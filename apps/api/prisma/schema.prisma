@@ -1,0 +1,1513 @@
+// HealthGuard domain model (Phase 1 foundation). Source of truth for the database.
+// DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE
+// Prisma ORM 7.10.x, PostgreSQL 17, UUIDv7 keys, timestamptz everywhere
+
+generator client {
+  provider            = "prisma-client"
+  output              = "../src/generated/prisma"
+  moduleFormat        = "esm"
+  importFileExtension = "js"
+  previewFeatures     = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+  // Prisma 7: the connection URL lives in the Prisma config file, not here.
+}
+
+// ===================================================================
+// Enums
+// ===================================================================
+
+enum UserStatus {
+  INVITED
+  ACTIVE
+  DISABLED
+}
+
+enum AuthMethod {
+  DEMO_QUICK_LOGIN
+  PASSWORD
+  OIDC
+}
+
+enum PlatformRole {
+  NONE
+  PLATFORM_ADMIN
+}
+
+enum OrganizationType {
+  CLINIC
+  HOSPITAL
+}
+
+enum OrganizationStatus {
+  ACTIVE
+  SUSPENDED
+}
+
+enum MemberRole {
+  ORG_ADMIN
+  DOCTOR
+  NURSE
+  CARE_COORDINATOR
+  FRONT_DESK
+  AUDITOR
+}
+
+enum MemberStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+enum PatientStatus {
+  ACTIVE
+  INACTIVE
+  DECEASED
+}
+
+enum Sex {
+  FEMALE
+  MALE
+  OTHER
+  UNKNOWN
+}
+
+enum RecordSource {
+  CLINICIAN_ENTERED
+  PATIENT_REPORTED
+  DEVICE
+  LAB_FEED
+  DOCUMENT_EXTRACTION
+  INTEROP_IMPORT
+  SYNTHETIC_SEED
+}
+
+enum ProvenanceVerification {
+  UNVERIFIED
+  PATIENT_CONFIRMED
+  CLINICIAN_VERIFIED
+}
+
+enum RecordStatus {
+  ACTIVE
+  ENTERED_IN_ERROR
+}
+
+enum EncounterType {
+  OUTPATIENT
+  TELECONSULT
+  FOLLOW_UP
+  INPATIENT
+}
+
+enum EncounterStatus {
+  PLANNED
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
+enum ClinicalStatus {
+  ACTIVE
+  INACTIVE
+  RESOLVED
+}
+
+enum ClinicalVerification {
+  UNCONFIRMED
+  PROVISIONAL
+  CONFIRMED
+  REFUTED
+}
+
+enum AllergyType {
+  ALLERGY
+  INTOLERANCE
+}
+
+enum AllergyCategory {
+  MEDICATION
+  FOOD
+  ENVIRONMENT
+  BIOLOGIC
+}
+
+enum AllergyCriticality {
+  LOW
+  HIGH
+  UNABLE_TO_ASSESS
+}
+
+enum ReactionSeverity {
+  MILD
+  MODERATE
+  SEVERE
+}
+
+enum ProcedureStatus {
+  COMPLETED
+  NOT_DONE
+}
+
+enum ImmunizationStatus {
+  COMPLETED
+  NOT_DONE
+}
+
+enum DoseForm {
+  TABLET
+  CAPSULE
+  SYRUP
+  SUSPENSION
+  INJECTION
+  INHALER
+  DROPS
+  CREAM
+  PATCH
+  OTHER
+}
+
+enum DoseUnit {
+  TABLET
+  CAPSULE
+  ML
+  MG
+  IU
+  PUFF
+  DROP
+  APPLICATION
+  PATCH
+}
+
+enum Route {
+  ORAL
+  SUBLINGUAL
+  INHALATION
+  SUBCUTANEOUS
+  INTRAMUSCULAR
+  INTRAVENOUS
+  TOPICAL
+  OPHTHALMIC
+  OTIC
+  NASAL
+  TRANSDERMAL
+  RECTAL
+}
+
+enum PeriodUnit {
+  DAY
+  WEEK
+  MONTH
+}
+
+// FHIR R4 EventTiming codes (Timing.repeat.when)
+enum EventTiming {
+  MORN
+  AFT
+  EVE
+  NIGHT
+  HS
+  WAKE
+  C
+  CM
+  CD
+  CV
+  AC
+  ACM
+  ACD
+  ACV
+  PC
+  PCM
+  PCD
+  PCV
+}
+
+enum MedicationPlanStatus {
+  DRAFT
+  ACTIVE
+  ON_HOLD
+  COMPLETED
+  STOPPED
+  SUPERSEDED
+  ENTERED_IN_ERROR
+}
+
+enum InstructionMethod {
+  TEMPLATE_ONLY
+  TEMPLATE_PLUS_AI
+  HUMAN_TRANSLATED
+}
+
+enum InstructionStatus {
+  DRAFT
+  APPROVED
+  REJECTED
+  SUPERSEDED
+}
+
+enum ValidationStatus {
+  PENDING
+  PASSED
+  FAILED
+}
+
+enum DoseStatus {
+  SCHEDULED
+  REMINDED
+  SNOOZED
+  TAKEN
+  SKIPPED
+  MISSED
+  CANCELLED
+}
+
+enum ResponseChannel {
+  APP
+  WHATSAPP
+  SMS
+  IVR
+  CLINIC
+  SYSTEM
+}
+
+enum LabResultStatus {
+  PRELIMINARY
+  FINAL
+  AMENDED
+}
+
+enum ResultInterpretation {
+  LOW
+  NORMAL
+  HIGH
+  CRITICAL_LOW
+  CRITICAL_HIGH
+}
+
+enum VitalType {
+  BLOOD_PRESSURE
+  HEART_RATE
+  BODY_WEIGHT
+  BODY_HEIGHT
+  BLOOD_GLUCOSE
+  OXYGEN_SATURATION
+  BODY_TEMPERATURE
+}
+
+enum ActivityMetricType {
+  STEPS
+  SLEEP_DURATION
+  ACTIVE_MINUTES
+  RESTING_HEART_RATE
+  WORKOUT_MINUTES
+}
+
+enum DocumentType {
+  LAB_REPORT
+  IMAGING_REPORT
+  PRESCRIPTION
+  DISCHARGE_SUMMARY
+  CONSULTATION_NOTE
+  VACCINATION_RECORD
+  OTHER
+}
+
+enum DocumentStatus {
+  UPLOADED
+  SCANNING
+  CLEAN
+  QUARANTINED
+  EXTRACTING
+  EXTRACTED
+  VERIFIED
+  FAILED
+}
+
+enum CarePlanStatus {
+  DRAFT
+  ACTIVE
+  COMPLETED
+  REVOKED
+}
+
+enum FollowUpType {
+  VISIT
+  REPEAT_TEST
+  CALLBACK
+  REVIEW
+}
+
+enum FollowUpOrigin {
+  CLINICIAN
+  RULE
+  PATIENT_REQUEST
+}
+
+enum FollowUpStatus {
+  PLANNED
+  DUE
+  PROPOSED
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+  OVERDUE
+}
+
+enum AppointmentMode {
+  IN_PERSON
+  VIDEO
+  PHONE
+}
+
+enum AppointmentStatus {
+  PROPOSED
+  PATIENT_APPROVED
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+  NO_SHOW
+}
+
+enum ConsentStatus {
+  REQUESTED
+  GRANTED
+  DENIED
+  REVOKED
+  EXPIRED
+}
+
+enum GranteeType {
+  ORGANIZATION
+  CLINICIAN
+  USER
+}
+
+enum DataCategory {
+  DEMOGRAPHICS
+  ENCOUNTERS
+  CONDITIONS
+  ALLERGIES
+  HISTORY
+  MEDICATIONS
+  ADHERENCE
+  LABS
+  VITALS
+  ACTIVITY
+  DOCUMENTS
+  CARE_PLAN
+  APPOINTMENTS
+}
+
+enum ConsentMethod {
+  IN_APP
+  CLINIC_ASSISTED
+  PAPER
+  DEMO_SEED
+  ABDM
+  BREAK_GLASS
+}
+
+enum AccessAction {
+  READ
+  CREATE
+  UPDATE
+  SIGN
+  EXPORT
+}
+
+enum PolicyEffect {
+  ALLOW
+  DENY
+}
+
+enum ActorType {
+  USER
+  SERVICE
+  AI_AGENT
+  SYSTEM
+}
+
+enum AuditAction {
+  READ
+  CREATE
+  UPDATE
+  STATUS_CHANGE
+  SIGN
+  EXPORT
+  LOGIN
+  LOGOUT
+  LOGIN_FAILED
+  ORG_SWITCH
+  CONSENT_REQUEST
+  CONSENT_GRANT
+  CONSENT_DENY
+  CONSENT_REVOKE
+  BREAK_GLASS
+  ACCESS_DENIED
+  AI_INVOKE
+  AI_OUTPUT_RELEASED
+  AI_RECOMMENDATION_REVIEWED
+  DEMO_PERSONA_SWITCH
+  DEMO_CLOCK_CHANGE
+  DEMO_RESET
+}
+
+enum AccessDecision {
+  ALLOW
+  DENY
+  NOT_APPLICABLE
+}
+
+enum AuditOutcome {
+  SUCCESS
+  FAILURE
+}
+
+enum NotificationChannel {
+  IN_APP
+  SIMULATED_PHONE
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  VOICE
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  DELIVERED
+  READ
+  FAILED
+  CANCELLED
+}
+
+enum AIAgent {
+  ORCHESTRATOR
+  RECORD_INGESTION
+  CLINICAL_TIMELINE
+  MEDICATION_INSTRUCTION
+  MEDICATION_ADHERENCE
+  DOCTOR_BRIEF
+  TREND_ANALYSIS
+  FOLLOW_UP
+  SAFETY
+  CONSENT
+}
+
+enum AIProviderName {
+  ANTHROPIC
+  DEMO
+}
+
+enum AIInteractionStatus {
+  PENDING
+  SUCCEEDED
+  FALLBACK_USED
+  VALIDATION_FAILED
+  BLOCKED_BY_CONSENT
+  BLOCKED_BY_SAFETY
+  PROVIDER_ERROR
+}
+
+enum AIRecommendationType {
+  DISCUSSION_POINT
+  QUESTION_FOR_CLINICIAN
+  FOLLOW_UP_DISCUSSION
+  DATA_QUALITY_FLAG
+}
+
+enum RecommendationAudience {
+  CLINICIAN
+  PATIENT
+}
+
+enum AIRecommendationStatus {
+  PROPOSED
+  ACCEPTED
+  DISMISSED
+  EXPIRED
+}
+
+enum Confidence {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+enum ProvenanceSubject {
+  AI_CLAIM
+  AI_RECOMMENDATION
+  EXTRACTED_VALUE
+  MEDICATION_INSTRUCTION
+}
+
+enum ProvenanceRelation {
+  SUPPORTED_BY
+  EXTRACTED_FROM
+  DERIVED_FROM
+}
+
+enum SourceEntity {
+  ENCOUNTER
+  CONDITION
+  ALLERGY
+  PROCEDURE
+  IMMUNIZATION
+  MEDICATION_PLAN
+  DOSE_EVENT
+  LAB_RESULT
+  VITAL
+  ACTIVITY_METRIC
+  DOCUMENT
+  CARE_PLAN
+  FOLLOW_UP
+  APPOINTMENT
+  CALCULATION
+}
+
+// ===================================================================
+// Platform and identity
+// ===================================================================
+
+model User {
+  id               String       @id @default(uuid(7)) @db.Uuid
+  email            String?      @unique
+  phone            String?      @unique
+  displayName      String
+  preferredLocale  String       @default("en-IN")
+  status           UserStatus   @default(ACTIVE)
+  platformRole     PlatformRole @default(NONE)
+  passwordHash     String?
+  oidcIssuer       String?
+  oidcSubject      String?
+  mfaEnabled       Boolean      @default(false)
+  lastLoginAt      DateTime?    @db.Timestamptz(3)
+  failedLoginCount Int          @default(0)
+  lockedUntil      DateTime?    @db.Timestamptz(3)
+  createdAt        DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt        DateTime?    @db.Timestamptz(3)
+
+  memberships       OrganizationMember[]
+  patientProfiles   PatientProfile[]
+  sessions          AuthSession[]
+  notifications     Notification[]
+  caregiverConsents Consent[]
+
+  @@unique([oidcIssuer, oidcSubject])
+}
+
+model AuthSession {
+  id                       String     @id @default(uuid(7)) @db.Uuid
+  userId                   String     @db.Uuid
+  activeOrganizationId     String?    @db.Uuid
+  refreshTokenHash         String     @unique
+  previousRefreshTokenHash String?    @unique
+  authMethod               AuthMethod
+  expiresAt                DateTime   @db.Timestamptz(3)
+  revokedAt                DateTime?  @db.Timestamptz(3)
+  lastUsedAt               DateTime   @default(now()) @db.Timestamptz(3)
+  userAgentHash            String?
+  ipHash                   String?
+  createdAt                DateTime   @default(now()) @db.Timestamptz(3)
+
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeOrganization Organization? @relation(fields: [activeOrganizationId], references: [id], onDelete: SetNull)
+
+  @@index([userId, revokedAt])
+}
+
+model Organization {
+  id        String             @id @default(uuid(7)) @db.Uuid
+  slug      String             @unique
+  name      String
+  type      OrganizationType
+  status    OrganizationStatus @default(ACTIVE)
+  isDemo    Boolean            @default(false)
+  timezone  String             @default("Asia/Kolkata")
+  settings  Json               @default("{}")
+  hfrId     String?            @unique
+  createdAt DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt DateTime           @updatedAt @db.Timestamptz(3)
+  deletedAt DateTime?          @db.Timestamptz(3)
+
+  members        OrganizationMember[]
+  patients       PatientProfile[]
+  activeSessions AuthSession[]
+  accessPolicies AccessPolicy[]
+  notifications  Notification[]
+  provenance     SourceProvenance[]
+}
+
+model OrganizationMember {
+  id             String       @id @default(uuid(7)) @db.Uuid
+  organizationId String       @db.Uuid
+  userId         String       @db.Uuid
+  roles          MemberRole[]
+  status         MemberStatus @default(INVITED)
+  invitedById    String?      @db.Uuid
+  joinedAt       DateTime?    @db.Timestamptz(3)
+  createdAt      DateTime     @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime     @updatedAt @db.Timestamptz(3)
+  deletedAt      DateTime?    @db.Timestamptz(3)
+
+  organization      Organization      @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user              User              @relation(fields: [userId], references: [id], onDelete: Restrict)
+  clinicianProfile  ClinicianProfile?
+  assignedFollowUps FollowUp[]
+
+  @@unique([organizationId, userId])
+  @@unique([organizationId, id])
+  @@index([userId])
+}
+
+model ClinicianProfile {
+  id                  String    @id @default(uuid(7)) @db.Uuid
+  organizationId      String    @db.Uuid
+  memberId            String    @db.Uuid
+  displayName         String
+  specialty           String?
+  qualifications      String?
+  registrationNumber  String?
+  registrationCouncil String?
+  hprId               String?
+  isPrescriber        Boolean   @default(false)
+  createdAt           DateTime  @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime  @updatedAt @db.Timestamptz(3)
+  deletedAt           DateTime? @db.Timestamptz(3)
+
+  member            OrganizationMember @relation(fields: [organizationId, memberId], references: [organizationId, id], onDelete: Restrict)
+  primaryPatients   PatientProfile[]
+  encounters        Encounter[]
+  prescribedPlans   MedicationPlan[]
+  authoredCarePlans CarePlan[]
+  appointments      Appointment[]
+  consentGrants     Consent[]
+
+  @@unique([organizationId, memberId])
+  @@unique([organizationId, id])
+}
+
+model PatientProfile {
+  id                 String        @id @default(uuid(7)) @db.Uuid
+  organizationId     String        @db.Uuid
+  userId             String?       @db.Uuid
+  mrn                String
+  givenName          String
+  familyName         String?
+  dateOfBirth        DateTime      @db.Date
+  sex                Sex
+  phone              String?
+  preferredLocale    String        @default("en-IN")
+  timezone           String        @default("Asia/Kolkata")
+  dailyRoutine       Json
+  primaryClinicianId String?       @db.Uuid
+  abhaNumber         String?
+  abhaAddress        String?
+  abhaVerifiedAt     DateTime?     @db.Timestamptz(3)
+  status             PatientStatus @default(ACTIVE)
+  isSynthetic        Boolean       @default(false)
+  createdAt          DateTime      @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime      @updatedAt @db.Timestamptz(3)
+  deletedAt          DateTime?     @db.Timestamptz(3)
+
+  organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  user              User?                 @relation(fields: [userId], references: [id], onDelete: SetNull)
+  primaryClinician  ClinicianProfile?     @relation(fields: [organizationId, primaryClinicianId], references: [organizationId, id], onDelete: Restrict)
+  encounters        Encounter[]
+  conditions        Condition[]
+  allergies         Allergy[]
+  procedures        Procedure[]
+  immunizations     Immunization[]
+  medicationPlans   MedicationPlan[]
+  doseEvents        MedicationDoseEvent[]
+  labResults        LabResult[]
+  vitals            Vital[]
+  activityMetrics   ActivityMetric[]
+  documents         Document[]
+  carePlans         CarePlan[]
+  followUps         FollowUp[]
+  appointments      Appointment[]
+  consents          Consent[]
+  notifications     Notification[]
+  aiInteractions    AIInteraction[]
+  aiRecommendations AIRecommendation[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, mrn])
+  @@unique([organizationId, abhaAddress])
+  @@index([userId])
+}
+
+// ===================================================================
+// Global reference data (not tenant-scoped)
+// ===================================================================
+
+model Medication {
+  id              String   @id @default(uuid(7)) @db.Uuid
+  genericName     String
+  strengthValue   Decimal  @db.Decimal(10, 3)
+  strengthUnit    String
+  form            DoseForm
+  defaultRoute    Route
+  brandNames      String[]
+  allergenClasses String[]
+  snomedCode      String?
+  atcCode         String?
+  isActive        Boolean  @default(true)
+  createdAt       DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt       DateTime @updatedAt @db.Timestamptz(3)
+
+  plans MedicationPlan[]
+
+  @@unique([genericName, strengthValue, strengthUnit, form])
+}
+
+model LabTest {
+  id            String   @id @default(uuid(7)) @db.Uuid
+  code          String   @unique
+  loincCode     String?  @unique
+  name          String
+  unit          String
+  referenceLow  Decimal? @db.Decimal(14, 4)
+  referenceHigh Decimal? @db.Decimal(14, 4)
+  referenceText String?
+  category      String
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @db.Timestamptz(3)
+
+  results   LabResult[]
+  followUps FollowUp[]
+}
+
+model ConsentPurpose {
+  id                    String         @id @default(uuid(7)) @db.Uuid
+  code                  String         @unique
+  name                  String
+  description           String
+  defaultCategories     DataCategory[]
+  defaultDurationDays   Int
+  abdmPurposeCode       String?
+  requiresPatientAction Boolean        @default(true)
+  isActive              Boolean        @default(true)
+  createdAt             DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt             DateTime       @updatedAt @db.Timestamptz(3)
+
+  consents       Consent[]
+  accessPolicies AccessPolicy[]
+}
+
+// ===================================================================
+// Clinical record (tenant- and patient-scoped)
+// ===================================================================
+
+model Encounter {
+  id               String          @id @default(uuid(7)) @db.Uuid
+  organizationId   String          @db.Uuid
+  patientProfileId String          @db.Uuid
+  clinicianId      String          @db.Uuid
+  appointmentId    String?         @db.Uuid
+  type             EncounterType
+  status           EncounterStatus @default(PLANNED)
+  reasonForVisit   String?
+  clinicalNotes    String?
+  startedAt        DateTime?       @db.Timestamptz(3)
+  endedAt          DateTime?       @db.Timestamptz(3)
+  recordSource     RecordSource    @default(CLINICIAN_ENTERED)
+  sourceSystem     String?
+  sourceRef        String?
+  recordedByUserId String?         @db.Uuid
+  recordStatus     RecordStatus    @default(ACTIVE)
+  createdAt        DateTime        @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime        @updatedAt @db.Timestamptz(3)
+
+  patient         PatientProfile   @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  clinician       ClinicianProfile @relation(fields: [organizationId, clinicianId], references: [organizationId, id], onDelete: Restrict)
+  appointment     Appointment?     @relation(fields: [organizationId, appointmentId], references: [organizationId, id], onDelete: Restrict)
+  conditions      Condition[]
+  allergies       Allergy[]
+  procedures      Procedure[]
+  immunizations   Immunization[]
+  medicationPlans MedicationPlan[]
+  labResults      LabResult[]
+  vitals          Vital[]
+  documents       Document[]
+  carePlans       CarePlan[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, appointmentId])
+  @@index([organizationId, patientProfileId, startedAt(sort: Desc)])
+}
+
+model Condition {
+  id                   String                 @id @default(uuid(7)) @db.Uuid
+  organizationId       String                 @db.Uuid
+  patientProfileId     String                 @db.Uuid
+  encounterId          String?                @db.Uuid
+  codeSystem           String?
+  code                 String?
+  display              String
+  clinicalStatus       ClinicalStatus         @default(ACTIVE)
+  clinicalVerification ClinicalVerification   @default(CONFIRMED)
+  onsetDate            DateTime?              @db.Date
+  abatementDate        DateTime?              @db.Date
+  note                 String?
+  recordSource         RecordSource
+  sourceSystem         String?
+  sourceRef            String?
+  verification         ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId     String?                @db.Uuid
+  recordStatus         RecordStatus           @default(ACTIVE)
+  supersedesId         String?                @unique @db.Uuid
+  createdAt            DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, clinicalStatus])
+}
+
+model Allergy {
+  id                   String                 @id @default(uuid(7)) @db.Uuid
+  organizationId       String                 @db.Uuid
+  patientProfileId     String                 @db.Uuid
+  encounterId          String?                @db.Uuid
+  substance            String
+  substanceCode        String?
+  allergenClass        String?
+  type                 AllergyType            @default(ALLERGY)
+  category             AllergyCategory
+  criticality          AllergyCriticality?
+  clinicalStatus       ClinicalStatus         @default(ACTIVE)
+  clinicalVerification ClinicalVerification   @default(CONFIRMED)
+  reaction             String?
+  severity             ReactionSeverity?
+  onsetDate            DateTime?              @db.Date
+  recordSource         RecordSource
+  sourceSystem         String?
+  sourceRef            String?
+  verification         ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId     String?                @db.Uuid
+  recordStatus         RecordStatus           @default(ACTIVE)
+  supersedesId         String?                @unique @db.Uuid
+  createdAt            DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, clinicalStatus])
+}
+
+model Procedure {
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  organizationId   String                 @db.Uuid
+  patientProfileId String                 @db.Uuid
+  encounterId      String?                @db.Uuid
+  codeSystem       String?
+  code             String?
+  display          String
+  status           ProcedureStatus        @default(COMPLETED)
+  performedOn      DateTime?              @db.Date
+  performerText    String?
+  facilityText     String?
+  outcome          String?
+  note             String?
+  recordSource     RecordSource
+  sourceSystem     String?
+  sourceRef        String?
+  verification     ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId String?                @db.Uuid
+  recordStatus     RecordStatus           @default(ACTIVE)
+  supersedesId     String?                @unique @db.Uuid
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, performedOn(sort: Desc)])
+}
+
+model Immunization {
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  organizationId   String                 @db.Uuid
+  patientProfileId String                 @db.Uuid
+  encounterId      String?                @db.Uuid
+  vaccineCode      String?
+  vaccineName      String
+  status           ImmunizationStatus     @default(COMPLETED)
+  occurredOn       DateTime               @db.Date
+  doseNumber       Int?
+  lotNumber        String?
+  performerText    String?
+  recordSource     RecordSource
+  sourceSystem     String?
+  sourceRef        String?
+  verification     ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId String?                @db.Uuid
+  recordStatus     RecordStatus           @default(ACTIVE)
+  supersedesId     String?                @unique @db.Uuid
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, occurredOn(sort: Desc)])
+}
+
+// ===================================================================
+// Medications and adherence
+// ===================================================================
+
+model MedicationPlan {
+  id                  String                 @id @default(uuid(7)) @db.Uuid
+  organizationId      String                 @db.Uuid
+  patientProfileId    String                 @db.Uuid
+  encounterId         String?                @db.Uuid
+  medicationId        String                 @db.Uuid
+  prescriberId        String?                @db.Uuid
+  doseQuantity        Decimal                @db.Decimal(10, 3)
+  doseUnit            DoseUnit
+  route               Route
+  frequency           Int
+  period              Int                    @default(1)
+  periodUnit          PeriodUnit             @default(DAY)
+  timingEvents        EventTiming[]
+  timingOffsetMinutes Int?
+  timesOfDay          String[]
+  asNeeded            Boolean                @default(false)
+  durationDays        Int?
+  startDate           DateTime               @db.Date
+  endDate             DateTime?              @db.Date
+  indication          String?
+  specialInstructions String?
+  status              MedicationPlanStatus   @default(DRAFT)
+  version             Int                    @default(1)
+  supersedesId        String?                @unique @db.Uuid
+  signedAt            DateTime?              @db.Timestamptz(3)
+  stoppedAt           DateTime?              @db.Timestamptz(3)
+  stopReason          String?
+  recordSource        RecordSource           @default(CLINICIAN_ENTERED)
+  sourceSystem        String?
+  sourceRef           String?
+  verification        ProvenanceVerification @default(CLINICIAN_VERIFIED)
+  recordedByUserId    String?                @db.Uuid
+  createdAt           DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient      PatientProfile          @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter    Encounter?              @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+  medication   Medication              @relation(fields: [medicationId], references: [id], onDelete: Restrict)
+  prescriber   ClinicianProfile?       @relation(fields: [organizationId, prescriberId], references: [organizationId, id], onDelete: Restrict)
+  supersedes   MedicationPlan?         @relation("PlanSupersession", fields: [supersedesId], references: [id], onDelete: Restrict)
+  supersededBy MedicationPlan?         @relation("PlanSupersession")
+  instructions MedicationInstruction[]
+  doseEvents   MedicationDoseEvent[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, patientProfileId, id])
+  @@index([organizationId, patientProfileId, status])
+}
+
+model MedicationInstruction {
+  id               String            @id @default(uuid(7)) @db.Uuid
+  organizationId   String            @db.Uuid
+  medicationPlanId String            @db.Uuid
+  locale           String
+  revision         Int               @default(1)
+  doseText         String
+  notesText        String?
+  method           InstructionMethod
+  templateKey      String
+  aiInteractionId  String?           @db.Uuid
+  validationStatus ValidationStatus  @default(PENDING)
+  validationReport Json?
+  status           InstructionStatus @default(DRAFT)
+  approvedByUserId String?           @db.Uuid
+  approvedAt       DateTime?         @db.Timestamptz(3)
+  audioObjectKey   String?
+  createdAt        DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime          @updatedAt @db.Timestamptz(3)
+
+  plan          MedicationPlan @relation(fields: [organizationId, medicationPlanId], references: [organizationId, id], onDelete: Restrict)
+  aiInteraction AIInteraction? @relation(fields: [organizationId, aiInteractionId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([medicationPlanId, locale, revision])
+  @@unique([medicationPlanId, locale], map: "one_approved_instruction_per_locale", where: raw("status = 'APPROVED'"))
+  @@index([organizationId, status])
+}
+
+model MedicationDoseEvent {
+  id                String           @id @default(uuid(7)) @db.Uuid
+  organizationId    String           @db.Uuid
+  patientProfileId  String           @db.Uuid
+  medicationPlanId  String           @db.Uuid
+  scheduledAt       DateTime         @db.Timestamptz(3)
+  localDate         DateTime         @db.Date
+  slotLabel         String
+  status            DoseStatus       @default(SCHEDULED)
+  remindAt          DateTime         @db.Timestamptz(3)
+  reminderCount     Int              @default(0)
+  lastRemindedAt    DateTime?        @db.Timestamptz(3)
+  respondedAt       DateTime?        @db.Timestamptz(3)
+  responseChannel   ResponseChannel?
+  respondedByUserId String?          @db.Uuid
+  skipReason        String?
+  missedInferred    Boolean          @default(false)
+  idempotencyKey    String?          @unique
+  recordSource      RecordSource     @default(PATIENT_REPORTED)
+  createdAt         DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime         @updatedAt @db.Timestamptz(3)
+
+  patient PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  plan    MedicationPlan @relation(fields: [organizationId, patientProfileId, medicationPlanId], references: [organizationId, patientProfileId, id], onDelete: Restrict)
+
+  @@unique([medicationPlanId, scheduledAt])
+  @@index([status, remindAt])
+  @@index([organizationId, patientProfileId, scheduledAt])
+}
+
+// ===================================================================
+// Labs, vitals, activity, documents
+// ===================================================================
+
+model LabResult {
+  id                   String                 @id @default(uuid(7)) @db.Uuid
+  organizationId       String                 @db.Uuid
+  patientProfileId     String                 @db.Uuid
+  labTestId            String                 @db.Uuid
+  encounterId          String?                @db.Uuid
+  documentId           String?                @db.Uuid
+  followUpId           String?                @db.Uuid
+  valueNumeric         Decimal?               @db.Decimal(14, 4)
+  valueText            String?
+  unit                 String
+  referenceLow         Decimal?               @db.Decimal(14, 4)
+  referenceHigh        Decimal?               @db.Decimal(14, 4)
+  interpretation       ResultInterpretation?
+  effectiveAt          DateTime               @db.Timestamptz(3)
+  issuedAt             DateTime?              @db.Timestamptz(3)
+  status               LabResultStatus        @default(FINAL)
+  performingLab        String?
+  extractionConfidence Decimal?               @db.Decimal(4, 3)
+  recordSource         RecordSource
+  sourceSystem         String?
+  sourceRef            String?
+  verification         ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId     String?                @db.Uuid
+  recordStatus         RecordStatus           @default(ACTIVE)
+  supersedesId         String?                @unique @db.Uuid
+  createdAt            DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt            DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  labTest   LabTest        @relation(fields: [labTestId], references: [id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+  document  Document?      @relation(fields: [organizationId, documentId], references: [organizationId, id], onDelete: Restrict)
+  followUp  FollowUp?      @relation(fields: [organizationId, followUpId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, labTestId, effectiveAt(sort: Desc)])
+}
+
+model Vital {
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  organizationId   String                 @db.Uuid
+  patientProfileId String                 @db.Uuid
+  encounterId      String?                @db.Uuid
+  type             VitalType
+  value            Decimal                @db.Decimal(10, 3)
+  value2           Decimal?               @db.Decimal(10, 3)
+  unit             String
+  measuredAt       DateTime               @db.Timestamptz(3)
+  context          String?
+  recordSource     RecordSource
+  sourceSystem     String?
+  sourceRef        String?
+  verification     ProvenanceVerification @default(UNVERIFIED)
+  recordedByUserId String?                @db.Uuid
+  recordStatus     RecordStatus           @default(ACTIVE)
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, type, measuredAt(sort: Desc)])
+}
+
+model ActivityMetric {
+  id               String             @id @default(uuid(7)) @db.Uuid
+  organizationId   String             @db.Uuid
+  patientProfileId String             @db.Uuid
+  type             ActivityMetricType
+  date             DateTime           @db.Date
+  value            Decimal            @db.Decimal(12, 2)
+  unit             String
+  recordSource     RecordSource
+  sourceSystem     String
+  sourceRef        String?
+  recordStatus     RecordStatus       @default(ACTIVE)
+  createdAt        DateTime           @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime           @updatedAt @db.Timestamptz(3)
+
+  patient PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([patientProfileId, type, date, sourceSystem])
+  @@index([organizationId, patientProfileId, type, date])
+}
+
+model Document {
+  id                String         @id @default(uuid(7)) @db.Uuid
+  organizationId    String         @db.Uuid
+  patientProfileId  String         @db.Uuid
+  encounterId       String?        @db.Uuid
+  type              DocumentType
+  title             String
+  documentDate      DateTime?      @db.Date
+  objectKey         String         @unique
+  mimeType          String
+  sizeBytes         Int
+  sha256            String
+  status            DocumentStatus @default(UPLOADED)
+  scanResult        String?
+  isSyntheticSample Boolean        @default(false)
+  uploadedByUserId  String?        @db.Uuid
+  recordSource      RecordSource
+  sourceSystem      String?
+  sourceRef         String?
+  recordStatus      RecordStatus   @default(ACTIVE)
+  createdAt         DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime       @updatedAt @db.Timestamptz(3)
+  deletedAt         DateTime?      @db.Timestamptz(3)
+
+  patient    PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter  Encounter?     @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+  labResults LabResult[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, patientProfileId, createdAt(sort: Desc)])
+  @@index([organizationId, sha256])
+}
+
+// ===================================================================
+// Care plans, follow-ups, appointments
+// ===================================================================
+
+model CarePlan {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  organizationId   String         @db.Uuid
+  patientProfileId String         @db.Uuid
+  encounterId      String?        @db.Uuid
+  authorId         String         @db.Uuid
+  title            String
+  goals            Json           @default("[]")
+  status           CarePlanStatus @default(ACTIVE)
+  startDate        DateTime       @db.Date
+  endDate          DateTime?      @db.Date
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile   @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?       @relation(fields: [organizationId, encounterId], references: [organizationId, id], onDelete: Restrict)
+  author    ClinicianProfile @relation(fields: [organizationId, authorId], references: [organizationId, id], onDelete: Restrict)
+  followUps FollowUp[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, patientProfileId, status])
+}
+
+model FollowUp {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  organizationId   String         @db.Uuid
+  patientProfileId String         @db.Uuid
+  carePlanId       String?        @db.Uuid
+  labTestId        String?        @db.Uuid
+  assignedMemberId String?        @db.Uuid
+  type             FollowUpType
+  origin           FollowUpOrigin
+  reason           String
+  dueDate          DateTime       @db.Date
+  windowStart      DateTime?      @db.Date
+  windowEnd        DateTime?      @db.Date
+  status           FollowUpStatus @default(PLANNED)
+  createdByUserId  String?        @db.Uuid
+  completedAt      DateTime?      @db.Timestamptz(3)
+  createdAt        DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime       @updatedAt @db.Timestamptz(3)
+
+  patient        PatientProfile      @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  carePlan       CarePlan?           @relation(fields: [organizationId, carePlanId], references: [organizationId, id], onDelete: Restrict)
+  labTest        LabTest?            @relation(fields: [labTestId], references: [id], onDelete: Restrict)
+  assignedMember OrganizationMember? @relation(fields: [organizationId, assignedMemberId], references: [organizationId, id], onDelete: Restrict)
+  appointments   Appointment[]
+  labResults     LabResult[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, status, dueDate])
+  @@index([organizationId, patientProfileId, dueDate])
+}
+
+model Appointment {
+  id                      String            @id @default(uuid(7)) @db.Uuid
+  organizationId          String            @db.Uuid
+  patientProfileId        String            @db.Uuid
+  clinicianId             String            @db.Uuid
+  followUpId              String?           @db.Uuid
+  mode                    AppointmentMode   @default(IN_PERSON)
+  status                  AppointmentStatus @default(PROPOSED)
+  startAt                 DateTime          @db.Timestamptz(3)
+  endAt                   DateTime          @db.Timestamptz(3)
+  reason                  String?
+  proposedAt              DateTime          @default(now()) @db.Timestamptz(3)
+  patientApprovedAt       DateTime?         @db.Timestamptz(3)
+  patientApprovedByUserId String?           @db.Uuid
+  confirmedAt             DateTime?         @db.Timestamptz(3)
+  confirmedByUserId       String?           @db.Uuid
+  cancelledAt             DateTime?         @db.Timestamptz(3)
+  cancellationReason      String?
+  createdAt               DateTime          @default(now()) @db.Timestamptz(3)
+  updatedAt               DateTime          @updatedAt @db.Timestamptz(3)
+
+  patient   PatientProfile   @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  clinician ClinicianProfile @relation(fields: [organizationId, clinicianId], references: [organizationId, id], onDelete: Restrict)
+  followUp  FollowUp?        @relation(fields: [organizationId, followUpId], references: [organizationId, id], onDelete: Restrict)
+  encounter Encounter?
+
+  @@unique([organizationId, id])
+  @@index([organizationId, clinicianId, startAt])
+  @@index([organizationId, patientProfileId, startAt])
+}
+
+// ===================================================================
+// Consent, access policy, audit
+// ===================================================================
+
+model Consent {
+  id                 String         @id @default(uuid(7)) @db.Uuid
+  organizationId     String         @db.Uuid
+  patientProfileId   String         @db.Uuid
+  purposeId          String         @db.Uuid
+  granteeType        GranteeType
+  granteeClinicianId String?        @db.Uuid
+  granteeUserId      String?        @db.Uuid
+  categories         DataCategory[]
+  dataFrom           DateTime?      @db.Date
+  dataTo             DateTime?      @db.Date
+  validFrom          DateTime       @db.Timestamptz(3)
+  validUntil         DateTime       @db.Timestamptz(3)
+  status             ConsentStatus  @default(REQUESTED)
+  method             ConsentMethod
+  requestedByUserId  String?        @db.Uuid
+  requestedAt        DateTime       @default(now()) @db.Timestamptz(3)
+  decidedAt          DateTime?      @db.Timestamptz(3)
+  revokedAt          DateTime?      @db.Timestamptz(3)
+  revokedReason      String?
+  justificationCode  String?
+  noticeVersion      String
+  noticeLocale       String
+  externalRef        String?
+  createdAt          DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime       @updatedAt @db.Timestamptz(3)
+
+  patient          PatientProfile    @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  purpose          ConsentPurpose    @relation(fields: [purposeId], references: [id], onDelete: Restrict)
+  granteeClinician ClinicianProfile? @relation(fields: [organizationId, granteeClinicianId], references: [organizationId, id], onDelete: Restrict)
+  granteeUser      User?             @relation(fields: [granteeUserId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, status, validUntil])
+  @@index([granteeClinicianId, status])
+  @@index([granteeUserId, status])
+}
+
+model AccessPolicy {
+  id                       String         @id @default(uuid(7)) @db.Uuid
+  organizationId           String?        @db.Uuid
+  role                     MemberRole
+  category                 DataCategory
+  actions                  AccessAction[]
+  purposeId                String?        @db.Uuid
+  requiresCareRelationship Boolean        @default(true)
+  effect                   PolicyEffect   @default(ALLOW)
+  priority                 Int            @default(100)
+  isActive                 Boolean        @default(true)
+  description              String?
+  createdAt                DateTime       @default(now()) @db.Timestamptz(3)
+  updatedAt                DateTime       @updatedAt @db.Timestamptz(3)
+
+  organization Organization?   @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  purpose      ConsentPurpose? @relation(fields: [purposeId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, role, category])
+}
+
+// Append-only. Deliberately has no foreign keys: audit rows must outlive
+// the rows they describe and must never block or cascade.
+model AuditEvent {
+  id               String         @id @default(uuid(7)) @db.Uuid
+  organizationId   String?        @db.Uuid
+  occurredAt       DateTime       @default(now()) @db.Timestamptz(3)
+  actorType        ActorType
+  actorUserId      String?        @db.Uuid
+  actorRoles       String[]
+  onBehalfOfUserId String?        @db.Uuid
+  aiAgent          AIAgent?
+  patientProfileId String?        @db.Uuid
+  action           AuditAction
+  resourceType     String
+  resourceId       String?        @db.Uuid
+  purposeCode      String?
+  consentId        String?        @db.Uuid
+  decision         AccessDecision
+  decisionReason   String?
+  outcome          AuditOutcome
+  requestId        String?
+  ipHash           String?
+  userAgentHash    String?
+  metadata         Json           @default("{}")
+  contentHash      String
+
+  @@index([organizationId, occurredAt(sort: Desc)])
+  @@index([patientProfileId, occurredAt(sort: Desc)])
+  @@index([actorUserId, occurredAt(sort: Desc)])
+}
+
+// ===================================================================
+// Notifications
+// ===================================================================
+
+model Notification {
+  id                String              @id @default(uuid(7)) @db.Uuid
+  organizationId    String              @db.Uuid
+  recipientUserId   String              @db.Uuid
+  patientProfileId  String?             @db.Uuid
+  channel           NotificationChannel
+  templateKey       String
+  locale            String
+  params            Json                @default("{}")
+  status            NotificationStatus  @default(QUEUED)
+  dedupeKey         String              @unique
+  scheduledFor      DateTime            @db.Timestamptz(3)
+  sentAt            DateTime?           @db.Timestamptz(3)
+  deliveredAt       DateTime?           @db.Timestamptz(3)
+  readAt            DateTime?           @db.Timestamptz(3)
+  failedAt          DateTime?           @db.Timestamptz(3)
+  failureReason     String?
+  relatedEntityType String?
+  relatedEntityId   String?             @db.Uuid
+  createdAt         DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt         DateTime            @updatedAt @db.Timestamptz(3)
+
+  organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  recipient    User            @relation(fields: [recipientUserId], references: [id], onDelete: Restrict)
+  patient      PatientProfile? @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([recipientUserId, status, scheduledFor])
+  @@index([organizationId, status, scheduledFor])
+}
+
+// ===================================================================
+// AI interactions, recommendations, provenance
+// ===================================================================
+
+model AIInteraction {
+  id               String              @id @default(uuid(7)) @db.Uuid
+  organizationId   String              @db.Uuid
+  patientProfileId String              @db.Uuid
+  actorUserId      String              @db.Uuid
+  agent            AIAgent
+  task             String
+  purposeCode      String
+  consentIds       String[]            @db.Uuid
+  provider         AIProviderName
+  model            String
+  promptKey        String
+  promptVersion    String
+  promptHash       String
+  inputFactIds     String[]            @db.Uuid
+  inputHash        String
+  output           Json?
+  status           AIInteractionStatus @default(PENDING)
+  validation       Json?
+  fallbackReason   String?
+  confidence       Confidence?
+  latencyMs        Int?
+  inputTokens      Int?
+  outputTokens     Int?
+  costMicroUsd     Int?
+  cached           Boolean             @default(false)
+  requestId        String?
+  createdAt        DateTime            @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime            @updatedAt @db.Timestamptz(3)
+  completedAt      DateTime?           @db.Timestamptz(3)
+
+  patient         PatientProfile          @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  recommendations AIRecommendation[]
+  instructions    MedicationInstruction[]
+
+  @@unique([organizationId, id])
+  @@index([organizationId, patientProfileId, createdAt(sort: Desc)])
+  @@index([organizationId, agent, status, createdAt(sort: Desc)])
+}
+
+model AIRecommendation {
+  id               String                 @id @default(uuid(7)) @db.Uuid
+  organizationId   String                 @db.Uuid
+  patientProfileId String                 @db.Uuid
+  aiInteractionId  String                 @db.Uuid
+  type             AIRecommendationType
+  audience         RecommendationAudience @default(CLINICIAN)
+  text             String
+  rationale        String?
+  confidence       Confidence
+  status           AIRecommendationStatus @default(PROPOSED)
+  reviewedByUserId String?                @db.Uuid
+  reviewedAt       DateTime?              @db.Timestamptz(3)
+  reviewNote       String?
+  expiresAt        DateTime?              @db.Timestamptz(3)
+  createdAt        DateTime               @default(now()) @db.Timestamptz(3)
+  updatedAt        DateTime               @updatedAt @db.Timestamptz(3)
+
+  patient       PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+  aiInteraction AIInteraction  @relation(fields: [organizationId, aiInteractionId], references: [organizationId, id], onDelete: Restrict)
+
+  @@index([organizationId, patientProfileId, status])
+}
+
+// Polymorphic link from a derived item (AI claim, AI recommendation,
+// extracted value, rendered instruction) to the facts it rests on.
+model SourceProvenance {
+  id             String             @id @default(uuid(7)) @db.Uuid
+  organizationId String             @db.Uuid
+  subjectType    ProvenanceSubject
+  subjectId      String             @db.Uuid
+  claimKey       String?
+  relationType   ProvenanceRelation
+  sourceType     SourceEntity
+  sourceId       String?            @db.Uuid
+  sourceLocator  Json?
+  createdAt      DateTime           @default(now()) @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+
+  @@index([organizationId, subjectType, subjectId])
+  @@index([organizationId, sourceType, sourceId])
+}
+
+// ===================================================================
+// System
+// ===================================================================
+
+// Key-value settings, e.g. the demo clock offset. Never holds patient data.
+model SystemSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt @db.Timestamptz(3)
+}

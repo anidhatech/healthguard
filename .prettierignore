@@ -1,0 +1,13 @@
+node_modules
+pnpm-lock.yaml
+dist
+.next
+.turbo
+coverage
+apps/api/src/generated
+apps/api/prisma/migrations
+playwright-report
+test-results
+docs
+packages/ai/prompts
+packages/ai/fixtures

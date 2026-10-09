@@ -1,0 +1,38 @@
+{
+  "name": "@healthguard/ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI foundation: provider abstraction (Claude + deterministic demo provider), prompt registry, request gate and output safety validation. The AI summarises recorded facts; it never diagnoses, prescribes or changes treatment.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "prompts",
+    "fixtures"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "0.132.1",
+    "@healthguard/shared": "workspace:*",
+    "zod": "4.6.5"
+  },
+  "devDependencies": {
+    "@healthguard/config": "workspace:*",
+    "@types/node": "24.19.1",
+    "eslint": "9.39.5",
+    "typescript": "6.0.3",
+    "vite": "8.3.3",
+    "vitest": "5.0.3"
+  }
+}

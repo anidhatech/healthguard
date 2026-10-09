@@ -1,0 +1,36 @@
+{
+  "name": "healthguard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HealthGuard: longitudinal health intelligence and treatment adherence for clinics and hospitals. Demo foundation; synthetic data only.",
+  "license": "UNLICENSED",
+  "type": "module",
+  "packageManager": "pnpm@10.28.0",
+  "engines": {
+    "node": ">=22.12.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "env:setup": "node scripts/setup-env.mjs",
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "pnpm --filter @healthguard/api test:integration",
+    "test:e2e": "pnpm --filter @healthguard/e2e test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @healthguard/api db:generate",
+    "db:migrate": "pnpm --filter @healthguard/api db:migrate",
+    "db:migrate:dev": "pnpm --filter @healthguard/api db:migrate:dev",
+    "db:seed": "pnpm --filter @healthguard/api db:seed",
+    "db:reset": "pnpm --filter @healthguard/api db:reset",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+  },
+  "devDependencies": {
+    "prettier": "3.9.9",
+    "turbo": "2.11.7",
+    "typescript": "6.0.3"
+  }
+}

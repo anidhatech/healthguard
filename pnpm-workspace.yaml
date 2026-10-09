@@ -1,0 +1,14 @@
+packages:
+  - apps/*
+  - packages/*
+  - tests/*
+
+# pnpm 10 runs no dependency install scripts unless they are listed here.
+# Prisma downloads its migration engine on first use, so @prisma/engines is
+# deliberately not listed.
+onlyBuiltDependencies:
+  - '@swc/core'
+  - '@tailwindcss/oxide'
+  - esbuild
+  - sharp
+  - unrs-resolver

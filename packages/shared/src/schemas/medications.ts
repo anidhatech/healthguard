@@ -1,0 +1,137 @@
+import { z } from 'zod';
+import { SUPPORTED_LOCALES } from '../locales.js';
+import {
+  IsoDateSchema,
+  IsoDateTimeSchema,
+  PersonRefSchema,
+  ProvenanceSchema,
+  SourceRefSchema,
+  UuidSchema,
+} from './common.js';
+
+export const MedicationInstructionViewSchema = z.object({
+  id: UuidSchema,
+  locale: z.enum(SUPPORTED_LOCALES),
+  doseText: z.string(),
+  notesText: z.string().nullable(),
+  method: z.enum(['TEMPLATE_ONLY', 'TEMPLATE_PLUS_AI', 'HUMAN_TRANSLATED']),
+  templateKey: z.string(),
+  status: z.enum(['DRAFT', 'APPROVED', 'REJECTED', 'SUPERSEDED']),
+  approvedAt: IsoDateTimeSchema.nullable(),
+});
+export type MedicationInstructionView = z.infer<typeof MedicationInstructionViewSchema>;
+
+export const MedicationPlansQuerySchema = z.strictObject({
+  locale: z.enum(SUPPORTED_LOCALES).optional(),
+  status: z.enum(['active', 'all']).optional(),
+});
+export type MedicationPlansQuery = z.infer<typeof MedicationPlansQuerySchema>;
+
+export const MedicationPlanViewSchema = z.object({
+  id: UuidSchema,
+  kind: z.literal('FACT'),
+  provenance: ProvenanceSchema,
+  medication: z.object({
+    id: UuidSchema,
+    genericName: z.string(),
+    strength: z.string(),
+    form: z.string(),
+  }),
+  doseQuantity: z.number(),
+  doseUnit: z.string(),
+  route: z.string(),
+  frequency: z.number().int(),
+  period: z.number().int(),
+  periodUnit: z.enum(['DAY', 'WEEK', 'MONTH']),
+  timingEvents: z.array(z.string()),
+  timingOffsetMinutes: z.number().int().nullable(),
+  timesOfDay: z.array(z.string()),
+  asNeeded: z.boolean(),
+  durationDays: z.number().int().nullable(),
+  startDate: IsoDateSchema,
+  endDate: IsoDateSchema.nullable(),
+  indication: z.string().nullable(),
+  specialInstructions: z.string().nullable(),
+  status: z.enum([
+    'DRAFT',
+    'ACTIVE',
+    'ON_HOLD',
+    'COMPLETED',
+    'STOPPED',
+    'SUPERSEDED',
+    'ENTERED_IN_ERROR',
+  ]),
+  version: z.number().int(),
+  signedAt: IsoDateTimeSchema.nullable(),
+  prescriber: PersonRefSchema.nullable(),
+  instruction: MedicationInstructionViewSchema.nullable(),
+  /** Set for every synthetic plan so it is never mistaken for a real prescription. */
+  syntheticNotice: z.string().nullable(),
+});
+export type MedicationPlanView = z.infer<typeof MedicationPlanViewSchema>;
+
+export const MedicationCatalogueQuerySchema = z.strictObject({
+  query: z.string().trim().max(60).optional(),
+});
+export type MedicationCatalogueQuery = z.infer<typeof MedicationCatalogueQuerySchema>;
+
+export const MedicationCatalogueItemSchema = z.object({
+  id: UuidSchema,
+  genericName: z.string(),
+  strength: z.string(),
+  form: z.string(),
+  defaultRoute: z.string(),
+});
+export type MedicationCatalogueItem = z.infer<typeof MedicationCatalogueItemSchema>;
+
+export const AdherenceQuerySchema = z.strictObject({
+  since: IsoDateSchema.optional(),
+});
+export type AdherenceQuery = z.infer<typeof AdherenceQuerySchema>;
+
+/** Recorded adherence: a deterministic calculation, never a model output. */
+export const AdherenceSummarySchema = z.object({
+  kind: z.literal('CALCULATED'),
+  label: z.string(),
+  from: IsoDateSchema,
+  to: IsoDateSchema,
+  taken: z.number().int(),
+  skipped: z.number().int(),
+  missed: z.number().int(),
+  due: z.number().int(),
+  pending: z.number().int(),
+  percentage: z.number().nullable(),
+  longestMissedRun: z.number().int(),
+  perPlan: z.array(
+    z.object({
+      planId: UuidSchema,
+      medication: z.string(),
+      taken: z.number().int(),
+      due: z.number().int(),
+      percentage: z.number().nullable(),
+    }),
+  ),
+  formula: z.string(),
+  sources: z.array(SourceRefSchema),
+});
+export type AdherenceSummary = z.infer<typeof AdherenceSummarySchema>;
+
+export const DoseEventsQuerySchema = z.strictObject({
+  from: IsoDateSchema.optional(),
+  to: IsoDateSchema.optional(),
+});
+export type DoseEventsQuery = z.infer<typeof DoseEventsQuerySchema>;
+
+export const DoseEventViewSchema = z.object({
+  id: UuidSchema,
+  kind: z.literal('FACT'),
+  planId: UuidSchema,
+  medication: z.string(),
+  scheduledAt: IsoDateTimeSchema,
+  localDate: IsoDateSchema,
+  slotLabel: z.string(),
+  status: z.enum(['SCHEDULED', 'REMINDED', 'SNOOZED', 'TAKEN', 'SKIPPED', 'MISSED', 'CANCELLED']),
+  respondedAt: IsoDateTimeSchema.nullable(),
+  missedInferred: z.boolean(),
+});
+export type DoseEventView = z.infer<typeof DoseEventViewSchema>;
