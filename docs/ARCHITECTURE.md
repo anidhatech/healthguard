@@ -75,7 +75,7 @@ Every arrow into patient data passes through `AccessService`. The AI module is a
 | # | Decision | How the architecture implements it | Where |
 |---|---|---|---|
 | 1 | Realistic generic medicines at standard doses; all data synthetic; banner everywhere | Real generics in the global `Medication` catalogue; seeded rows carry `isSynthetic` and the demo organization `isDemo`; the banner "DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE" sits in the root layout and on every export; `DEMO_MODE` refuses non-synthetic patients and real uploads | §4.6, [Data model §8](DATA_MODEL.md#8-synthetic-hero-dataset), [Security §13](SECURITY.md#13-pii-and-health-data-handling) |
-| 2 | Responsive Next.js PWA, no native app yet, ready for Apple Health and Health Connect | `apps/web` is a PWA (manifest, Serwist service worker); a `DeviceDataAdapter` port has a synthetic implementation now and native-app adapters in Phase 2 | §4, §11 |
+| 2 | Responsive Next.js PWA, no native app yet, ready for Apple Health and Health Connect | `apps/web` is a PWA (manifest, a small hand-written service worker); a `DeviceDataAdapter` port has a synthetic implementation now and native-app adapters in Phase 2 | §4, §11 |
 | 3 | English, Hindi, Telugu; more languages later; template-driven medication instructions | next-intl message catalogues; locales stored as BCP 47 strings; reviewed per-language dose templates; the model may only rephrase the doctor's free-text notes, and validators check the result | §4.4, [AI agents §6](AI_AGENT_SPEC.md#6-medication-instruction-templates) |
 | 4 | Clinics and hospitals buy; B2B2C; multi-tenant from the start | Organization is the tenant; staff and patients are organization-scoped; tenant-scoped Prisma client, composite foreign keys, cross-tenant tests; PostgreSQL row-level security in Phase 2 | §6 |
 | 5 | Laptop Docker Compose first; small cloud later; no Kubernetes now | `compose.yaml` with seven core services; the same images run on one small VM behind Caddy for remote demos; Kubernetes is a Phase 4 option, not a Phase 1 dependency | §10 |
@@ -121,9 +121,9 @@ Pinned major versions, checked in October 2026:
 | Next.js / React | 16.x / 19.x | App Router |
 | NestJS | 12.x | New NestJS projects are ESM by default |
 | Prisma ORM | 7.10.x, pinned | npm's `latest` tag for the `prisma` CLI points at an 8.0 release candidate; use `@prisma/adapter-pg` |
-| BullMQ | 6.x | via `@nestjs/bullmq` |
+| BullMQ | 6.x | used directly by the worker process (`apps/api/src/worker.ts`) |
 | next-intl / Tailwind CSS / Recharts / zod | 4.x / 4.x / 3.x / 4.x | |
-| Serwist | 9.x | PWA service worker for Next.js |
+| Service worker | hand-written (`apps/web/public/sw.js`) | Caches the app shell only, never `/api`; Serwist was dropped to keep the build simple |
 | PostgreSQL / Redis | 17 / 7.x or Valkey 8 | |
 
 ## 4. Frontend architecture
@@ -131,42 +131,46 @@ Pinned major versions, checked in October 2026:
 ### 4.1 Application structure
 
 ```text
-apps/web/src/app/[locale]/
-├── (auth)/login
-├── (patient)/
-│   ├── today                 doses due today, Taken / Snooze / Skip / Missed / Need help
-│   ├── medicines/[planId]    instruction card with audio, schedule, history
-│   ├── records               timeline, conditions, allergies, history, documents
-│   ├── tests                 before/after lab comparisons
+apps/web/src/app/            (built in the Phase 1 foundation; routes are not locale-prefixed)
+├── login
+├── patient/
+│   ├── dashboard             since-last-visit progress, medicines, next appointment
+│   ├── medications           reviewed instructions in the chosen language, adherence, doses
+│   ├── timeline              one chronological record
+│   ├── tests                 lab trends and results
+│   ├── records               conditions, allergies, procedures, vaccinations, documents
 │   ├── activity              steps, weight, blood pressure
-│   ├── appointments          proposals to approve, upcoming visits
-│   ├── sharing               consents and "who saw my data"
-│   └── settings              language, daily routine, notifications
-├── (clinician)/
-│   ├── patients              patients this clinician may see
-│   └── patients/[patientId]  workspace: what changed, AI brief, timeline, medications,
-│                             labs, activity, history, care plan, consent
-└── (demo)/console            persona switcher, scenario clock, reset, AI provider toggle
+│   ├── appointments          visits and follow-ups
+│   ├── consent               consents (withdraw) and "who saw my data"
+│   ├── notifications         in-app inbox
+│   └── profile               language, daily routine
+├── doctor/
+│   ├── dashboard             schedule, my patients / all patients, AI status
+│   └── patient/[id]          what changed, AI brief, labs, medicines, history, timeline
+└── admin/dashboard           counts, members, audit, tenants (platform admins)
+
+Planned (not built yet): dose answering from the app, a demo console (scenario clock,
+reset, provider toggle), appointment requests.
 ```
 
 ### 4.2 Rendering and data access
-- Server Components render first paint; they call the API through an internal client that forwards the session cookie. Client Components use TanStack Query for interactive data.
-- One contract: request and response schemas are zod schemas in `packages/shared`. NestJS validates with them (nestjs-zod) and publishes them as OpenAPI; the web app imports the same types. A field cannot drift between client and server.
+- Phase 1: pages are Client Components that fetch through TanStack Query; the root layout is a Server Component (locale, messages). Server-side data fetching is a later optimisation.
+- One contract: request and response schemas are zod schemas in `packages/shared`. NestJS validates with them (a small `ZodPipe`) and Swagger documents every route; the web app imports the same types. A field cannot drift between client and server.
 - The browser talks only to the web origin. Next.js rewrites `/api/*` to the NestJS service, so cookies are first-party and the API is never exposed directly.
 - Every API item that carries clinical content includes a `kind` (`FACT`, `CALCULATED`, `AI_SUMMARY`, `AI_RECOMMENDATION`) and `sources`; the UI renders a badge and a "view source" link from them.
 
 ### 4.3 Patient PWA
 - Mobile-first, installable (web app manifest), works on low-end Android Chrome and iOS Safari.
-- Serwist service worker precaches the app shell and static assets only. API responses are sent with `Cache-Control: no-store` and are never cached by the service worker, so health data is not left in the browser cache.
+- The service worker caches the app shell and static assets only. API responses are sent with `Cache-Control: no-store` and are never cached by the service worker, so health data is not left in the browser cache.
 - Offline: the shell loads and shows an offline notice; dose answers made offline are not queued in Phase 1.
 - Notifications: in-app plus a simulated phone panel in the demo. Web Push, WhatsApp and SMS arrive in Phase 2.
 
 ### 4.4 Internationalization
-- `next-intl` with locale-prefixed routes (`/en`, `/hi`, `/te`); the supported list lives in `packages/shared` and drives both web and API.
-- UI strings come from message catalogues (`messages/en.json`, `hi.json`, `te.json`) using ICU plural and select rules.
+- `next-intl` without locale routing: the language is the `NEXT_LOCALE` cookie (set from the account's saved preference at sign-in), so URLs stay `/patient/...`. The supported list (`en-IN`, `hi-IN`, `te-IN`) lives in `packages/shared` and drives both web and API.
+- UI strings come from message catalogues (`messages/en-IN.json`, `hi-IN.json`, `te-IN.json`) using ICU plural and select rules.
 - Clinical text never comes from UI catalogues. Medication instructions are pre-rendered per locale by the API from reviewed templates (`MedicationInstruction`), so the wording a pharmacist approved is exactly what the patient sees.
 - Digits: every dose, time and duration uses Western Arabic digits in all three languages; drug names stay in Latin script as printed on the strip.
-- Fonts: Noto Sans, Noto Sans Devanagari and Noto Sans Telugu through `next/font`.
+- Fonts: Noto Sans, Noto Sans Devanagari and Noto Sans Telugu, self-hosted with `@fontsource` (no font CDN at runtime).
 - Dates and times use `Intl` with the patient's time zone (`Asia/Kolkata` by default).
 - Adding a language means adding a locale code, a message catalogue, reviewed instruction templates and a font. No code or schema change.
 
@@ -262,7 +266,7 @@ apps/web/src/app/[locale]/
 | interoperability | `GET /patients/{id}/fhir/bundle` · `POST /interop/abdm/simulated/link` · `POST /interop/abdm/simulated/share` · `POST /interop/devices/synthetic/sync` |
 | files | `POST /patients/{id}/documents` · `GET /documents/{id}` · `GET /documents/{id}/download-url` |
 | demo | `GET /demo/state` · `POST /demo/clock` · `POST /demo/persona` · `POST /demo/reset` |
-| health | `GET /health/live` · `GET /health/ready` |
+| health | `GET /health` (liveness) · `GET /ready` (database and Redis) |
 
 ### 5.6 Domain events
 
@@ -570,7 +574,7 @@ The four kinds of content are kept apart throughout: recorded facts, determinist
 | Logs | pino JSON to stdout, via `nestjs-pino` | Field allowlist and redaction; no health data, identifiers, prompts or model output ([Security §14](SECURITY.md#14-logging-policy)) |
 | Traces | OpenTelemetry SDK with HTTP, NestJS, pg, ioredis and BullMQ spans; OTLP to Jaeger in the `observability` profile | Span attributes follow the same allowlist |
 | Metrics | Prometheus endpoint on the API and worker | Request latency and errors; queue depth and job duration; reminder lag (scheduled time to send); AI latency, tokens, cost, fallback rate and validation failures; access denials by reason |
-| Health | `/health/live`, `/health/ready` (database, Redis, object storage) | Used by Compose health checks |
+| Health | `/health` (liveness), `/ready` (database, Redis) | Used by Compose health checks |
 | AI transparency | In-app "AI details" drawer reading `AIInteraction` | Visible to the clinician who requested the output |
 | Audit | `AuditEvent` table, separate from logs | Queried by the patient access log and auditors |
 

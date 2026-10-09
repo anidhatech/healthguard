@@ -1,6 +1,6 @@
 import { z } from 'zod';
 import { SUPPORTED_LOCALES } from '../locales.js';
-import { ALL_ROLE_REQUIREMENTS, MEMBER_ROLES } from '../roles.js';
+import { MEMBER_ROLES, PATIENT_ROLE, PLATFORM_ADMIN_ROLE } from '../roles.js';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
 
 const EmailSchema = z.email().max(254);
@@ -28,9 +28,7 @@ export const UpdateLocaleRequestSchema = z.strictObject({
 });
 export type UpdateLocaleRequest = z.infer<typeof UpdateLocaleRequestSchema>;
 
-const SessionRoleSchema = z.enum(
-  ALL_ROLE_REQUIREMENTS.filter((role) => role !== 'CARE_TEAM') as [string, ...string[]],
-);
+const SessionRoleSchema = z.enum([...MEMBER_ROLES, PATIENT_ROLE, PLATFORM_ADMIN_ROLE]);
 
 export const OrganizationRefSchema = z.object({
   id: UuidSchema,

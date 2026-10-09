@@ -1,0 +1,47 @@
+@import 'tailwindcss';
+
+@theme {
+  --font-sans: 'Noto Sans', 'Noto Sans Devanagari', 'Noto Sans Telugu', system-ui, sans-serif;
+  --color-brand-50: #eef8f8;
+  --color-brand-100: #d5eeee;
+  --color-brand-600: #157a83;
+  --color-brand-700: #0d5c63;
+  --color-brand-800: #0a474d;
+  --color-ink: #17212b;
+  --color-muted: #5b6876;
+  --color-line: #dfe5ea;
+  --color-surface: #f6f8fa;
+  --color-ai: #6d4bc4;
+  --color-ai-50: #f3effc;
+  --color-calc: #1e66b4;
+  --color-calc-50: #eaf2fb;
+  --color-warn: #a35b00;
+  --color-warn-50: #fff6e5;
+  --color-danger: #b42318;
+  --color-danger-50: #fdeceb;
+  --color-ok: #1d7a46;
+  --color-ok-50: #e8f6ee;
+}
+
+html {
+  color: var(--color-ink);
+  background: var(--color-surface);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  line-height: 1.55;
+}
+
+:focus-visible {
+  outline: 3px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}

@@ -36,6 +36,8 @@ const config = buildConfig({
   RATE_LIMIT_PER_MINUTE: '10000',
   AUTH_RATE_LIMIT_PER_MINUTE: '10000',
   AI_RATE_LIMIT_PER_MINUTE: '10000',
+  // Own hashing key, so test traffic never shares rate-limit buckets with a running dev stack.
+  IDENTIFIER_HASH_KEY: 'integration-tests-only',
 });
 
 let app: INestApplication;

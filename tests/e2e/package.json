@@ -1,0 +1,15 @@
+{
+  "name": "@healthguard/e2e",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Browser end-to-end tests against a running HealthGuard stack (web on :3000, API on :4000, seeded demo data).",
+  "type": "module",
+  "scripts": {
+    "e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.0",
+    "@types/node": "24.19.1",
+    "typescript": "6.0.3"
+  }
+}

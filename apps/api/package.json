@@ -4,6 +4,11 @@
   "private": true,
   "description": "HealthGuard API (NestJS). DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE",
   "type": "module",
+  "files": [
+    "dist",
+    "prisma",
+    "prisma.config.ts"
+  ],
   "scripts": {
     "generate": "prisma generate",
     "db:generate": "prisma generate",

@@ -9,6 +9,7 @@ import {
 import { timingSafeEqual } from 'node:crypto';
 import { APP_CONFIG, type AppConfig } from '../config/env.js';
 import { RedisService } from '../infrastructure/redis/redis.service.js';
+import { keyedHash } from './hashing.js';
 import type { HealthGuardRequest } from './actor.js';
 import { IS_PUBLIC, RATE_LIMIT_BUCKET, ROLES, type RateLimitBucket } from './decorators.js';
 import { Problems } from './problem.js';
@@ -90,7 +91,11 @@ export class RateLimitGuard implements CanActivate {
         : bucket === 'ai'
           ? this.config.env.AI_RATE_LIMIT_PER_MINUTE
           : this.config.env.RATE_LIMIT_PER_MINUTE;
-    const subject = request.actor?.userId ?? request.meta?.ipHash ?? 'anonymous';
+    // Keyed hash: no raw user IDs in Redis, and separate deployments never share buckets.
+    const subject =
+      keyedHash(this.config.identifierHashKey, request.actor?.userId) ??
+      request.meta?.ipHash ??
+      'anonymous';
     const window = Math.floor(Date.now() / 60_000);
     const count = await this.redis.incrementWindow(`rl:${bucket}:${subject}:${window}`, 61);
     if (count !== null && count > limit) throw Problems.rateLimited();

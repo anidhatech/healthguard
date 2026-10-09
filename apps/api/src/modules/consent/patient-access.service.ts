@@ -45,7 +45,8 @@ export class PatientAccessService {
       meta,
       action: decision.allowed ? (action === 'READ' ? 'READ' : 'UPDATE') : 'ACCESS_DENIED',
       resourceType,
-      patientProfileId: decision.patient?.id ?? null,
+      patientProfileId:
+        decision.patient?.id ?? (decision.allowed ? null : (decision.auditPatientId ?? null)),
       purposeCode: decision.purposeCode,
       consentId: decision.allowed ? decision.consentId : null,
       decision: decision.allowed ? 'ALLOW' : 'DENY',

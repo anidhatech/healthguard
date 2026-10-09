@@ -18,6 +18,12 @@ export type AccessDecisionResult =
       status: 403 | 404;
       patient: PatientProfile | null;
       purposeCode: string | null;
+      /**
+       * For the audit trail only: the patient a cross-tenant attempt was
+       * aimed at, so the patient's own access log shows it. Never returned
+       * to the caller, who just gets 404.
+       */
+      auditPatientId?: string;
     };
 
 /**
@@ -71,7 +77,14 @@ export class AccessService {
     }
 
     if (!actor.memberId || patient.organizationId !== actor.activeOrganizationId) {
-      return { allowed: false, reason: 'NOT_A_MEMBER', status: 404, patient: null, purposeCode };
+      return {
+        allowed: false,
+        reason: 'NOT_A_MEMBER',
+        status: 404,
+        patient: null,
+        purposeCode,
+        auditPatientId: patient.id,
+      };
     }
 
     const policies = await this.prisma.db.accessPolicy.findMany({
