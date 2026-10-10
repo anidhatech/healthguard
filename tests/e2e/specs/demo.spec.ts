@@ -1,19 +1,9 @@
-import { expect, test, type Page } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { NOTICE, quickSignIn, resetDemo, shot } from './helpers';
 
-const NOTICE = 'DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE';
-const SHOTS = process.env.E2E_SCREENSHOTS; // directory, optional
-
-async function shot(page: Page, name: string) {
-  if (SHOTS) await page.screenshot({ path: `${SHOTS}/${name}.png`, fullPage: false });
-}
-
-async function quickSignIn(page: Page, persona: string | RegExp) {
-  await page.goto('/login');
-  await expect(page.getByText(NOTICE)).toBeVisible();
-  const button = page.getByRole('button', { name: persona }).first();
-  if (!(await button.isVisible())) await page.getByText('More demo accounts').click();
-  await button.click();
-}
+test.beforeAll(async () => {
+  await resetDemo(92);
+});
 
 test.beforeEach(async ({ context }) => {
   await context.clearCookies();
@@ -36,9 +26,9 @@ test('patient sees progress since the last visit and Telugu instructions', async
   await quickSignIn(page, /Ananya Rao/);
   await expect(page).toHaveURL(/\/patient\/dashboard/);
   await expect(page.getByText(NOTICE)).toBeVisible();
-  await expect(page.getByText('6.8%')).toBeVisible();
-  await expect(page.getByText('7,100')).toBeVisible();
-  await expect(page.getByText('92%')).toBeVisible();
+  await expect(page.getByText('6.8%', { exact: true })).toBeVisible();
+  await expect(page.getByText('7,100', { exact: true })).toBeVisible();
+  await expect(page.getByText('92%', { exact: true })).toBeVisible();
   await shot(page, '02-patient-dashboard');
   await page
     .getByRole('link', { name: /Medicines|మందులు|दवाइयाँ/ })
@@ -49,7 +39,7 @@ test('patient sees progress since the last visit and Telugu instructions', async
       exact: false,
     }),
   ).toBeVisible();
-  await expect(page.getByText('తదుపరి దశలో వస్తుంది').first()).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'ఈరోజు మందులు' })).toBeVisible();
   await shot(page, '03-patient-medications');
 });
 
@@ -121,6 +111,6 @@ test('organization admin sees counts and audit, not clinical data', async ({ pag
 
 test('patient view works on a phone @mobile', async ({ page }) => {
   await quickSignIn(page, /Ananya Rao/);
-  await expect(page.getByText('92%')).toBeVisible();
+  await expect(page.getByText('92%', { exact: true })).toBeVisible();
   await shot(page, '10-mobile-dashboard');
 });

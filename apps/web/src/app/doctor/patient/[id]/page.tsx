@@ -16,12 +16,55 @@ import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ComingNextPhase, KindBadge } from '@/components/ui/honest';
+import { KindBadge } from '@/components/ui/honest';
+import { ProposeAppointmentButton, StaffAppointments } from '@/components/doctor/care-queue';
+import { DraftsPanel, PlanActions, PrescribeButton } from '@/components/doctor/prescribing';
+import { FhirExportButton } from '@/components/patient/connected-services';
+import { TodayDoses } from '@/components/patient/today-doses';
 import { ErrorState, LoadingState, QueryView } from '@/components/ui/states';
 import { api } from '@/lib/api';
-import { useApi } from '@/lib/queries';
+import { useAction, useApi } from '@/lib/queries';
 import { useSession } from '@/lib/session';
 import { formatDate } from '@/lib/utils';
+
+function ObservationReview({ id, status }: { id: string; status: string }) {
+  const t = useTranslations('doctor');
+  const review = useAction(
+    (decision: 'ACCEPTED' | 'DISMISSED') =>
+      api<{ status: string }>(`/ai/recommendations/${id}/review`, {
+        method: 'POST',
+        json: { decision, reason: decision === 'ACCEPTED' ? 'USEFUL' : 'NOT_RELEVANT' },
+      }),
+    [],
+  );
+  const current = review.data?.status ?? status;
+  if (current !== 'PROPOSED') {
+    return (
+      <Badge tone={current === 'ACCEPTED' ? 'ok' : 'neutral'}>{t(`reviewed.${current}`)}</Badge>
+    );
+  }
+  return (
+    <span className="flex flex-wrap gap-2">
+      <Button
+        size="sm"
+        variant="secondary"
+        disabled={review.isPending}
+        onClick={() => review.mutate('ACCEPTED')}
+      >
+        {t('noted')}
+      </Button>
+      <Button
+        size="sm"
+        variant="ghost"
+        disabled={review.isPending}
+        onClick={() => review.mutate('DISMISSED')}
+      >
+        {t('dismiss')}
+      </Button>
+      {review.error ? <ErrorState error={review.error} /> : null}
+    </span>
+  );
+}
 
 function DoctorBrief({ patientId }: { patientId: string }) {
   const t = useTranslations('doctor');
@@ -101,6 +144,9 @@ function DoctorBrief({ patientId }: { patientId: string }) {
                       {item.rationale} · {item.type.toLowerCase().replaceAll('_', ' ')} ·{' '}
                       {item.confidence.toLowerCase()}
                     </p>
+                    <div className="mt-2">
+                      <ObservationReview id={item.id} status={item.status} />
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -149,6 +195,8 @@ export default function DoctorPatientPage() {
   const { data: session } = useSession();
   const profile = useApi<PatientProfileView>(`/patients/${id}`);
   const isDoctor = session?.roles.includes('DOCTOR') ?? false;
+  const isCareTeam =
+    session?.roles.some((role) => ['DOCTOR', 'NURSE', 'CARE_COORDINATOR'].includes(role)) ?? false;
 
   return (
     <div className="grid gap-5">
@@ -164,8 +212,15 @@ export default function DoctorPatientPage() {
             <PageHeader
               title={patient.displayName}
               subtitle={`${patient.mrn} · ${patient.ageYears} · ${patient.sex.toLowerCase()} · ${formatDate(patient.dateOfBirth, locale)} · ${patient.preferredLocale}${patient.isSynthetic ? ' · synthetic' : ''}`}
-              action={isDoctor ? <ComingNextPhase label={t('prescribe')} /> : undefined}
+              action={
+                <span className="flex flex-wrap gap-2">
+                  {isDoctor ? <PrescribeButton patientId={id} /> : null}
+                  {isCareTeam ? <ProposeAppointmentButton patientId={id} /> : null}
+                  {isDoctor ? <FhirExportButton patientId={id} /> : null}
+                </span>
+              }
             />
+            {isDoctor ? <DraftsPanel patientId={id} /> : null}
             <ProgressCards patientId={id} />
             {isDoctor ? <DoctorBrief patientId={id} /> : null}
             <div className="grid gap-4 lg:grid-cols-2">
@@ -182,11 +237,24 @@ export default function DoctorPatientPage() {
             <div className="grid gap-4 lg:grid-cols-3">
               <div className="lg:col-span-2">
                 <Section title={t('medicines')}>
-                  <MedicationList patientId={id} />
+                  <MedicationList
+                    patientId={id}
+                    actions={
+                      isDoctor ? (plan) => <PlanActions patientId={id} plan={plan} /> : undefined
+                    }
+                  />
                 </Section>
               </div>
               <AdherenceCard patientId={id} />
             </div>
+            {isCareTeam ? (
+              <Section title={t('appointments')}>
+                <StaffAppointments patientId={id} />
+              </Section>
+            ) : null}
+            <Section title={t('todayDoses')}>
+              <TodayDoses patientId={id} readOnly />
+            </Section>
             <Section title={t('timeline')}>
               <TimelineList patientId={id} limit={25} />
             </Section>

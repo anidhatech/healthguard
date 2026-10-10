@@ -5,6 +5,7 @@ import { Bot, CalendarClock, Search } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
 import Link from 'next/link';
 import { useDeferredValue, useState } from 'react';
+import { CareQueue } from '@/components/doctor/care-queue';
 import { PageHeader } from '@/components/layout/page-header';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader } from '@/components/ui/card';
@@ -97,6 +98,9 @@ export default function DoctorDashboard() {
           </QueryView>
         </Card>
       </div>
+      {session?.roles.some((role) => ['DOCTOR', 'NURSE', 'CARE_COORDINATOR'].includes(role)) ? (
+        <CareQueue />
+      ) : null}
       <Card>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="flex gap-1 rounded-lg bg-surface p-1" role="tablist">
@@ -142,6 +146,13 @@ export default function DoctorDashboard() {
                     <Td className="font-medium">
                       {row.displayName}{' '}
                       {row.careRelationship ? <Badge tone="brand">{t('inCare')}</Badge> : null}
+                      <span className="mt-1 flex flex-wrap gap-1">
+                        {row.flags.map((flag) => (
+                          <Badge key={flag} tone={flag === 'MISSED_DOSES' ? 'danger' : 'warn'}>
+                            {t(`flags.${flag}`)}
+                          </Badge>
+                        ))}
+                      </span>
                     </Td>
                     <Td className="font-mono text-xs">{row.mrn}</Td>
                     <Td>

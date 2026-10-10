@@ -83,6 +83,8 @@ export type HelpRequest = z.infer<typeof HelpRequestSchema>;
 
 export const HelpRequestResultSchema = z.object({
   followUpId: UuidSchema,
+  /** False when an open call-back request already existed. */
+  created: z.boolean(),
   status: z.string(),
   dueDate: IsoDateSchema,
   emergencyNumbers: z.array(z.object({ number: z.string(), label: z.string() })),

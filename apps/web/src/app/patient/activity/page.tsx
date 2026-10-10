@@ -5,8 +5,9 @@ import { useLocale, useTranslations } from 'next-intl';
 import { TrendChart } from '@/components/charts/trend-chart';
 import { OwnPatient } from '@/components/layout/own-patient';
 import { PageHeader } from '@/components/layout/page-header';
+import { DeviceSync } from '@/components/patient/connected-services';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ComingNextPhase, KindBadge } from '@/components/ui/honest';
+import { KindBadge } from '@/components/ui/honest';
 import { QueryView } from '@/components/ui/states';
 import { useApi } from '@/lib/queries';
 import { formatDate, formatNumber } from '@/lib/utils';
@@ -87,7 +88,7 @@ export default function ActivityPage() {
     <OwnPatient>
       {(patientId) => (
         <div className="grid gap-4">
-          <PageHeader title={t('title')} action={<ComingNextPhase label={t('connectDevice')} />} />
+          <PageHeader title={t('title')} action={<DeviceSync patientId={patientId} />} />
           <Card>
             <CardHeader title={t('steps')} />
             <Steps patientId={patientId} />

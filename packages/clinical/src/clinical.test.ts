@@ -5,7 +5,10 @@ import {
   checkInstructionPreservation,
   doseClockTime,
   longestMissedRunStart,
+  OFFSET_TIMING_EVENTS,
   renderDoseInstruction,
+  renderNotePhrases,
+  SUPPORTED_TIMING_EVENTS,
   slotLabel,
   type DoseRecord,
   type DoseStatus,
@@ -158,5 +161,36 @@ describe('renderDoseInstruction', () => {
     const check = checkInstructionPreservation(tampered, metformin);
     expect(check.passed).toBe(false);
     expect(check.problems).toContain('unexpected number 2');
+  });
+});
+
+describe('prescribing phrases', () => {
+  it('renders every supported timing in every language and keeps the numbers', () => {
+    for (const event of SUPPORTED_TIMING_EVENTS) {
+      for (const locale of ['en-IN', 'hi-IN', 'te-IN'] as const) {
+        const plan = {
+          drugName: 'Metformin',
+          strength: '500 mg',
+          doseQuantity: 2,
+          doseUnit: 'TABLET',
+          frequency: 1,
+          period: 1,
+          periodUnit: 'DAY' as const,
+          timingEvents: [event],
+          timingOffsetMinutes: OFFSET_TIMING_EVENTS.includes(event) ? 30 : null,
+          durationDays: 14,
+        };
+        const rendered = renderDoseInstruction(plan, locale);
+        expect(rendered.ok).toBe(true);
+        if (rendered.ok)
+          expect(checkInstructionPreservation(rendered.text, plan).passed).toBe(true);
+      }
+    }
+  });
+
+  it('joins reviewed note phrases and ignores unknown keys', () => {
+    expect(renderNotePhrases(['WITH_FOOD', 'NOPE'], 'en-IN')).toBe('Take with food.');
+    expect(renderNotePhrases([], 'te-IN')).toBeNull();
+    expect(renderNotePhrases(['REPORT_SIDE_EFFECTS'], 'te-IN')).toContain('సహాయం కావాలి');
   });
 });

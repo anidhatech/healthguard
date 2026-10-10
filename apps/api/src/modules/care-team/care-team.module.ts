@@ -108,6 +108,7 @@ export class CareTeamController {
     });
     return {
       followUpId: followUp.id,
+      created: followUp.created,
       status: followUp.status,
       dueDate: dateOnly(followUp.dueDate),
       emergencyNumbers: EMERGENCY_NUMBERS.map((entry) => ({ ...entry })),

@@ -97,6 +97,9 @@ export function LabsPanel({ patientId }: { patientId: string }) {
                       ) : row.interpretation === 'NORMAL' ? (
                         <Badge tone="ok">{t('inRange')}</Badge>
                       ) : null}
+                      {row.awaitingConfirmation ? (
+                        <Badge tone="warn">{t('notConfirmed')}</Badge>
+                      ) : null}
                       <KindBadge kind="FACT" />
                     </span>
                   </Td>

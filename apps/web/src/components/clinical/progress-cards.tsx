@@ -69,6 +69,14 @@ export function ProgressCards({ patientId }: { patientId: string }) {
               );
             })}
           </ul>
+          {summary.association ? (
+            <p className="mt-2 flex items-start gap-2 rounded-lg bg-calc-50 p-3 text-sm">
+              <KindBadge kind="CALCULATED" />
+              <span>
+                <span className="font-medium">{t('association')}</span> {summary.association}
+              </span>
+            </p>
+          ) : null}
         </section>
       )}
     </QueryView>

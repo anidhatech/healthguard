@@ -155,3 +155,59 @@ describe('small helpers', () => {
     expect(auditContentHash(row)).not.toBe(auditContentHash({ ...row, decision: 'DENY' }));
   });
 });
+
+describe('Phase 1 rules', () => {
+  it('runs the demo clock from a time-of-day jump', async () => {
+    const { demoNow } = await import('./infrastructure/clock/clock.service.js');
+    const realAt = '2026-10-10T05:00:00.000Z';
+    const now = demoNow(
+      {
+        anchorDay0: '2026-07-08',
+        offsetDays: 6,
+        timezone: 'Asia/Kolkata',
+        timeOfDay: { clock: '08:00', realAt },
+      },
+      new Date(Date.parse(realAt) + 10 * 60_000),
+      'Asia/Kolkata',
+    );
+    expect(now.toISOString()).toBe('2026-07-14T02:40:00.000Z'); // 08:10 IST on day 6
+  });
+
+  it('turns a plan into local dose times from the routine', async () => {
+    const { planClockTimes } = await import('./modules/doses/dose-engine.js');
+    expect(
+      planClockTimes(
+        { timingEvents: ['PCM'], timingOffsetMinutes: 15, timesOfDay: [] },
+        { breakfast: '08:00' },
+      ),
+    ).toEqual([{ clock: '08:15', slot: 'PCM+15' }]);
+  });
+
+  it('describes numbers that moved together without claiming cause', async () => {
+    const { associationSentence } = await import('./modules/activity/progress.service.js');
+    const base = { unit: '%', method: '', sourceIds: [], beforeDate: null, afterDate: null };
+    const sentence = associationSentence([
+      {
+        ...base,
+        metric: 'HBA1C',
+        label: 'HbA1c',
+        before: 7.4,
+        after: 6.8,
+        beforeDate: '2026-07-08',
+        afterDate: '2026-10-07',
+        direction: 'down',
+      },
+      {
+        ...base,
+        metric: 'RECORDED_ADHERENCE',
+        label: 'Adherence',
+        before: null,
+        after: 92,
+        direction: null,
+      },
+    ]);
+    expect(sentence).toContain('HbA1c went down (7.4% to 6.8%)');
+    expect(sentence).toContain('does not show that one caused the other');
+    expect(associationSentence([])).toBeNull();
+  });
+});

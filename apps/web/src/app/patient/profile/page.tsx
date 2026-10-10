@@ -5,8 +5,8 @@ import { useLocale, useTranslations } from 'next-intl';
 import { LanguageSwitcher } from '@/components/layout/language-switcher';
 import { OwnPatient } from '@/components/layout/own-patient';
 import { PageHeader } from '@/components/layout/page-header';
+import { AbdmSimulation, FhirExportButton } from '@/components/patient/connected-services';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ComingNextPhase } from '@/components/ui/honest';
 import { QueryView } from '@/components/ui/states';
 import { useApi } from '@/lib/queries';
 import { formatDate } from '@/lib/utils';
@@ -49,10 +49,11 @@ function Profile({ patientId }: { patientId: string }) {
               )}
             </dl>
           </Card>
-          <Card className="lg:col-span-2">
-            <CardHeader title={t('abha')} />
-            <ComingNextPhase label={t('abhaLink')} />
+          <Card>
+            <CardHeader title={t('shareTitle')} subtitle={t('shareHint')} />
+            <FhirExportButton patientId={patientId} />
           </Card>
+          <AbdmSimulation patientId={patientId} />
         </div>
       )}
     </QueryView>

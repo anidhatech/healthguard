@@ -2,11 +2,13 @@
 
 import type {
   AuditEventView,
+  DemoState,
   MemberView,
   OrganizationStats,
   PlatformOrganizationView,
 } from '@healthguard/shared';
 import { useLocale, useTranslations } from 'next-intl';
+import { DemoConsolePanel } from '@/components/admin/demo-console';
 import { PageHeader } from '@/components/layout/page-header';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -30,12 +32,16 @@ export default function AdminDashboard() {
     session?.roles.includes('ORG_ADMIN') ? '/organizations/current/members' : null,
   );
   const audit = useApi<AuditEventView[]>(orgAdmin ? '/audit-events?limit=25' : null);
+  const demo = useApi<DemoState>('/demo/state');
   const tenants = useApi<PlatformOrganizationView[]>(platform ? '/platform/organizations' : null);
 
   return (
     <div className="grid gap-5">
       <PageHeader title={t('title')} subtitle={session?.activeOrganization?.name} />
       <Alert tone="info">{t('noClinical')}</Alert>
+      {demo.data?.demoMode && (session?.roles.includes('ORG_ADMIN') || platform) ? (
+        <DemoConsolePanel />
+      ) : null}
       {orgAdmin ? (
         <Card>
           <CardHeader title={t('stats')} action={<KindBadge kind="CALCULATED" />} />

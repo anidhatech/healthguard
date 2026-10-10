@@ -3,6 +3,7 @@
 import type { AdherenceSummary, MedicationPlanView, SupportedLocale } from '@healthguard/shared';
 import { Pill } from 'lucide-react';
 import { useLocale, useTranslations } from 'next-intl';
+import type { ReactNode } from 'react';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -14,9 +15,12 @@ import { formatDate } from '@/lib/utils';
 export function MedicationList({
   patientId,
   compact = false,
+  actions,
 }: {
   patientId: string;
   compact?: boolean;
+  /** Extra controls per plan (the prescriber's change and stop). */
+  actions?: (plan: MedicationPlanView) => ReactNode;
 }) {
   const t = useTranslations('medications');
   const locale = useLocale() as SupportedLocale;
@@ -47,6 +51,11 @@ export function MedicationList({
               <p className="text-base" lang={plan.instruction?.locale.slice(0, 2)}>
                 {plan.instruction?.doseText ?? t('noInstruction')}
               </p>
+              {plan.instruction?.notesText ? (
+                <p className="mt-1 text-sm text-muted" lang={plan.instruction.locale.slice(0, 2)}>
+                  {plan.instruction.notesText}
+                </p>
+              ) : null}
               {!compact ? (
                 <p className="mt-2 text-xs text-muted">
                   {plan.prescriber
@@ -59,6 +68,7 @@ export function MedicationList({
                   {plan.instruction ? ` · template ${plan.instruction.templateKey}` : ''}
                 </p>
               ) : null}
+              {actions ? <div className="mt-2">{actions(plan)}</div> : null}
               {plan.syntheticNotice && !compact ? (
                 <p className="mt-1 text-xs text-warn">{plan.syntheticNotice}</p>
               ) : null}

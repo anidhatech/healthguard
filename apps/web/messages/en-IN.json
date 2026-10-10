@@ -66,7 +66,8 @@
     "notEnoughData": "Not enough data",
     "adherenceExplained": "Doses you marked as taken, out of all doses due since your last visit.",
     "markTaken": "Mark today's dose as taken",
-    "doseLogging": "Dose logging from the app"
+    "doseLogging": "Dose logging from the app",
+    "association": "Over the same period:"
   },
   "medications": {
     "title": "Medicines",
@@ -111,7 +112,15 @@
     "inRange": "In range",
     "date": "Date",
     "result": "Result",
-    "test": "Test"
+    "test": "Test",
+    "confirmTitle": "Check the values read from your report",
+    "confirmIntro": "These numbers were read from the report you uploaded. Compare each one with the paper. Only values you confirm are used in your progress.",
+    "readConfidence": "read with {percent}% confidence",
+    "matches": "Matches",
+    "doesNotMatch": "Doesn't match",
+    "submitCheck": "Save my check",
+    "confirmedThanks": "Thank you. Your check is saved.",
+    "notConfirmed": "Not confirmed yet"
   },
   "records": {
     "title": "Health records",
@@ -129,7 +138,10 @@
     "weight": "Body weight",
     "bloodPressure": "Blood pressure",
     "source": "Source: {source}",
-    "connectDevice": "Connect a wearable or phone"
+    "connectDevice": "Connect a wearable or phone",
+    "syncDevice": "Sync wearable",
+    "synced": "Synced: {days} day(s) added, {steps} steps today",
+    "deviceNotice": "Synthetic demo device"
   },
   "appointments": {
     "title": "Appointments",
@@ -144,7 +156,30 @@
       "CANCELLED": "Cancelled",
       "COMPLETED": "Completed",
       "NO_SHOW": "Missed"
-    }
+    },
+    "requestTitle": "Ask for a visit",
+    "requestHint": "The clinic will propose a time. You approve it here before it is booked.",
+    "reasonLabel": "Reason",
+    "requestReasons": {
+      "FOLLOW_UP": "Follow-up visit",
+      "NEW_PROBLEM": "A new problem",
+      "REPORT_REVIEW": "Review a report",
+      "OTHER": "Something else"
+    },
+    "windowLabel": "When",
+    "windows": {
+      "THIS_WEEK": "This week",
+      "NEXT_WEEK": "Next week",
+      "ANY_TIME": "Any time"
+    },
+    "send": "Send request",
+    "requested": "Request sent. The clinic will propose a time.",
+    "approve": "Approve this time",
+    "decline": "Decline",
+    "cannotAttend": "I can't attend",
+    "waitingForClinic": "You approved this time. The clinic will confirm it.",
+    "awaitingYou": "Waiting for your approval",
+    "followUps": "Follow-ups"
   },
   "consent": {
     "title": "Privacy and consent",
@@ -187,7 +222,9 @@
     "dinner": "Dinner",
     "sleep": "Sleep",
     "abha": "ABHA (Ayushman Bharat Health Account)",
-    "abhaLink": "Link ABHA"
+    "abhaLink": "Link ABHA",
+    "shareTitle": "Your records as a file",
+    "shareHint": "Download your records in the FHIR R4 standard (marked as synthetic demo data)."
   },
   "doctor": {
     "title": "Clinic",
@@ -215,7 +252,22 @@
     "prescribe": "Write or change a prescription",
     "aiStatus": "AI assistant",
     "aiProvider": "Provider: {provider}",
-    "aiFallback": "Fallback: {fallback}"
+    "aiFallback": "Fallback: {fallback}",
+    "noted": "Noted",
+    "dismiss": "Dismiss",
+    "reviewed": {
+      "ACCEPTED": "Noted by you",
+      "DISMISSED": "Dismissed",
+      "EXPIRED": "Expired"
+    },
+    "flags": {
+      "MISSED_DOSES": "Missed doses",
+      "CALLBACK_OPEN": "Call-back open",
+      "LAB_TO_CONFIRM": "Report values unconfirmed",
+      "APPOINTMENT_AWAITING_PATIENT": "Awaiting patient approval"
+    },
+    "todayDoses": "Today's doses",
+    "appointments": "Appointments"
   },
   "admin": {
     "title": "Organization",
@@ -248,5 +300,185 @@
     "DOCUMENTS": "Documents",
     "CARE_PLAN": "Care plan",
     "APPOINTMENTS": "Appointments"
+  },
+  "doses": {
+    "todayTitle": "Today's medicines",
+    "noneToday": "No doses are due today.",
+    "rulesNote": "Reminders follow the times your doctor set. A dose with no answer 2 hours after its time is recorded as not confirmed.",
+    "noAnswer": "no answer",
+    "taken": "Taken",
+    "takenLate": "I took it (late)",
+    "skip": "Skip",
+    "skipTitle": "Why are you skipping this dose?",
+    "skipHint": "Your care team sees the reason. If you feel unwell, use Need help.",
+    "skipReasons": {
+      "FELT_UNWELL": "I felt unwell",
+      "RAN_OUT": "I ran out of medicine",
+      "FORGOT_TO_CARRY": "I don't have it with me",
+      "OTHER": "Another reason"
+    },
+    "snoozeFor": "{minutes} min",
+    "readAloud": "Read aloud",
+    "noVoice": "This device has no voice for this language.",
+    "snoozeLabel": "Remind me in"
+  },
+  "help": {
+    "button": "Need help",
+    "title": "Need help",
+    "emergencyTitle": "Emergency? Call now.",
+    "emergencyBody": "Chest pain, trouble breathing, fainting or a severe reaction: call immediately. Do not wait for the app.",
+    "call112": "112 — Emergency",
+    "call108": "108 — Ambulance",
+    "notEmergency": "For anything else, ask your care team to call you back. This is not an emergency service.",
+    "reasonLabel": "What is it about?",
+    "reasons": {
+      "SIDE_EFFECT": "I think I have a side effect",
+      "MEDICINE_QUESTION": "A question about my medicine",
+      "MISSED_DOSES": "I have missed doses",
+      "OTHER": "Something else"
+    },
+    "noteLabel": "Anything to add? (optional)",
+    "notePlaceholder": "For example: stomach upset after the tablet",
+    "send": "Ask for a call back",
+    "sent": "Request sent. Your care team will call you.",
+    "alreadyOpen": "Your care team already has your request and will call you."
+  },
+  "phone": {
+    "title": "Simulated phone",
+    "notice": "Demo: reminders appear here instead of SMS or WhatsApp. Nothing is sent to a real phone.",
+    "empty": "No reminders yet."
+  },
+  "share": {
+    "exportFhir": "Download FHIR file",
+    "exported": "{count} records exported",
+    "abdmTitle": "Health record link (ABDM)",
+    "simulatedLabel": "SIMULATED — not connected to ABDM",
+    "linkedAs": "Linked as {address}",
+    "careContexts": "{count} visits that could be shared",
+    "previewShare": "Preview what would be shared",
+    "unlink": "Remove link",
+    "link": "Link (simulation)",
+    "previewTitle": "{count} records would be shared",
+    "previewBody": "Record types: {types}. Nothing was sent."
+  },
+  "prescribe": {
+    "title": "New medicine plan",
+    "intro": "Draft, review the checks and the instruction in every language, then sign. Patients and AI cannot sign.",
+    "newPlan": "Prescribe",
+    "changeTitle": "Change {name} (new version)",
+    "medicine": "Medicine",
+    "chooseMedicine": "Choose a medicine",
+    "quantity": "Tablets per dose",
+    "timing": "When",
+    "timings": {
+      "MORN": "In the morning",
+      "ACM": "Before breakfast",
+      "PCM": "After breakfast",
+      "ACV": "Before dinner",
+      "PCV": "After dinner",
+      "HS": "At bedtime"
+    },
+    "offset": "Minutes before/after the meal",
+    "duration": "Days (empty = ongoing)",
+    "ongoing": "Ongoing",
+    "indication": "For (plain words, e.g. Blood sugar)",
+    "notes": "Reviewed notes for the patient",
+    "notePhrases": {
+      "SWALLOW_WHOLE": "Swallow whole with water",
+      "WITH_FOOD": "Take with food",
+      "EMPTY_STOMACH": "Take on an empty stomach",
+      "DO_NOT_STOP": "Do not stop without talking to your doctor",
+      "REPORT_SIDE_EFFECTS": "If unwell, use Need help or call the clinic"
+    },
+    "notesHint": "Notes are chosen from reviewed phrases so every language says the same thing.",
+    "checkDraft": "Save draft and run checks",
+    "version": "version {version}",
+    "signedBadge": "Signed",
+    "draftBadge": "Draft",
+    "checks": "Checks",
+    "instructions": "What the patient will read",
+    "signedDone": "Signed. Doses start tomorrow and the patient sees the instruction in their language.",
+    "readAllLanguages": "I have read the instruction in every language and it matches my prescription.",
+    "sign": "Sign",
+    "discard": "Discard draft",
+    "blocked": "A blocking check failed. This draft cannot be signed.",
+    "change": "Change dose",
+    "stop": "Stop",
+    "stopTitle": "Stop {name}?",
+    "stopHint": "Future doses are cancelled. The plan stays in the record.",
+    "stopReasons": {
+      "COURSE_NOT_NEEDED": "Course no longer needed",
+      "SIDE_EFFECT_REPORTED": "Side effect reported",
+      "CHANGED_TREATMENT": "Treatment changed",
+      "ENTERED_IN_ERROR": "Entered in error"
+    },
+    "drafts": "Unsigned drafts"
+  },
+  "care": {
+    "propose": "Propose a time",
+    "proposeTitle": "Propose an appointment",
+    "proposeHint": "The patient approves it in the app before it is confirmed.",
+    "proposed": "Proposed. The patient will see it and can approve or decline.",
+    "clinician": "Clinician",
+    "date": "Date",
+    "time": "Time",
+    "mode": "Type",
+    "modes": {
+      "IN_PERSON": "In person",
+      "VIDEO": "Video",
+      "PHONE": "Phone"
+    },
+    "reason": "Reason",
+    "send": "Send to patient",
+    "complete": "Log call",
+    "completeTitle": "How did the call go?",
+    "outcomes": {
+      "CALLED_RESOLVED": "Called — resolved",
+      "CALLED_ESCALATED_TO_DOCTOR": "Called — passed to the doctor",
+      "NO_ANSWER_CLOSED": "No answer — closed"
+    },
+    "queueTitle": "Care queue",
+    "queueHint": "Call-backs and visits to arrange. Only patients whose data you may see are listed.",
+    "empty": "Nothing waiting.",
+    "origins": {
+      "CLINICIAN": "Clinician",
+      "RULE": "Rule",
+      "PATIENT_REQUEST": "Patient asked"
+    },
+    "overdue": "Overdue",
+    "due": "Due {date}",
+    "types": {
+      "VISIT": "Visit",
+      "REPEAT_TEST": "Repeat test",
+      "CALLBACK": "Call-back",
+      "REVIEW": "Review"
+    },
+    "assigned": "assigned to {name}",
+    "visitReason": "Follow-up visit",
+    "testReason": "Repeat test review",
+    "confirm": "Confirm",
+    "waitingForPatient": "Waiting for the patient",
+    "cancelAppointment": "Cancel"
+  },
+  "demoConsole": {
+    "title": "Demo console",
+    "intro": "Presenter controls. Demo mode only; every change is audited.",
+    "checkpoints": "Story checkpoints",
+    "current": "Now",
+    "jump": "Reset to this day",
+    "timeOfDay": "Time of day",
+    "timeSet": "The demo clock is set to {time} and running.",
+    "realTime": "The demo clock uses the real time of day.",
+    "setTime": "Jump to time",
+    "useRealTime": "Use real time",
+    "ai": "AI provider",
+    "aiDemo": "Demo AI (offline)",
+    "aiClaude": "Claude",
+    "claudeUnavailable": "Claude needs ANTHROPIC_API_KEY on the server. The key is never shown or stored in the database.",
+    "resetTitle": "Reset all demo data to day {day}?",
+    "resetBody": "All demo data is replaced and everyone is signed out. This cannot be undone.",
+    "resetConfirm": "Reset and sign everyone out",
+    "resetDone": "Done. Signing you out…",
+    "cancel": "Cancel"
   }
 }

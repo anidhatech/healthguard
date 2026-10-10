@@ -4,11 +4,11 @@ import type { DoseEventView } from '@healthguard/shared';
 import { useLocale, useTranslations } from 'next-intl';
 import { AdherenceCard, MedicationList } from '@/components/clinical/medication-list';
 import { OwnPatient } from '@/components/layout/own-patient';
+import { TodayDoses } from '@/components/patient/today-doses';
 import { PageHeader } from '@/components/layout/page-header';
 import { Alert } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ComingNextPhase } from '@/components/ui/honest';
 import { QueryView } from '@/components/ui/states';
 import { useApi } from '@/lib/queries';
 import { formatDate, formatTime } from '@/lib/utils';
@@ -43,13 +43,15 @@ function RecentDoses({ patientId }: { patientId: string }) {
 export default function MedicationsPage() {
   const t = useTranslations('medications');
   const tp = useTranslations('app');
-  const tpat = useTranslations('patient');
   return (
     <OwnPatient>
       {(patientId) => (
         <div className="grid gap-5">
-          <PageHeader title={t('title')} action={<ComingNextPhase label={tpat('markTaken')} />} />
+          <PageHeader title={t('title')} />
           <Alert tone="info">{tp('safety')}</Alert>
+          <Card>
+            <TodayDoses patientId={patientId} />
+          </Card>
           <div className="grid gap-4 lg:grid-cols-3">
             <div className="lg:col-span-2">
               <MedicationList patientId={patientId} />

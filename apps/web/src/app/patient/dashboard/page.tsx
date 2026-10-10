@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { MedicationList } from '@/components/clinical/medication-list';
 import { ProgressCards } from '@/components/clinical/progress-cards';
 import { OwnPatient } from '@/components/layout/own-patient';
+import { SimulatedPhone } from '@/components/patient/simulated-phone';
+import { TodayDoses } from '@/components/patient/today-doses';
 import { PageHeader } from '@/components/layout/page-header';
 import { Card, CardHeader } from '@/components/ui/card';
 import { QueryView } from '@/components/ui/states';
@@ -62,6 +64,12 @@ export default function PatientDashboard() {
                 : undefined
             }
           />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Card className="lg:col-span-2">
+              <TodayDoses patientId={patientId} />
+            </Card>
+            <SimulatedPhone />
+          </div>
           <ProgressCards patientId={patientId} />
           <div className="grid gap-4 lg:grid-cols-3">
             <Card className="lg:col-span-2">
