@@ -36,7 +36,9 @@ export function demoNow(clock: DemoClock | null, real: Date, timezone: string): 
 
 /** Reads the demo clock with any client (the worker has no Nest container). */
 export async function readDemoClock(db: {
-  systemSetting: { findUnique: (args: { where: { key: string } }) => Promise<{ value: unknown } | null> };
+  systemSetting: {
+    findUnique: (args: { where: { key: string } }) => Promise<{ value: unknown } | null>;
+  };
 }): Promise<DemoClock | null> {
   const row = await db.systemSetting.findUnique({ where: { key: 'demo.clock' } });
   return (row?.value as DemoClock | undefined) ?? null;

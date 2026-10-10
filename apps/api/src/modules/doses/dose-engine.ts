@@ -67,7 +67,11 @@ async function systemAudit(
     metadata: event.metadata,
   };
   await db.auditEvent.create({
-    data: { ...row, metadata: row.metadata as Prisma.InputJsonValue, contentHash: auditContentHash(row) },
+    data: {
+      ...row,
+      metadata: row.metadata as Prisma.InputJsonValue,
+      contentHash: auditContentHash(row),
+    },
   });
 }
 
@@ -325,7 +329,10 @@ export async function inferMissedDoses(
     include: { patient: { select: { timezone: true } } },
     take: 2000,
   });
-  const affectedPlans = new Map<string, { organizationId: string; patientId: string; tz: string }>();
+  const affectedPlans = new Map<
+    string,
+    { organizationId: string; patientId: string; tz: string }
+  >();
   let missed = 0;
   for (const dose of pending) {
     const now = nowFor(clock, dose.patient.timezone);

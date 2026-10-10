@@ -102,6 +102,11 @@ export class SessionService {
     this.actorCache.delete(sessionId);
   }
 
+  /** Drops every cached actor (after a demo reset wipes all sessions). */
+  forgetAll(): void {
+    this.actorCache.clear();
+  }
+
   /** The default organization: the first active membership, else the first patient profile's. */
   async defaultOrganization(userId: string): Promise<string | null> {
     const membership = await this.prisma.db.organizationMember.findFirst({

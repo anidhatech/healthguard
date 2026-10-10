@@ -24,6 +24,8 @@ export const EnvSchema = z
     DEMO_MODE: bool.default(false),
     ALLOW_DEMO_IN_PRODUCTION: bool.default(false),
     DEMO_AUTH_ENABLED: bool.optional(),
+    // Used only to (re)seed the synthetic demo accounts; never a real credential.
+    DEMO_ACCOUNT_PASSWORD: z.string().min(8).default('HealthGuard-Demo-2026'),
     PASSWORD_LOGIN_ENABLED: bool.default(true),
 
     JWT_PRIVATE_KEY: z.string().optional(),

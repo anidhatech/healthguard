@@ -100,7 +100,11 @@ export class CareTeamController {
       decision: 'ALLOW',
       decisionReason: 'SELF',
       // The reason code only: the patient's note never goes into the audit trail.
-      metadata: { helpReason: body.reason, alreadyOpen: !followUp.created, hasNote: Boolean(body.note) },
+      metadata: {
+        helpReason: body.reason,
+        alreadyOpen: !followUp.created,
+        hasNote: Boolean(body.note),
+      },
     });
     return {
       followUpId: followUp.id,
@@ -122,7 +126,12 @@ export class CareTeamController {
   ): Promise<CareQueueItem[]> {
     const organizationId = requireOrganization(actor);
     const rows = await this.prisma.tenant(organizationId).followUp.findMany({
-      where: { status: { in: ['DUE', 'OVERDUE', 'PLANNED'] }, type: { in: ['CALLBACK', 'REVIEW'] } },
+      where: {
+        OR: [
+          { type: { in: ['CALLBACK', 'REVIEW'] }, status: { in: ['DUE', 'OVERDUE', 'PLANNED'] } },
+          { type: { in: ['VISIT', 'REPEAT_TEST'] }, status: { in: ['DUE', 'OVERDUE'] } },
+        ],
+      },
       include: { patient: true, assignedMember: { include: { user: true } } },
       orderBy: [{ dueDate: 'asc' }, { createdAt: 'asc' }],
       take: 200,

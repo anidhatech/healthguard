@@ -67,7 +67,10 @@ export async function resetTo(
 /** Jumps the demo clock to a local time on the current demo day. */
 export async function setTimeOfDay(app: INestApplication | null, clock: string): Promise<void> {
   const row = await db.systemSetting.findUniqueOrThrow({ where: { key: 'demo.clock' } });
-  const value = { ...(row.value as unknown as DemoClock), timeOfDay: { clock, realAt: new Date().toISOString() } };
+  const value = {
+    ...(row.value as unknown as DemoClock),
+    timeOfDay: { clock, realAt: new Date().toISOString() },
+  };
   await db.systemSetting.update({ where: { key: 'demo.clock' }, data: { value } });
   app?.get(ClockService).invalidate();
 }

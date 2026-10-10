@@ -4,6 +4,8 @@ import {
   AiRequestBodySchema,
   IdParamsSchema,
   PatientIdParamsSchema,
+  ReviewRecommendationSchema,
+  type ReviewRecommendation,
   type AiInteractionDetails,
   type AiRequestBody,
   type AiResultView,
@@ -25,6 +27,8 @@ import { zod } from '../../common/zod.pipe.js';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { ActivityModule } from '../activity/activity.module.js';
 import { AdherenceModule } from '../adherence/adherence.module.js';
+import { AuditService } from '../audit/audit.service.js';
+import { PatientAccessService } from '../consent/patient-access.service.js';
 import { AiService } from './ai.service.js';
 import { FactSheetService } from './fact-sheet.service.js';
 
@@ -34,14 +38,74 @@ export class AiController {
   constructor(
     private readonly ai: AiService,
     private readonly prisma: PrismaService,
+    private readonly patientAccess: PatientAccessService,
+    private readonly audit: AuditService,
   ) {}
 
   @Get('ai/status')
   @ApiOperation({
     summary: 'AI provider, fallback, implemented / planned / prohibited tasks (never the key)',
   })
-  status(): AiStatus {
+  status(): Promise<AiStatus> {
     return this.ai.status();
+  }
+
+  @Post('ai/recommendations/:id/review')
+  @HttpCode(200)
+  @Roles('DOCTOR')
+  @ApiOperation({
+    summary:
+      'The doctor marks an AI observation as noted or dismissed. Nothing clinical happens automatically.',
+  })
+  async review(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Param(zod(IdParamsSchema)) params: IdParams,
+    @Body(zod(ReviewRecommendationSchema)) body: ReviewRecommendation,
+  ): Promise<{ id: string; status: string; reviewedAt: string | null }> {
+    const organizationId = requireOrganization(actor);
+    const db = this.prisma.tenant(organizationId);
+    const row = await db.aIRecommendation.findFirst({
+      where: { id: params.id },
+      include: { aiInteraction: { select: { actorUserId: true } } },
+    });
+    if (!row) throw Problems.notFound('AI observation');
+    await this.patientAccess.authorize(
+      actor,
+      meta,
+      row.patientProfileId,
+      'CARE_PLAN',
+      'AIRecommendation',
+      'UPDATE',
+    );
+    if (row.status !== 'PROPOSED')
+      throw Problems.conflict('This observation was already reviewed.');
+    const now = new Date();
+    const status = row.expiresAt && row.expiresAt < now ? 'EXPIRED' : body.decision;
+    if (status === 'EXPIRED') {
+      await db.aIRecommendation.update({ where: { id: row.id }, data: { status } });
+      throw Problems.conflict('This observation expired. Run a new summary.');
+    }
+    const updated = await db.aIRecommendation.update({
+      where: { id: row.id },
+      data: {
+        status,
+        reviewedByUserId: actor.userId,
+        reviewedAt: now,
+        reviewNote: body.reason ?? null,
+      },
+    });
+    await this.audit.record({
+      actor,
+      meta,
+      action: 'AI_RECOMMENDATION_REVIEWED',
+      resourceType: 'AIRecommendation',
+      resourceId: row.id,
+      patientProfileId: row.patientProfileId,
+      decision: 'ALLOW',
+      metadata: { decision: body.decision, reason: body.reason ?? null, type: row.type },
+    });
+    return { id: updated.id, status: updated.status, reviewedAt: isoOrNull(updated.reviewedAt) };
   }
 
   @Post('patients/:patientId/ai/requests')

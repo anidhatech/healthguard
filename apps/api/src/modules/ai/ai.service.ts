@@ -58,8 +58,8 @@ function sourcesFor(factIds: readonly string[], sheet: FactSheet) {
 export class AiService {
   private readonly logger = new Logger('AI');
   private readonly prompts = new PromptRegistry();
-  readonly primary: AIProvider;
-  readonly fallback: AIProvider | null;
+  private readonly demo = new DemoAIProvider();
+  private readonly claude: AIProvider | null;
 
   constructor(
     private readonly prisma: PrismaService,
@@ -68,23 +68,42 @@ export class AiService {
     private readonly factSheets: FactSheetService,
     @Inject(APP_CONFIG) private readonly config: AppConfig,
   ) {
-    const demo = new DemoAIProvider();
-    this.primary =
-      config.aiProvider === 'ANTHROPIC'
-        ? new ClaudeProvider({
-            apiKey: config.env.ANTHROPIC_API_KEY,
-            defaultModel: config.env.AI_MODEL,
-            fastModel: config.env.AI_FAST_MODEL,
-            timeoutMs: config.env.AI_TIMEOUT_MS,
-          })
-        : demo;
-    this.fallback = config.env.AI_FALLBACK_TO_DEMO || config.aiProvider === 'DEMO' ? demo : null;
+    // The Claude provider exists only when a key is configured (never stored in the database).
+    this.claude = config.env.ANTHROPIC_API_KEY
+      ? new ClaudeProvider({
+          apiKey: config.env.ANTHROPIC_API_KEY,
+          defaultModel: config.env.AI_MODEL,
+          fastModel: config.env.AI_FAST_MODEL,
+          timeoutMs: config.env.AI_TIMEOUT_MS,
+        })
+      : null;
   }
 
-  status(): AiStatus {
+  /**
+   * The provider in use: the demo console's choice (SystemSetting `ai.provider`)
+   * if set, else AI_PROVIDER. Claude is only possible with a configured key.
+   */
+  async providers(): Promise<{ primary: AIProvider; fallback: AIProvider | null }> {
+    const setting = await this.prisma.db.systemSetting.findUnique({
+      where: { key: 'ai.provider' },
+    });
+    const chosen =
+      (setting?.value as { provider?: 'DEMO' | 'ANTHROPIC' } | null)?.provider ??
+      this.config.aiProvider;
+    if (chosen === 'ANTHROPIC' && this.claude) {
+      return {
+        primary: this.claude,
+        fallback: this.config.env.AI_FALLBACK_TO_DEMO ? this.demo : null,
+      };
+    }
+    return { primary: this.demo, fallback: this.demo };
+  }
+
+  async status(): Promise<AiStatus> {
+    const { primary, fallback } = await this.providers();
     return {
-      provider: this.primary.name,
-      fallbackProvider: this.fallback ? 'DEMO' : 'NONE',
+      provider: primary.name,
+      fallbackProvider: fallback ? 'DEMO' : 'NONE',
       anthropicKeyConfigured: Boolean(this.config.env.ANTHROPIC_API_KEY),
       models: { default: this.config.env.AI_MODEL, fast: this.config.env.AI_FAST_MODEL },
       implementedTasks: [...IMPLEMENTED_AI_TASKS],
@@ -167,7 +186,7 @@ export class AiService {
           task: gate.definition.task,
           purposeCode: 'AI_ASSISTANCE',
           consentIds: [],
-          provider: this.primary.name,
+          provider: (await this.providers()).primary.name,
           model: 'none',
           promptKey: prompt.key,
           promptVersion: prompt.version,
@@ -199,7 +218,7 @@ export class AiService {
     // 4. Facts → provider → validation → (fallback).
     const sheet = await this.factSheets.build(patient, allowed);
     const run = await runDoctorBrief(
-      { prompts: this.prompts, primary: this.primary, fallback: this.fallback },
+      { prompts: this.prompts, ...(await this.providers()) },
       sheet,
       body.instruction ?? null,
     );

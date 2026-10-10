@@ -7,7 +7,6 @@ import {
   resolveLocale,
   type MedicationCatalogueItem,
   type MedicationCatalogueQuery,
-  type MedicationInstructionView,
   type MedicationPlansQuery,
   type MedicationPlanView,
   type PatientIdParams,
@@ -18,29 +17,14 @@ import {
   type ActorContext,
   type RequestMeta,
 } from '../../common/actor.js';
-import {
-  dateOnly,
-  dateOnlyOrNull,
-  isoOrNull,
-  num,
-  provenance,
-  strength,
-} from '../../common/mapping.js';
+import { strength } from '../../common/mapping.js';
 import { zod } from '../../common/zod.pipe.js';
-import type {
-  ClinicianProfile,
-  Medication,
-  MedicationInstruction,
-  MedicationPlan,
-  PatientProfile,
-} from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { PatientAccessService } from '../consent/patient-access.service.js';
 import { toPlanView } from './plan-view.js';
 import { PrescribingController } from './prescribing.controller.js';
 
 export { SYNTHETIC_PLAN_NOTICE } from './plan-view.js';
-
 
 @ApiTags('medications')
 @Controller({ version: '1' })

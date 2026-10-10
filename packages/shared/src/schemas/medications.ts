@@ -232,6 +232,11 @@ export const SignPlanRequestSchema = z.strictObject({
 export type SignPlanRequest = z.infer<typeof SignPlanRequestSchema>;
 
 export const StopPlanRequestSchema = z.strictObject({
-  reason: z.enum(['COURSE_NOT_NEEDED', 'SIDE_EFFECT_REPORTED', 'CHANGED_TREATMENT', 'ENTERED_IN_ERROR']),
+  reason: z.enum([
+    'COURSE_NOT_NEEDED',
+    'SIDE_EFFECT_REPORTED',
+    'CHANGED_TREATMENT',
+    'ENTERED_IN_ERROR',
+  ]),
 });
 export type StopPlanRequest = z.infer<typeof StopPlanRequestSchema>;

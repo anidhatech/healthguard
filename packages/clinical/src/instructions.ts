@@ -232,7 +232,8 @@ export const NOTE_PHRASES = {
   REPORT_SIDE_EFFECTS: {
     'en-IN': 'If you feel unwell after taking it, use "Need help" or call the clinic.',
     'hi-IN': 'लेने के बाद तबीयत ठीक न लगे तो "मदद चाहिए" दबाएँ या क्लिनिक को फ़ोन करें।',
-    'te-IN': 'తీసుకున్న తర్వాత ఆరోగ్యం బాగోలేకపోతే "సహాయం కావాలి" నొక్కండి లేదా క్లినిక్‌కు ఫోన్ చేయండి.',
+    'te-IN':
+      'తీసుకున్న తర్వాత ఆరోగ్యం బాగోలేకపోతే "సహాయం కావాలి" నొక్కండి లేదా క్లినిక్‌కు ఫోన్ చేయండి.',
   },
 } as const satisfies Record<string, PhraseTable>;
 export type NotePhraseKey = keyof typeof NOTE_PHRASES;

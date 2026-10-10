@@ -109,3 +109,36 @@ export const CompleteFollowUpSchema = z.strictObject({
   outcome: z.enum(['CALLED_RESOLVED', 'CALLED_ESCALATED_TO_DOCTOR', 'NO_ANSWER_CLOSED']),
 });
 export type CompleteFollowUp = z.infer<typeof CompleteFollowUpSchema>;
+
+export const AppointmentParamsSchema = z.strictObject({
+  patientId: UuidSchema,
+  appointmentId: UuidSchema,
+});
+export type AppointmentParams = z.infer<typeof AppointmentParamsSchema>;
+
+/** Staff propose; the patient approves; staff confirm. Never confirmed without the patient. */
+export const ProposeAppointmentSchema = z.strictObject({
+  clinicianId: UuidSchema,
+  startAt: IsoDateTimeSchema,
+  durationMinutes: z.number().int().min(10).max(60).default(20),
+  mode: z.enum(['IN_PERSON', 'VIDEO', 'PHONE']).default('IN_PERSON'),
+  reason: z.string().trim().min(2).max(120),
+  followUpId: UuidSchema.optional(),
+});
+export type ProposeAppointment = z.infer<typeof ProposeAppointmentSchema>;
+
+export const CancelAppointmentSchema = z.strictObject({
+  reason: z.enum([
+    'PATIENT_DECLINED',
+    'PATIENT_CANNOT_ATTEND',
+    'CLINICIAN_UNAVAILABLE',
+    'NO_LONGER_NEEDED',
+  ]),
+});
+export type CancelAppointment = z.infer<typeof CancelAppointmentSchema>;
+
+export const AppointmentRequestSchema = z.strictObject({
+  reason: z.enum(['FOLLOW_UP', 'NEW_PROBLEM', 'REPORT_REVIEW', 'OTHER']),
+  preferredWindow: z.enum(['THIS_WEEK', 'NEXT_WEEK', 'ANY_TIME']),
+});
+export type AppointmentRequest = z.infer<typeof AppointmentRequestSchema>;

@@ -163,3 +163,10 @@ export const AiStatusSchema = z.object({
   notice: z.string(),
 });
 export type AiStatus = z.infer<typeof AiStatusSchema>;
+
+/** The doctor's review of an AI observation. Accepting only records that it was noted. */
+export const ReviewRecommendationSchema = z.strictObject({
+  decision: z.enum(['ACCEPTED', 'DISMISSED']),
+  reason: z.enum(['USEFUL', 'ALREADY_KNOWN', 'NOT_RELEVANT', 'INCORRECT']).optional(),
+});
+export type ReviewRecommendation = z.infer<typeof ReviewRecommendationSchema>;

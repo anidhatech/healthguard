@@ -29,6 +29,31 @@ function direction(before: number | null, after: number | null): Metric['directi
   return after > before ? 'up' : after < before ? 'down' : 'same';
 }
 
+const WORDS = { up: 'went up', down: 'went down', same: 'stayed the same' } as const;
+
+/**
+ * A calculated sentence about numbers that moved over the same period. It
+ * names the period and the values, and always says it does not show cause.
+ */
+export function associationSentence(metrics: readonly Metric[]): string | null {
+  const hba1c = metrics.find((metric) => metric.metric === 'HBA1C');
+  const adherence = metrics.find((metric) => metric.metric === 'RECORDED_ADHERENCE');
+  if (!hba1c?.direction || hba1c.before === null || hba1c.after === null || !hba1c.beforeDate) {
+    return null;
+  }
+  if (adherence?.after === null || adherence?.after === undefined) return null;
+  const steps = metrics.find((metric) => metric.metric === 'AVERAGE_DAILY_STEPS');
+  const stepsPart =
+    steps?.before !== null && steps?.before !== undefined && steps.after !== null && steps.direction
+      ? `, average daily steps ${WORDS[steps.direction]} (${steps.before.toLocaleString('en-IN')} to ${steps.after.toLocaleString('en-IN')})`
+      : '';
+  return (
+    `From ${hba1c.beforeDate} to ${hba1c.afterDate ?? 'now'}, HbA1c ${WORDS[hba1c.direction]} ` +
+    `(${hba1c.before}% to ${hba1c.after}%) while recorded adherence was ${adherence.after}%${stepsPart}. ` +
+    'These changes happened over the same period; this does not show that one caused the other.'
+  );
+}
+
 /** Deterministic "since the last visit" comparisons for the dashboards and the AI fact sheet. */
 @Injectable()
 export class ProgressService {
@@ -58,7 +83,13 @@ export class ProgressService {
 
     if (can('HBA1C')) {
       const results = await db.labResult.findMany({
-        where: { patientProfileId: patient.id, recordStatus: 'ACTIVE', labTest: { code: 'HBA1C' } },
+        where: {
+          patientProfileId: patient.id,
+          recordStatus: 'ACTIVE',
+          labTest: { code: 'HBA1C' },
+          // Values read from a report count only after the patient confirms them.
+          NOT: { recordSource: 'DOCUMENT_EXTRACTION', verification: 'UNVERIFIED' },
+        },
         orderBy: { effectiveAt: 'asc' },
       });
       const after = results.at(-1);
@@ -149,6 +180,7 @@ export class ProgressService {
       asOf: today,
       metrics,
       hiddenMetrics: hidden,
+      association: associationSentence(metrics),
     };
   }
 }

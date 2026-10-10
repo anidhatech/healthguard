@@ -107,7 +107,12 @@ describe('doses and reminders (day 6)', () => {
     const result = await engine();
     expect(result.missed).toBe(1); // metformin, snoozed and never answered
     const metformin = await db.medicationDoseEvent.findFirstOrThrow({
-      where: { patientProfileId: ananya, slotLabel: 'PCM+15', status: 'MISSED', missedInferred: true },
+      where: {
+        patientProfileId: ananya,
+        slotLabel: 'PCM+15',
+        status: 'MISSED',
+        missedInferred: true,
+      },
       orderBy: { scheduledAt: 'desc' },
     });
     expect(metformin.responseChannel).toBe('SYSTEM');
@@ -120,10 +125,9 @@ describe('doses and reminders (day 6)', () => {
       .set('X-CSRF-Token', patient.csrf)
       .send({ reason: 'SIDE_EFFECT', note: 'Stomach upset after the tablet' })
       .expect(201);
-    expect(response.body.data.emergencyNumbers.map((entry: { number: string }) => entry.number)).toEqual([
-      '112',
-      '108',
-    ]);
+    expect(
+      response.body.data.emergencyNumbers.map((entry: { number: string }) => entry.number),
+    ).toEqual(['112', '108']);
     const again = await patient.agent
       .post(`/api/v1/patients/${ananya}/help-requests`)
       .set('X-CSRF-Token', patient.csrf)
@@ -182,7 +186,12 @@ describe('prescribing (day 0)', () => {
     const draft = await doctor.agent
       .post(`${base}/drafts`)
       .set('X-CSRF-Token', doctor.csrf)
-      .send({ ...metforminDraft, medicationId: medicationId('amoxicillin500'), durationDays: 5, notePhrases: [] })
+      .send({
+        ...metforminDraft,
+        medicationId: medicationId('amoxicillin500'),
+        durationDays: 5,
+        notePhrases: [],
+      })
       .expect(201);
     const allergy = (draft.body.data.checks as { code: string; severity: string }[]).find(
       (check) => check.code === 'ALLERGY_CONFLICT',
@@ -205,17 +214,34 @@ describe('prescribing (day 0)', () => {
     const draft = await doctor.agent
       .post(`${base}/drafts`)
       .set('X-CSRF-Token', doctor.csrf)
-      .send({ ...metforminDraft, medicationId: medicationId('telmisartan40'), timingEvent: 'MORN', timingOffsetMinutes: null, durationDays: null })
+      .send({
+        ...metforminDraft,
+        medicationId: medicationId('telmisartan40'),
+        timingEvent: 'MORN',
+        timingOffsetMinutes: null,
+        durationDays: null,
+      })
       .expect(201);
     expect(draft.body.data.canSign).toBe(false);
-    await doctor.agent.post(`${base}/${draft.body.data.plan.id}/discard`).set('X-CSRF-Token', doctor.csrf).expect(200);
+    await doctor.agent
+      .post(`${base}/${draft.body.data.plan.id}/discard`)
+      .set('X-CSRF-Token', doctor.csrf)
+      .expect(200);
   });
 
   it('lets only a prescriber in the care relationship draft', async () => {
     const patient = await signIn(app, EMAIL.patient);
-    await patient.agent.post(`${base}/drafts`).set('X-CSRF-Token', patient.csrf).send(metforminDraft).expect(403);
+    await patient.agent
+      .post(`${base}/drafts`)
+      .set('X-CSRF-Token', patient.csrf)
+      .send(metforminDraft)
+      .expect(403);
     const arjun = await signIn(app, EMAIL.arjun);
-    await arjun.agent.post(`${base}/drafts`).set('X-CSRF-Token', arjun.csrf).send(metforminDraft).expect(403);
+    await arjun.agent
+      .post(`${base}/drafts`)
+      .set('X-CSRF-Token', arjun.csrf)
+      .send(metforminDraft)
+      .expect(403);
   });
 
   it('renders the instruction from reviewed templates in every language, then signs', async () => {
@@ -249,12 +275,17 @@ describe('prescribing (day 0)', () => {
       .expect(200);
     expect(signed.body.data.plan.status).toBe('ACTIVE');
     expect(
-      (signed.body.data.instructions as { status: string }[]).every((row) => row.status === 'APPROVED'),
+      (signed.body.data.instructions as { status: string }[]).every(
+        (row) => row.status === 'APPROVED',
+      ),
     ).toBe(true);
     const after = await patient.agent.get(`${base}?locale=te-IN`).expect(200);
-    const metformin = (after.body.data as { medication: { genericName: string }; instruction: { doseText: string } }[]).find(
-      (plan) => plan.medication.genericName === 'Metformin',
-    );
+    const metformin = (
+      after.body.data as {
+        medication: { genericName: string };
+        instruction: { doseText: string };
+      }[]
+    ).find((plan) => plan.medication.genericName === 'Metformin');
     expect(metformin?.instruction.doseText).toBe(telugu?.doseText);
     await expect(
       db.medicationPlan.update({ where: { id: review.plan.id }, data: { doseQuantity: 2 } }),
@@ -301,8 +332,303 @@ describe('prescribing (day 0)', () => {
       .expect(200);
     expect(stopped.body.data.plan.status).toBe('STOPPED');
     const signs = await db.auditEvent.count({
-      where: { action: 'SIGN', resourceType: 'MedicationPlan', patientProfileId: ananya, decision: 'ALLOW' },
+      where: {
+        action: 'SIGN',
+        resourceType: 'MedicationPlan',
+        patientProfileId: ananya,
+        decision: 'ALLOW',
+      },
     });
     expect(signs).toBe(2);
+  });
+});
+
+describe('lab report confirmation (day 85)', () => {
+  beforeAll(async () => {
+    await resetTo(app, 85, '10:00');
+  });
+
+  it('shows values read from a report but leaves them out of trends until confirmed', async () => {
+    const patient = await signIn(app, EMAIL.patient);
+    const labs = await patient.agent
+      .get(`/api/v1/patients/${ananya}/lab-results?test=HBA1C`)
+      .expect(200);
+    const latest = (
+      labs.body.data as {
+        id: string;
+        awaitingConfirmation: boolean;
+        documentId: string;
+        valueNumeric: number;
+      }[]
+    )[0];
+    expect(latest?.awaitingConfirmation).toBe(true);
+    expect(latest?.valueNumeric).toBe(6.8);
+    const progress = await patient.agent.get(`/api/v1/patients/${ananya}/progress`).expect(200);
+    const hba1c = (progress.body.data.metrics as { metric: string; after: number }[]).find(
+      (m) => m.metric === 'HBA1C',
+    );
+    expect(hba1c?.after).toBe(7.4);
+
+    const doctor = await signIn(app, EMAIL.doctor);
+    const list = await doctor.agent.get('/api/v1/patients').expect(200);
+    expect(
+      (list.body.data as { id: string; flags: string[] }[]).find((row) => row.id === ananya)?.flags,
+    ).toContain('LAB_TO_CONFIRM');
+
+    const pending = await db.labResult.findMany({
+      where: { documentId: latest?.documentId, verification: 'UNVERIFIED' },
+    });
+    await doctor.agent
+      .post(`/api/v1/patients/${ananya}/documents/${latest?.documentId}/confirm-values`)
+      .set('X-CSRF-Token', doctor.csrf)
+      .send({
+        results: pending.map((row) => ({ labResultId: row.id, decision: 'MATCHES_REPORT' })),
+      })
+      .expect(403);
+    const confirmed = await patient.agent
+      .post(`/api/v1/patients/${ananya}/documents/${latest?.documentId}/confirm-values`)
+      .set('X-CSRF-Token', patient.csrf)
+      .send({
+        results: pending.map((row) => ({ labResultId: row.id, decision: 'MATCHES_REPORT' })),
+      })
+      .expect(200);
+    expect(confirmed.body.data).toMatchObject({
+      confirmed: pending.length,
+      documentStatus: 'VERIFIED',
+    });
+
+    const after = await patient.agent.get(`/api/v1/patients/${ananya}/progress`).expect(200);
+    const updated = (after.body.data.metrics as { metric: string; after: number }[]).find(
+      (m) => m.metric === 'HBA1C',
+    );
+    expect(updated?.after).toBe(6.8);
+    expect(after.body.data.association).toContain('does not show that one caused the other');
+  });
+});
+
+describe('appointments (day 88)', () => {
+  beforeAll(async () => {
+    await resetTo(app, 88, '18:00');
+  });
+
+  it('is confirmed only after the patient approves', async () => {
+    const proposed = await db.appointment.findFirstOrThrow({
+      where: { patientProfileId: ananya, status: 'PROPOSED' },
+    });
+    const base = `/api/v1/patients/${ananya}/appointments/${proposed.id}`;
+    const care = await signIn(app, EMAIL.care);
+    const early = await care.agent
+      .post(`${base}/confirm`)
+      .set('X-CSRF-Token', care.csrf)
+      .expect(409);
+    expect(early.body.detail).toContain('not approved');
+
+    const patient = await signIn(app, EMAIL.patient);
+    await patient.agent.post(`${base}/approve`).set('X-CSRF-Token', patient.csrf).expect(200);
+    const confirmed = await care.agent
+      .post(`${base}/confirm`)
+      .set('X-CSRF-Token', care.csrf)
+      .expect(200);
+    expect(confirmed.body.data.status).toBe('CONFIRMED');
+    const followUp = await db.followUp.findUniqueOrThrow({
+      where: { id: proposed.followUpId ?? '' },
+    });
+    expect(followUp.status).toBe('SCHEDULED');
+    const inbox = await patient.agent.get('/api/v1/notifications').expect(200);
+    expect(JSON.stringify(inbox.body.data)).toContain('ఖరారైంది');
+  });
+
+  it('lets staff propose, the patient decline, and the patient ask for a visit', async () => {
+    const care = await signIn(app, EMAIL.care);
+    const meera = await db.clinicianProfile.findFirstOrThrow({
+      where: { displayName: { contains: 'Meera' } },
+    });
+    const proposed = await care.agent
+      .post(`/api/v1/patients/${ananya}/appointments`)
+      .set('X-CSRF-Token', care.csrf)
+      .send({ clinicianId: meera.id, startAt: '2026-10-20T05:30:00.000Z', reason: 'Extra review' })
+      .expect(201);
+    await care.agent
+      .post(`/api/v1/patients/${ananya}/appointments`)
+      .set('X-CSRF-Token', care.csrf)
+      .send({ clinicianId: meera.id, startAt: '2026-10-20T05:40:00.000Z', reason: 'Clash' })
+      .expect(409);
+    const patient = await signIn(app, EMAIL.patient);
+    const declined = await patient.agent
+      .post(`/api/v1/patients/${ananya}/appointments/${proposed.body.data.id}/cancel`)
+      .set('X-CSRF-Token', patient.csrf)
+      .send({ reason: 'PATIENT_DECLINED' })
+      .expect(200);
+    expect(declined.body.data.status).toBe('CANCELLED');
+    await patient.agent
+      .post(`/api/v1/patients/${ananya}/appointment-requests`)
+      .set('X-CSRF-Token', patient.csrf)
+      .send({ reason: 'REPORT_REVIEW', preferredWindow: 'THIS_WEEK' })
+      .expect(201);
+    await patient.agent
+      .post(`/api/v1/patients/${ananya}/appointment-requests`)
+      .set('X-CSRF-Token', patient.csrf)
+      .send({ reason: 'OTHER', preferredWindow: 'ANY_TIME' })
+      .expect(409);
+    const queue = await care.agent.get('/api/v1/care-queue').expect(200);
+    expect(
+      (queue.body.data as { type: string; origin: string }[]).some(
+        (item) => item.type === 'VISIT' && item.origin === 'PATIENT_REQUEST',
+      ),
+    ).toBe(true);
+  });
+});
+
+describe('day 92: AI review, exports, ABDM simulation, device, demo console', () => {
+  beforeAll(async () => {
+    await resetTo(app, 92, '11:00');
+  });
+
+  it('records the doctor review of an AI observation (nothing clinical happens)', async () => {
+    const doctor = await signIn(app, EMAIL.doctor);
+    const result = await doctor.agent
+      .post(`/api/v1/patients/${ananya}/ai/requests`)
+      .set('X-CSRF-Token', doctor.csrf)
+      .send({ task: 'DOCTOR_BRIEF_SYNTHESIS' })
+      .expect(200);
+    const observation = (result.body.data.observations as { id: string }[])[0];
+    expect(observation).toBeDefined();
+    const reviewed = await doctor.agent
+      .post(`/api/v1/ai/recommendations/${observation?.id}/review`)
+      .set('X-CSRF-Token', doctor.csrf)
+      .send({ decision: 'DISMISSED', reason: 'ALREADY_KNOWN' })
+      .expect(200);
+    expect(reviewed.body.data.status).toBe('DISMISSED');
+    await doctor.agent
+      .post(`/api/v1/ai/recommendations/${observation?.id}/review`)
+      .set('X-CSRF-Token', doctor.csrf)
+      .send({ decision: 'ACCEPTED' })
+      .expect(409);
+    expect(
+      await db.auditEvent.count({
+        where: { action: 'AI_RECOMMENDATION_REVIEWED', resourceId: observation?.id },
+      }),
+    ).toBe(1);
+  });
+
+  it('exports a FHIR R4 Bundle tagged SYNTHETIC, limited to what the caller may see', async () => {
+    const patient = await signIn(app, EMAIL.patient);
+    const response = await patient.agent.get(`/api/v1/patients/${ananya}/fhir/export`).expect(200);
+    const bundle = response.body.data as {
+      resourceType: string;
+      type: string;
+      meta: { tag: { code: string }[] };
+      entry: {
+        resource: {
+          resourceType: string;
+          meta: { tag: { code: string }[] };
+          code?: { coding?: { code: string }[] };
+        };
+      }[];
+    };
+    expect(bundle).toMatchObject({ resourceType: 'Bundle', type: 'collection' });
+    expect(bundle.meta.tag[0]?.code).toBe('SYNTHETIC');
+    expect(bundle.entry.every((entry) => entry.resource.meta.tag[0]?.code === 'SYNTHETIC')).toBe(
+      true,
+    );
+    const types = new Set(bundle.entry.map((entry) => entry.resource.resourceType));
+    for (const type of [
+      'Patient',
+      'Organization',
+      'Encounter',
+      'Condition',
+      'AllergyIntolerance',
+      'MedicationRequest',
+      'Observation',
+      'Appointment',
+    ]) {
+      expect(types.has(type)).toBe(true);
+    }
+    const hba1c = bundle.entry.filter(
+      (entry) => entry.resource.code?.coding?.[0]?.code === '4548-4',
+    );
+    expect(hba1c.length).toBeGreaterThanOrEqual(2);
+    expect(
+      await db.auditEvent.count({ where: { action: 'EXPORT', patientProfileId: ananya } }),
+    ).toBe(1);
+
+    // Dr. Arjun has no care relationship: nothing clinical to export.
+    const arjun = await signIn(app, EMAIL.arjun);
+    await arjun.agent.get(`/api/v1/patients/${ananya}/fhir/export`).expect(403);
+  });
+
+  it('simulates an ABDM link without touching ABHA fields or the network', async () => {
+    const patient = await signIn(app, EMAIL.patient);
+    const base = `/api/v1/patients/${ananya}/abdm-simulation`;
+    const before = await patient.agent.get(base).expect(200);
+    expect(before.body.data).toMatchObject({
+      label: 'SIMULATED — not connected to ABDM',
+      linked: false,
+    });
+    await patient.agent.get(`${base}/share-preview`).expect(409);
+    const linked = await patient.agent
+      .post(`${base}/link`)
+      .set('X-CSRF-Token', patient.csrf)
+      .expect(200);
+    expect(linked.body.data.simulatedAddress).toBe('ananya.demo@simulated');
+    expect(linked.body.data.careContexts.length).toBeGreaterThan(0);
+    const preview = await patient.agent.get(`${base}/share-preview`).expect(200);
+    expect(preview.body.data).toMatchObject({
+      sent: false,
+      label: 'SIMULATED — not connected to ABDM',
+    });
+    const profile = await db.patientProfile.findUniqueOrThrow({ where: { id: ananya } });
+    expect([profile.abhaNumber, profile.abhaAddress, profile.abhaVerifiedAt]).toEqual([
+      null,
+      null,
+      null,
+    ]);
+    const doctor = await signIn(app, EMAIL.doctor);
+    await doctor.agent.get(base).expect(403);
+  });
+
+  it('syncs the synthetic wearable for today', async () => {
+    const patient = await signIn(app, EMAIL.patient);
+    const sync = await patient.agent
+      .post(`/api/v1/patients/${ananya}/devices/sync`)
+      .set('X-CSRF-Token', patient.csrf)
+      .expect(200);
+    expect(sync.body.data).toMatchObject({ adapter: 'synthetic-wearable', daysAdded: 0 });
+    expect(sync.body.data.todaySteps).toBeGreaterThan(0);
+  });
+
+  it('lets only an admin use the demo console, and a reset signs everyone out', async () => {
+    const patient = await signIn(app, EMAIL.patient);
+    await patient.agent.get('/api/v1/demo/console').expect(403);
+    const admin = await signIn(app, EMAIL.admin);
+    const consoleView = await admin.agent.get('/api/v1/demo/console').expect(200);
+    expect(consoleView.body.data).toMatchObject({
+      currentDay: 92,
+      ai: { provider: 'DEMO', claudeAvailable: false },
+    });
+    await admin.agent
+      .post('/api/v1/demo/ai-provider')
+      .set('X-CSRF-Token', admin.csrf)
+      .send({ provider: 'ANTHROPIC' })
+      .expect(409);
+    const clock = await admin.agent
+      .post('/api/v1/demo/clock')
+      .set('X-CSRF-Token', admin.csrf)
+      .send({ timeOfDay: '06:25' })
+      .expect(200);
+    expect(clock.body.data.clock.today).toBe('2026-10-08');
+    await admin.agent
+      .post('/api/v1/demo/reset')
+      .set('X-CSRF-Token', admin.csrf)
+      .send({ checkpointDay: 6 })
+      .expect(200);
+    await patient.agent.get(`/api/v1/patients/${ananya}`).expect(401);
+    const state = await (
+      await signIn(app, EMAIL.patient)
+    ).agent
+      .get('/api/v1/demo/state')
+      .expect(200);
+    expect(state.body.data.clock.offsetDays).toBe(6);
+    expect(await db.auditEvent.count({ where: { action: 'DEMO_RESET' } })).toBe(2);
   });
 });

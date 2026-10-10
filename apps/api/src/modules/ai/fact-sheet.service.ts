@@ -132,6 +132,8 @@ export class FactSheetService {
         where: {
           patientProfileId: patient.id,
           recordStatus: 'ACTIVE',
+          // Values read from a report count only after the patient confirms them.
+          NOT: { recordSource: 'DOCUMENT_EXTRACTION', verification: 'UNVERIFIED' },
           effectiveAt: { gte: since },
         },
         include: { labTest: true },

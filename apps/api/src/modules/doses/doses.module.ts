@@ -1,4 +1,14 @@
-import { Body, Controller, Get, HttpCode, Inject, Module, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  HttpCode,
+  Inject,
+  Module,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   DoseParamsSchema,
@@ -197,7 +207,8 @@ export class DosesController {
       where: { id: dose.id, status: dose.status },
       data,
     });
-    if (updated.count === 0) throw Problems.conflict('This dose was just updated. Refresh and try again.');
+    if (updated.count === 0)
+      throw Problems.conflict('This dose was just updated. Refresh and try again.');
     await this.audit.record({
       actor,
       meta,

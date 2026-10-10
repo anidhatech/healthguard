@@ -191,7 +191,9 @@ export async function seedDemoData(
 ): Promise<HeroNumbers | null> {
   const until = options.checkpointDay ?? TODAY_OFFSET_DAYS;
   if (!isDemoCheckpoint(until)) {
-    throw new Error(`Unknown demo checkpoint ${String(until)}; use one of ${DEMO_CHECKPOINTS.join(', ')}.`);
+    throw new Error(
+      `Unknown demo checkpoint ${String(until)}; use one of ${DEMO_CHECKPOINTS.join(', ')}.`,
+    );
   }
   const realTenants = await db.organization.count({ where: { isDemo: false } });
   if (realTenants > 0) {

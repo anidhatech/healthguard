@@ -205,7 +205,9 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
   });
 
   // Day 0 visit: in progress at checkpoint 0 (the presenter prescribes live).
-  await db.appointment.createMany({ data: appointments.filter((row) => row.id === ANANYA.appointmentDay0) });
+  await db.appointment.createMany({
+    data: appointments.filter((row) => row.id === ANANYA.appointmentDay0),
+  });
   await db.encounter.create({
     data: {
       id: ANANYA.encounterDay0,
@@ -308,7 +310,9 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
     }
     await db.followUp.createMany({ data: followUps });
   }
-  await db.appointment.createMany({ data: appointments.filter((row) => row.id !== ANANYA.appointmentDay0) });
+  await db.appointment.createMany({
+    data: appointments.filter((row) => row.id !== ANANYA.appointmentDay0),
+  });
 
   // Medicines and doses (synthetic, not a prescription) -----------------
   const telmisartan = await insertPlan(db, {
@@ -346,7 +350,9 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
     : null;
   if (lastDoseDay >= 1) {
     const plans = [['ananya-telmisartan', telmisartan, 'MORN', null, 11] as const];
-    const all = metformin ? [...plans, ['ananya-metformin', metformin, 'PCM', 15, 12] as const] : plans;
+    const all = metformin
+      ? [...plans, ['ananya-metformin', metformin, 'PCM', 15, 12] as const]
+      : plans;
     for (const [planKey, planId, timing, offset, seed] of all) {
       await insertDailyDoses(db, {
         planKey,
@@ -431,7 +437,10 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
   ];
   if (by(85)) {
     labs.push(
-      { ...fromReport(lab('hba1c:85', 'HBA1C', 84, HERO.hba1cAfter, 'HIGH')), followUpId: ANANYA.followUpHba1c },
+      {
+        ...fromReport(lab('hba1c:85', 'HBA1C', 84, HERO.hba1cAfter, 'HIGH')),
+        followUpId: ANANYA.followUpHba1c,
+      },
       fromReport(lab('fpg:85', 'FASTING_GLUCOSE', 84, 126, 'HIGH')),
       fromReport(lab('creatinine:85', 'CREATININE', 84, 0.8, 'NORMAL')),
     );
@@ -444,7 +453,8 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
   const weeks = 14; // days 0, 7, …, 91
   for (let week = 0; week < weeks; week += 1) {
     const day = week * 7;
-    const linear = HERO.weightBefore + ((HERO.weightAfter - HERO.weightBefore) * week) / (weeks - 1);
+    const linear =
+      HERO.weightBefore + ((HERO.weightAfter - HERO.weightBefore) * week) / (weeks - 1);
     const jitter = week === 0 || week === weeks - 1 ? 0 : (random() - 0.5) * 0.2;
     const systolic = Math.round(138 - (10 * week) / (weeks - 1) + (random() - 0.5) * 4);
     const diastolic = Math.round(86 - (6 * week) / (weeks - 1) + (random() - 0.5) * 3);
@@ -525,14 +535,70 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
 
   // Consents (AI assistance and medication management granted at the day-0 visit).
   const allCategories = [
-    'DEMOGRAPHICS', 'ENCOUNTERS', 'CONDITIONS', 'ALLERGIES', 'HISTORY', 'MEDICATIONS',
-    'ADHERENCE', 'LABS', 'VITALS', 'ACTIVITY', 'DOCUMENTS', 'CARE_PLAN', 'APPOINTMENTS',
+    'DEMOGRAPHICS',
+    'ENCOUNTERS',
+    'CONDITIONS',
+    'ALLERGIES',
+    'HISTORY',
+    'MEDICATIONS',
+    'ADHERENCE',
+    'LABS',
+    'VITALS',
+    'ACTIVITY',
+    'DOCUMENTS',
+    'CARE_PLAN',
+    'APPOINTMENTS',
   ] as const;
   const consentIds = [
-    await insertConsent(db, { key: 'ananya:consultation', organizationId: org, patientId, purpose: 'CONSULTATION', categories: [...allCategories], grantedDay: -182, validDays: 365, locale: 'te-IN' }),
-    await insertConsent(db, { key: 'ananya:medication', organizationId: org, patientId, purpose: 'MEDICATION_MANAGEMENT', categories: ['MEDICATIONS', 'ADHERENCE'], grantedDay: 0, validDays: 365, locale: 'te-IN' }),
-    await insertConsent(db, { key: 'ananya:labs', organizationId: org, patientId, purpose: 'LAB_REVIEW', categories: ['LABS'], grantedDay: 0, validDays: 365, locale: 'te-IN' }),
-    await insertConsent(db, { key: 'ananya:ai', organizationId: org, patientId, purpose: 'AI_ASSISTANCE', categories: ['ENCOUNTERS', 'CONDITIONS', 'ALLERGIES', 'MEDICATIONS', 'ADHERENCE', 'LABS', 'VITALS', 'ACTIVITY'], grantedDay: 0, validDays: 365, locale: 'te-IN' }),
+    await insertConsent(db, {
+      key: 'ananya:consultation',
+      organizationId: org,
+      patientId,
+      purpose: 'CONSULTATION',
+      categories: [...allCategories],
+      grantedDay: -182,
+      validDays: 365,
+      locale: 'te-IN',
+    }),
+    await insertConsent(db, {
+      key: 'ananya:medication',
+      organizationId: org,
+      patientId,
+      purpose: 'MEDICATION_MANAGEMENT',
+      categories: ['MEDICATIONS', 'ADHERENCE'],
+      grantedDay: 0,
+      validDays: 365,
+      locale: 'te-IN',
+    }),
+    await insertConsent(db, {
+      key: 'ananya:labs',
+      organizationId: org,
+      patientId,
+      purpose: 'LAB_REVIEW',
+      categories: ['LABS'],
+      grantedDay: 0,
+      validDays: 365,
+      locale: 'te-IN',
+    }),
+    await insertConsent(db, {
+      key: 'ananya:ai',
+      organizationId: org,
+      patientId,
+      purpose: 'AI_ASSISTANCE',
+      categories: [
+        'ENCOUNTERS',
+        'CONDITIONS',
+        'ALLERGIES',
+        'MEDICATIONS',
+        'ADHERENCE',
+        'LABS',
+        'VITALS',
+        'ACTIVITY',
+      ],
+      grantedDay: 0,
+      validDays: 365,
+      locale: 'te-IN',
+    }),
   ];
 
   // Notifications (in-app inbox; nothing is sent anywhere) ---------------
@@ -604,10 +670,38 @@ export async function seedAnanya(db: SeedDb, until: number): Promise<void> {
     resourceId: consentId,
   }));
   if (by(43)) {
-    audit.push({ key: 'ananya:read:adherence:42', organizationId: org, day: 42, clock: '16:00', actorUserId: USER.ravi, actorRoles: ['CARE_COORDINATOR'], patientProfileId: patientId, action: 'READ', resourceType: 'MedicationDoseEvent', resourceId: null, purposeCode: 'MEDICATION_MANAGEMENT', decision: 'ALLOW', decisionReason: 'ALLOWED' });
+    audit.push({
+      key: 'ananya:read:adherence:42',
+      organizationId: org,
+      day: 42,
+      clock: '16:00',
+      actorUserId: USER.ravi,
+      actorRoles: ['CARE_COORDINATOR'],
+      patientProfileId: patientId,
+      action: 'READ',
+      resourceType: 'MedicationDoseEvent',
+      resourceId: null,
+      purposeCode: 'MEDICATION_MANAGEMENT',
+      decision: 'ALLOW',
+      decisionReason: 'ALLOWED',
+    });
   }
   if (by(86)) {
-    audit.push({ key: 'ananya:read:labs:85', organizationId: org, day: 85, clock: '18:10', actorUserId: USER.meera, actorRoles: ['DOCTOR'], patientProfileId: patientId, action: 'READ', resourceType: 'LabResult', resourceId: null, purposeCode: 'LAB_REVIEW', decision: 'ALLOW', decisionReason: 'ALLOWED' });
+    audit.push({
+      key: 'ananya:read:labs:85',
+      organizationId: org,
+      day: 85,
+      clock: '18:10',
+      actorUserId: USER.meera,
+      actorRoles: ['DOCTOR'],
+      patientProfileId: patientId,
+      action: 'READ',
+      resourceType: 'LabResult',
+      resourceId: null,
+      purposeCode: 'LAB_REVIEW',
+      decision: 'ALLOW',
+      decisionReason: 'ALLOWED',
+    });
   }
   await insertAuditEvents(db, audit);
 }

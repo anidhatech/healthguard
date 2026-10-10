@@ -32,14 +32,32 @@ export const NOTIFICATION_TEMPLATES: Record<string, Template> = {
     },
   },
   'care.callback_requested': {
-    'en-IN': { title: 'Call-back requested', body: 'A patient asked the care team to call back. See the care queue.' },
-    'hi-IN': { title: 'कॉल-बैक का अनुरोध', body: 'एक मरीज़ ने केयर टीम से कॉल-बैक माँगा है। केयर क्यू देखें।' },
-    'te-IN': { title: 'కాల్-బ్యాక్ అభ్యర్థన', body: 'ఒక రోగి కేర్ టీమ్ నుండి కాల్-బ్యాక్ కోరారు. కేర్ క్యూ చూడండి.' },
+    'en-IN': {
+      title: 'Call-back requested',
+      body: 'A patient asked the care team to call back. See the care queue.',
+    },
+    'hi-IN': {
+      title: 'कॉल-बैक का अनुरोध',
+      body: 'एक मरीज़ ने केयर टीम से कॉल-बैक माँगा है। केयर क्यू देखें।',
+    },
+    'te-IN': {
+      title: 'కాల్-బ్యాక్ అభ్యర్థన',
+      body: 'ఒక రోగి కేర్ టీమ్ నుండి కాల్-బ్యాక్ కోరారు. కేర్ క్యూ చూడండి.',
+    },
   },
   'care.callback_missed_doses': {
-    'en-IN': { title: 'Missed doses: call-back due', body: 'Doses were recorded as missed twice in a row. See the care queue.' },
-    'hi-IN': { title: 'छूटी खुराकें: कॉल-बैक करें', body: 'लगातार दो खुराकें छूटी दर्ज हुई हैं। केयर क्यू देखें।' },
-    'te-IN': { title: 'తప్పిన మోతాదులు: కాల్-బ్యాక్', body: 'వరుసగా రెండు మోతాదులు తప్పినట్లు నమోదైంది. కేర్ క్యూ చూడండి.' },
+    'en-IN': {
+      title: 'Missed doses: call-back due',
+      body: 'Doses were recorded as missed twice in a row. See the care queue.',
+    },
+    'hi-IN': {
+      title: 'छूटी खुराकें: कॉल-बैक करें',
+      body: 'लगातार दो खुराकें छूटी दर्ज हुई हैं। केयर क्यू देखें।',
+    },
+    'te-IN': {
+      title: 'తప్పిన మోతాదులు: కాల్-బ్యాక్',
+      body: 'వరుసగా రెండు మోతాదులు తప్పినట్లు నమోదైంది. కేర్ క్యూ చూడండి.',
+    },
   },
   'lab.result_available': {
     'en-IN': {
@@ -59,6 +77,39 @@ export const NOTIFICATION_TEMPLATES: Record<string, Template> = {
     'en-IN': { title: 'Appointment tomorrow', body: 'You are seeing {clinician} at {time}.' },
     'hi-IN': { title: 'कल अपॉइंटमेंट है', body: 'आप {time} बजे {clinician} से मिल रहे हैं।' },
     'te-IN': { title: 'రేపు అపాయింట్‌మెంట్', body: 'మీరు {time}కి {clinician}ని కలుస్తున్నారు.' },
+  },
+  'appointment.proposed': {
+    'en-IN': {
+      title: 'New appointment time',
+      body: '{clinician} proposed {time}. Open Appointments to approve or decline.',
+    },
+    'hi-IN': {
+      title: 'अपॉइंटमेंट का नया समय',
+      body: '{clinician} ने {time} का समय सुझाया है। मंज़ूर या मना करने के लिए "अपॉइंटमेंट" खोलें।',
+    },
+    'te-IN': {
+      title: 'కొత్త అపాయింట్‌మెంట్ సమయం',
+      body: '{clinician} {time} సమయం సూచించారు. ఆమోదించడానికి లేదా తిరస్కరించడానికి "అపాయింట్‌మెంట్లు" తెరవండి.',
+    },
+  },
+  'appointment.confirmed': {
+    'en-IN': { title: 'Appointment confirmed', body: 'You are seeing {clinician} on {time}.' },
+    'hi-IN': { title: 'अपॉइंटमेंट पक्का हुआ', body: 'आप {time} को {clinician} से मिलेंगे।' },
+    'te-IN': { title: 'అపాయింట్‌మెంట్ ఖరారైంది', body: 'మీరు {time}కి {clinician}ని కలుస్తారు.' },
+  },
+  'appointment.cancelled': {
+    'en-IN': {
+      title: 'Appointment cancelled',
+      body: 'Your appointment with {clinician} on {time} was cancelled. The care team will contact you.',
+    },
+    'hi-IN': {
+      title: 'अपॉइंटमेंट रद्द हुआ',
+      body: '{time} को {clinician} के साथ आपका अपॉइंटमेंट रद्द हो गया। केयर टीम आपसे संपर्क करेगी।',
+    },
+    'te-IN': {
+      title: 'అపాయింట్‌మెంట్ రద్దయింది',
+      body: '{time}కి {clinician}తో మీ అపాయింట్‌మెంట్ రద్దయింది. కేర్ టీమ్ మిమ్మల్ని సంప్రదిస్తుంది.',
+    },
   },
   'medication.course_completed': {
     'en-IN': {

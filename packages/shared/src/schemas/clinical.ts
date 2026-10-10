@@ -115,6 +115,10 @@ export const LabResultViewSchema = z.object({
   issuedAt: IsoDateTimeSchema.nullable(),
   status: z.enum(['PRELIMINARY', 'FINAL', 'AMENDED']),
   performingLab: z.string().nullable(),
+  documentId: UuidSchema.nullable(),
+  /** Read from an uploaded report: shown, but not used in trends until the patient confirms it. */
+  extractionConfidence: z.number().nullable(),
+  awaitingConfirmation: z.boolean(),
 });
 export type LabResultView = z.infer<typeof LabResultViewSchema>;
 
@@ -252,5 +256,30 @@ export const ProgressSummarySchema = z.object({
     }),
   ),
   hiddenMetrics: z.array(z.enum(PROGRESS_METRICS)),
+  /**
+   * A calculated sentence about numbers that moved together. It never claims
+   * one caused the other.
+   */
+  association: z.string().nullable(),
 });
 export type ProgressSummary = z.infer<typeof ProgressSummarySchema>;
+
+export const DocumentParamsSchema = z.strictObject({
+  patientId: UuidSchema,
+  documentId: UuidSchema,
+});
+export type DocumentParams = z.infer<typeof DocumentParamsSchema>;
+
+/** The patient checks each value read from their report against the paper. */
+export const ConfirmExtractedValuesSchema = z.strictObject({
+  results: z
+    .array(
+      z.strictObject({
+        labResultId: UuidSchema,
+        decision: z.enum(['MATCHES_REPORT', 'DOES_NOT_MATCH']),
+      }),
+    )
+    .min(1)
+    .max(30),
+});
+export type ConfirmExtractedValues = z.infer<typeof ConfirmExtractedValuesSchema>;

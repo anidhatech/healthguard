@@ -35,7 +35,7 @@ import { Roles } from '../../common/decorators.js';
 import { strength } from '../../common/mapping.js';
 import { Problems } from '../../common/problem.js';
 import { zod } from '../../common/zod.pipe.js';
-import type { Medication, PatientProfile, Prisma } from '../../generated/prisma/client.js';
+import type { Medication, PatientProfile } from '../../generated/prisma/client.js';
 import { ClockService } from '../../infrastructure/clock/clock.service.js';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
@@ -137,8 +137,13 @@ export class PrescribingController {
             code: 'ALLERGY_CONFLICT',
             severity: 'BLOCK',
             message: `Recorded allergy: ${conflicts
-              .map((allergy) => `${allergy.substance}${allergy.reaction ? ` (${allergy.reaction})` : ''}`)
-              .join(', ')}. ${medication.genericName} belongs to the same allergen class. Signing is blocked.`,
+              .map(
+                (allergy) =>
+                  `${allergy.substance}${allergy.reaction ? ` (${allergy.reaction})` : ''}`,
+              )
+              .join(
+                ', ',
+              )}. ${medication.genericName} belongs to the same allergen class. Signing is blocked.`,
           }
         : {
             code: 'ALLERGY_CONFLICT',
@@ -244,7 +249,9 @@ export class PrescribingController {
   @Post('drafts')
   @HttpCode(201)
   @Roles('DOCTOR')
-  @ApiOperation({ summary: 'Draft a plan; returns the checks and the instruction in every language' })
+  @ApiOperation({
+    summary: 'Draft a plan; returns the checks and the instruction in every language',
+  })
   async draft(
     @CurrentActor() actor: ActorContext,
     @CurrentMeta() meta: RequestMeta,
@@ -344,7 +351,7 @@ export class PrescribingController {
               passed: preservation.passed,
               problems: preservation.problems,
               notePhrases: body.notePhrases,
-            } as Prisma.InputJsonValue,
+            },
             status: 'DRAFT',
           },
         });

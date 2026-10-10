@@ -1,4 +1,8 @@
-import { resolveLocale, type MedicationInstructionView, type MedicationPlanView } from '@healthguard/shared';
+import {
+  resolveLocale,
+  type MedicationInstructionView,
+  type MedicationPlanView,
+} from '@healthguard/shared';
 import {
   dateOnly,
   dateOnlyOrNull,
@@ -77,4 +81,3 @@ export function toPlanView(
       row.recordSource === 'SYNTHETIC_SEED' || patient.isSynthetic ? SYNTHETIC_PLAN_NOTICE : null,
   };
 }
-
