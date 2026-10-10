@@ -20,7 +20,8 @@
     "dev": "tsc -p tsconfig.build.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "lint": "eslint .",
-    "test": "vitest run"
+    "test": "vitest run src",
+    "eval": "vitest run evals"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "0.132.1",

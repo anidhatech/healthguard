@@ -26,7 +26,8 @@
     "db:migrate:dev": "pnpm --filter @healthguard/api db:migrate:dev",
     "db:seed": "pnpm --filter @healthguard/api db:seed",
     "db:reset": "pnpm --filter @healthguard/api db:reset",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build"
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm test && pnpm build",
+    "eval:ai": "pnpm --filter @healthguard/ai eval"
   },
   "devDependencies": {
     "prettier": "3.9.9",

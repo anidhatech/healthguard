@@ -4,7 +4,7 @@
 >
 > HealthGuard is a software demonstration. It is not a medical device, not a clinical decision-support system, and not ABDM certified or production compliant. It does not diagnose, prescribe or change treatment. All clinical decisions stay with qualified healthcare professionals. Every person and record in it is fictional.
 
-HealthGuard brings a patient's health story into one place (visits, conditions, medicines, lab trends, activity, adherence) for patients, clinicians and clinics. This repository is the **Phase 1 foundation**: a working multi-tenant platform with a seeded demo story, consent-aware access control, an audited AI summary, and a three-language patient app.
+HealthGuard brings a patient's health story into one place (visits, conditions, medicines, lab trends, activity, adherence) for patients, clinicians and clinics. This repository is **Phase 1 (investor/partner demo), complete**: a working multi-tenant platform with the full demo story (prescribe → reminders → missed doses → report → booking → follow-up visit), consent-aware access control, an audited AI summary, and a three-language patient app. Outside services are simulated and labelled as such.
 
 Step-by-step setup: **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)**.
 
@@ -12,15 +12,15 @@ Step-by-step setup: **[docs/GETTING_STARTED.md](docs/GETTING_STARTED.md)**.
 
 ## 1. What works today
 
-| Area                | Built in this phase                                                                                                                                                                                                                                                                         |
-| ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Patients            | Dashboard with "since your last visit" (HbA1c, weight, steps, adherence), medicines with reviewed instructions in English, Hindi or Telugu, timeline, lab trends, records, activity and vitals, appointments, consent with withdraw, "who saw my data", notifications, profile and language |
-| Clinicians          | Day schedule, my patients / all patients, patient workspace (progress, labs, medicines and adherence, history, timeline), AI pre-visit summary with sources                                                                                                                                 |
-| Organization admins | Counts, members and roles, audit trail. No clinical data                                                                                                                                                                                                                                    |
-| Platform admins     | Tenant list (counts only)                                                                                                                                                                                                                                                                   |
-| Platform            | Multi-tenancy, consent-aware access decisions, append-only audit, rate limits, CSRF, problem-details errors, Swagger, health and readiness checks, background worker                                                                                                                        |
+| Area                | Built                                                                                                                                                                                                                                                                                                                                                                                                                                                                               |
+| ------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Patients            | Today's doses with **taken / skip / snooze** and read-aloud (device voice); **Need help** (112 / 108 first, then a care-team call-back); simulated phone for reminders; "since your last visit"; medicines with reviewed instructions in English, Hindi or Telugu; checking values read from a report; approving, declining and requesting visits; wearable sync (synthetic); FHIR download; labelled ABDM simulation; timeline, labs, records, consent, "who saw my data", profile |
+| Doctors             | Prescribing: draft → allergy and duplicate checks → instruction in 3 languages with a preservation check → sign (never patients or AI); change dose (new version) and stop; AI pre-visit summary with sources and "noted / dismiss"; work-list flags; appointments; FHIR download                                                                                                                                                                                                   |
+| Care team           | Care queue (call-backs from "Need help" and from the missed-dose rule, visit requests), call logging, proposing appointment times, confirming times the patient approved                                                                                                                                                                                                                                                                                                            |
+| Organization admins | Counts, members and roles, audit trail (no clinical data); **demo console**: reset to a story checkpoint, jump the time of day, switch the AI provider                                                                                                                                                                                                                                                                                                                              |
+| Platform            | Dose engine in the worker (doses from signed plans, reminders, missed-dose inference, call-back rule), multi-tenancy, consent-aware access decisions, append-only audit, rate limits, CSRF, problem-details errors, Swagger, health and readiness, CI with secret scanning                                                                                                                                                                                                          |
 
-Anything not built is shown as a disabled control labelled **"Coming in next phase"** (for example "Mark today's dose as taken", "Upload a report", "Write or change a prescription", "Link ABHA"). Nothing pretends to work.
+Still not built, and shown as a disabled control labelled **"Coming in next phase"**: uploading a document, inviting staff. Simulated pieces say so on screen: reminders go to the in-app **simulated phone**; ABDM is labelled **"SIMULATED — not connected to ABDM"**; the wearable is a **synthetic device**.
 
 ## 2. Architecture at a glance
 
@@ -131,7 +131,7 @@ All configuration lives in `.env` (copy of [`.env.example`](.env.example)). `.en
 
 ## 9. The seeded demo story
 
-The seed (`apps/api/prisma/seed`) is deterministic: same IDs and numbers every run. Day 0 (8 Jul 2026) is Ananya's last visit; the demo clock stands on **day 92 (8 Oct 2026)**, her follow-up. After seeding it re-measures the hero numbers with the same code the API uses and fails if any differ:
+The seed (`apps/api/src/modules/demo/seed`, CLI `pnpm db:seed`) is deterministic: same IDs and numbers every run. Day 0 (8 Jul 2026) is Ananya's last visit; the demo clock stands on **day 92 (8 Oct 2026)**, her follow-up. After seeding it re-measures the hero numbers with the same code the API uses and fails if any differ:
 
 | Measure                       | Before (day 0) | Now (day 92)            |
 | ----------------------------- | -------------- | ----------------------- |
@@ -139,6 +139,19 @@ The seed (`apps/api/prisma/seed`) is deterministic: same IDs and numbers every r
 | Weight                        | 74.2 kg        | 72.9 kg                 |
 | Average daily steps (30 days) | 5,200          | 7,100                   |
 | Recorded adherence            | —              | 92 % (166 of 180 doses) |
+
+The demo can be reset to any **story checkpoint** from the admin demo console (or `DEMO_CHECKPOINT_DAY=6 pnpm db:seed`):
+
+| Day | What to show                                                                                  |
+| --- | --------------------------------------------------------------------------------------------- |
+| 0   | Dr. Meera prescribes Metformin live; amoxicillin is blocked by Ananya's penicillin allergy    |
+| 6   | Telugu reminder on the simulated phone, taken / snooze, "Need help" reaching Ravi             |
+| 42  | Two missed doses in a row raised a call-back for Ravi                                         |
+| 85  | A report was uploaded; Ananya confirms the values read from it before they count in trends    |
+| 88  | The clinic proposed the day-92 visit; Ananya approves, Ravi confirms                          |
+| 92  | Follow-up visit: progress, AI brief with sources, FHIR export (the hero numbers are verified) |
+
+Use the console's **time of day** to show reminders (for example 07:40 on day 6) or missed-dose inference (late evening).
 
 Metformin 500 mg and Telmisartan 40 mg are real generic medicines used for realism in a **synthetic** plan; every plan carries a "not a prescription" notice. Organizations: _HealthGuard Demo Medical Center_ and _Lakeview Demo Hospital_.
 
@@ -171,20 +184,27 @@ Metformin 500 mg and Telmisartan 40 mg are real generic medicines used for reali
 pnpm lint && pnpm typecheck && pnpm test   # unit tests: shared, clinical, ai, api, web
 pnpm test:integration                      # API against PostgreSQL + Redis (resets TEST_DATABASE_URL)
 pnpm build                                 # production builds
+pnpm eval:ai                               # AI safety evaluation (multilingual refusal and output rules)
 pnpm test:e2e                              # Playwright, against a running stack on :3000
 ```
 
-Integration tests cover: app start, database connectivity, health and readiness, authentication (cookies, refresh-token rotation, CSRF, logout), role authorization, organization isolation, patient access, doctor access, cross-tenant rejection, the demo AI provider, unsafe AI rejection, consent withdrawal, and the database's append-only and immutability rules.
+GitHub Actions (`.github/workflows/ci.yml`) runs formatting, lint, typecheck, unit tests, the AI evaluation, the build, the integration tests against PostgreSQL and Redis, and a gitleaks secret scan on every push and pull request.
 
-The sign-in rate limit (20 per minute) is real: running the browser suite several times within a minute can hit it.
+Integration tests cover the Phase 1 flows checkpoint by checkpoint (doses and reminders, Need help, care queue, prescribing with allergy blocking and versioning, report confirmation, appointments, AI review, FHIR export, ABDM simulation, device sync, demo console) and: app start, database connectivity, health and readiness, authentication (cookies, refresh-token rotation, CSRF, logout), role authorization, organization isolation, patient access, doctor access, cross-tenant rejection, the demo AI provider, unsafe AI rejection, consent withdrawal, and the database's append-only and immutability rules.
+
+The sign-in rate limit (20 per minute) is real. The browser suite signs in many times; start the API with `AUTH_RATE_LIMIT_PER_MINUTE=500` when running it locally.
 
 ## 14. Known limitations (Phase 1)
 
 - Demo authentication only; no OIDC, MFA or real identity verification.
-- No dose answering, prescription writing, appointment booking, document upload or AI extraction yet (shown as "Coming in next phase").
-- Reminders and notifications are in-app records only; nothing is sent by SMS, WhatsApp, email or push.
-- FHIR export, ABDM sandbox and wearable sync are designed ([FHIR_MAPPING](docs/FHIR_MAPPING.md), [ABDM_INTEGRATION](docs/ABDM_INTEGRATION.md)) but not connected. HealthGuard is not ABDM certified.
-- Metric labels and clinical names from the API are English; UI chrome and medication instructions are translated.
+- Nothing is sent by SMS, WhatsApp, email or push: reminders appear on the in-app simulated phone.
+- ABDM is a labelled simulation with no network calls; HealthGuard is not ABDM certified and writes no ABHA data. The FHIR export is base R4, not validated against the ABDM implementation guide, and does not include care plans or recorded doses.
+- The prescribing checks cover recorded allergies (by allergen class), duplicate active medicines and the 3-language preservation check. They are **not** a drug-interaction or dosing check; the prescriber stays responsible.
+- Reviewed instruction templates cover once-a-day oral tablets and capsules (morning, before/after breakfast or dinner, bedtime); other schedules cannot be signed yet.
+- No document upload or AI extraction: the day-85 report and its extracted values are seeded.
+- Read-aloud uses the device's own voice; some devices have no Hindi or Telugu voice, and the app says so.
+- The session cache means a revoked session can work for up to 30 seconds on another API instance.
+- Metric labels, calculated sentences and clinical names from the API are English; UI chrome and medication instructions are translated.
 - Not load-tested, pen-tested or reviewed for regulatory compliance.
 
 ## 15. Roadmap and documents

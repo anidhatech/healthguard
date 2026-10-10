@@ -23,6 +23,8 @@
 
 **Goal.** A repeatable 12-minute demonstration of the full journey on synthetic data, on a laptop, online or offline ([PRD §8](PRD.md#8-mvp-and-demo-scope-phase-1)).
 
+**Status (October 2026): built.** Everything below works on synthetic data, with these differences from the plan: document upload and AI extraction are not built (the day-85 report is seeded, and the patient confirms its values); staff invitations are not built; the persona switcher is the demo sign-in page; prescribing covers once-a-day oral tablets and capsules. See the README's known limitations.
+
 ### Features
 - Two demo tenants, HealthGuard Demo Clinic and Lakeview Demo Hospital, with seeded personas: Ananya Rao (patient), Dr. Meera Sharma, Dr. Arjun Menon, Ravi Kumar (care coordinator), a clinic admin and a Lakeview Demo Hospital doctor.
 - Patient PWA in English, Hindi and Telugu: medication cards and instructions, reminders, Taken, Snooze, Skip, Missed and Need help, record timeline, sharing screen and access log.

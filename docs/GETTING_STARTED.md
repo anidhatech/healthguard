@@ -112,7 +112,7 @@ pnpm db:seed             # synthetic demo; prints the verified hero numbers
 pnpm build
 pnpm --filter @healthguard/api start      # terminal 1: API on http://localhost:4000
 pnpm --filter @healthguard/web start      # terminal 2: web on http://localhost:3000
-pnpm --filter @healthguard/api start:worker   # optional terminal 3: background worker
+pnpm --filter @healthguard/api start:worker   # terminal 3: worker (reminders, missed doses)
 ```
 
 For live reload while coding, run `pnpm dev` instead of build + start.
@@ -124,24 +124,41 @@ pnpm lint
 pnpm typecheck
 pnpm test                # unit tests
 pnpm test:integration    # API + PostgreSQL + Redis (resets healthguard_test)
+pnpm eval:ai             # AI safety evaluation
 pnpm test:e2e            # browser tests; needs the app running on :3000
 ```
 
-The first `pnpm test:e2e` needs a browser: `pnpm --filter @healthguard/e2e exec playwright install chromium`.
+The first `pnpm test:e2e` needs a browser: `pnpm --filter @healthguard/e2e exec playwright install chromium`. The browser suite resets the demo data and signs in many times: start the API with `AUTH_RATE_LIMIT_PER_MINUTE=500` for it.
 
 ---
 
-## Step 5: Walk through the demo (about 8 minutes)
+## Step 5: Walk through the demo (about 12 minutes)
 
-1. **Sign in as Ananya Rao (patient).** The app opens in Telugu, her saved language. The banner "DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE" is on every screen.
-2. **Home → "since your last visit":** HbA1c 7.4 → 6.8 %, weight 74.2 → 72.9 kg, steps 5,200 → 7,100, adherence 92 % (166 of 180 doses). Each card says how it was calculated.
-3. **Medicines:** the Metformin instruction in Telugu. Switch the language (top right) to Hindi or English: the sentence comes from reviewed templates, never from AI, with the same numbers.
-4. **Privacy & consent:** her consents, and "Who looked at your data", including refused attempts.
-5. **Sign out → Dr. Meera Sharma (doctor):** today's schedule shows Ananya at 10:30. Open her record and press **Generate AI summary**: every line has sources, the provider and prompt version are shown, and observations are labelled "for clinician review".
-6. **Dr. Arjun Reddy** (More demo accounts): same clinic, not in Ananya's care. Opening her labs shows an explained denial (`NO_CARE_RELATIONSHIP`), which is audited.
-7. **Dr. Sameer Khan** (another organization): Ananya does not exist for him (404).
-8. **Kavya Iyer (organization admin):** counts, members and the audit trail, with no clinical data.
-9. **Priya Nair (patient):** withdraw "AI-assisted summaries". Dr. Meera's next AI request for Priya is refused with `NO_AI_CONSENT`.
+Sign in as **Kavya Iyer (organization admin)**. The **Demo console** jumps the whole demo to a story day and sets the time of day. A reset signs everyone out.
+
+**Day 0 — the visit** (console: reset to day 0, time 11:00)
+1. **Dr. Meera Sharma** → open Ananya → **Prescribe** → Amoxicillin: the check shows her **penicillin allergy** and signing is blocked. Discard.
+2. **Prescribe** → Metformin 500 mg, after breakfast +15 min, 90 days, "Blood sugar", note "Take with food" → **Save draft and run checks** → read the instruction in English, Hindi and Telugu (built from reviewed templates, never AI) → tick "I have read…" → **Sign**. Doses start the next day.
+
+**Day 6 — first week** (reset to day 6, time 07:40)
+3. **Ananya Rao** (opens in Telugu): today's doses, the reminder on the **simulated phone**, **Read aloud**. Tap **Taken** on Telmisartan, snooze Metformin 30 min.
+4. **సహాయం కావాలి (Need help)**: 112 and 108 come first; then ask for a call-back about a side effect.
+5. **Ravi Kumar (care coordinator)**: the request is in the **Care queue** → **Log call**.
+
+**Day 42 — missed doses** (reset to day 42)
+6. Ravi's care queue shows the call-back the rule raised after two missed doses in a row; Dr. Meera's patient list flags "Missed doses".
+
+**Day 85 — new report** (reset to day 85)
+7. Ananya → Tests: **check the values read from the report** against the paper. Before she confirms, they are shown but left out of trends and the AI summary.
+
+**Day 88 — booking** (reset to day 88, time 18:00)
+8. Ananya → Appointments → **Approve this time**. Ravi → open Ananya → **Confirm**. It can never be confirmed without her approval.
+
+**Day 92 — follow-up visit** (reset to day 92)
+9. Ananya's home: HbA1c 7.4 → 6.8 %, weight 74.2 → 72.9 kg, steps 5,200 → 7,100, adherence 92 % (166 of 180), with a sentence that says these moved together, **not** that one caused the other.
+10. Dr. Meera → **Generate AI summary**: every line has sources; mark an observation **Noted** or **Dismiss** (audited, nothing clinical happens). **Download FHIR file** (tagged SYNTHETIC).
+11. Ananya → Profile → **Health record link (ABDM)**: clearly labelled **SIMULATED — not connected to ABDM**; link and preview what would be shared. Nothing is sent.
+12. Access control: **Dr. Arjun Reddy** gets an explained denial (`NO_CARE_RELATIONSHIP`); **Dr. Sameer Khan** (other organization) gets "not found"; **Priya Nair** can withdraw AI consent, after which AI requests for her are refused (`NO_AI_CONSENT`).
 
 ---
 

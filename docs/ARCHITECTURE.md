@@ -149,8 +149,10 @@ apps/web/src/app/            (built in the Phase 1 foundation; routes are not lo
 │   └── patient/[id]          what changed, AI brief, labs, medicines, history, timeline
 └── admin/dashboard           counts, members, audit, tenants (platform admins)
 
-Planned (not built yet): dose answering from the app, a demo console (scenario clock,
-reset, provider toggle), appointment requests.
+Phase 1 additions: today's doses with taken / skip / snooze and Need help, simulated
+phone, report value check, appointment approval and requests, prescribing with checks
+and signing, care queue, ABDM simulation, FHIR download, and the admin demo console
+(checkpoints, time of day, AI provider). The worker runs the dose engine every minute.
 ```
 
 ### 4.2 Rendering and data access

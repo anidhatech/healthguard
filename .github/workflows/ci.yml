@@ -1,0 +1,91 @@
+# HealthGuard CI: formatting, lint, typecheck, unit tests, AI safety evals,
+# integration tests against PostgreSQL and Redis, build, and a secret scan.
+# DEMO • SYNTHETIC HEALTH DATA • NOT FOR CLINICAL USE
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, typecheck, unit tests, AI evals, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm format:check
+      - run: pnpm lint
+      - run: pnpm typecheck
+      - run: pnpm test
+      - run: pnpm eval:ai
+      - run: pnpm build
+
+  integration:
+    name: Integration tests (PostgreSQL + Redis)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: healthguard
+          POSTGRES_PASSWORD: healthguard
+          POSTGRES_DB: healthguard_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U healthguard" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping" --health-interval 5s
+          --health-timeout 5s --health-retries 10
+    env:
+      # CI-only throwaway values for synthetic data; never real credentials.
+      DATABASE_URL: postgresql://healthguard:healthguard@localhost:5432/healthguard_test
+      TEST_DATABASE_URL: postgresql://healthguard:healthguard@localhost:5432/healthguard_test
+      REDIS_URL: redis://localhost:6379
+      DEMO_MODE: 'true'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm db:generate
+      - run: pnpm --filter @healthguard/shared --filter @healthguard/clinical --filter @healthguard/ai build
+      - name: Generate throwaway JWT keys for the test run
+        run: node scripts/setup-env.mjs
+      - run: pnpm db:migrate
+      - run: pnpm test:integration
+
+  secrets:
+    name: Secret scan (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

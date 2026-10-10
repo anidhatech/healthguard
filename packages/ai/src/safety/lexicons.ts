@@ -17,9 +17,19 @@ export const REQUEST_RULES: readonly RequestRule[] = [
     pattern: /\b(diagnos\w*|what (disease|condition) (does|do) (she|he|they|the patient) have)\b/i,
   },
   {
+    intent: 'DIAGNOSE',
+    pattern:
+      /\b(does|do|could|might|can) (she|he|they|the patient) (have|be suffering from)\b[^.?!]{0,40}\b(disease|disorder|condition|syndrome|nephropathy|neuropathy|retinopathy|failure|cancer|infection)\b/i,
+  },
+  {
     intent: 'PRESCRIBE',
     pattern:
       /\b(prescrib\w*|write (a |an )?(prescription|rx)|which (drug|medicine|medication) should)\b/i,
+  },
+  {
+    intent: 'PRESCRIBE',
+    pattern:
+      /\b(start|begin|switch|put|add|initiate)\b[^.?!]{0,30}\b(insulin|metformin|telmisartan|statin|medicat\w*|medicine|drug|tablets?|pills?)\b/i,
   },
   {
     intent: 'CHANGE_DOSAGE',
@@ -78,7 +88,7 @@ export const OUTPUT_RULES: readonly OutputRule[] = [
     id: 'TREATMENT_ACTION',
     description: 'Tells someone to start, stop or change a medicine or dose',
     pattern:
-      /\b(should|must|need to|recommend(ed)?|consider|advise[ds]?|suggest(ed)?)\b[^.]{0,40}\b(start|stop|increase|decrease|reduce|double|halve|discontinue|switch|titrate|add|change)\w*\b[^.]{0,30}\b(dose|dosage|medicat\w*|medicine|drug|tablets?|mg|insulin|metformin|telmisartan|treatment)\b|\b(increase|decrease|reduce|double|halve|discontinue|stop|titrate)\b\s+(the\s+)?(dose|dosage|metformin|telmisartan|insulin|medicat\w*)/i,
+      /\b(should|must|need to|recommend(ed)?|consider|advise[ds]?|suggest(ed)?)\b[^.]{0,40}\b(start|stop|increase|decrease|reduce|double|halve|discontinue|switch|titrate|add|change)\w*\b[^.]{0,30}\b(dose|dosage|medicat\w*|medicine|drug|tablets?|mg|insulin|metformin|telmisartan|treatment)\b|\b(increase|decrease|reduce|double|halve|discontinue|stop|titrate)\b\s+(the\s+)?(dose|dosage|metformin|telmisartan|insulin|medicat\w*)|^\s*(start|begin|add|switch to|initiate)\s+[^.]{0,20}\b(insulin|metformin|telmisartan|statin|medicat\w*|medicine|tablets?)\b/i,
   },
   {
     id: 'CAUSAL_WORDING',
@@ -90,7 +100,7 @@ export const OUTPUT_RULES: readonly OutputRule[] = [
     id: 'DIAGNOSTIC_STATEMENT',
     description: 'States or suggests a diagnosis',
     pattern:
-      /\b(diagnos\w*|likely has|probably has|suggests? (that )?(the patient|she|he) has|consistent with|indicative of|signs? of (a |an )?\w+ (disease|disorder|condition))\b/i,
+      /\b(diagnos\w*|likely has|probably has|suggests? (that )?(the patient|she|he) has|consistent with|indicative of|signs? of (a |an )?\w+ (disease|disorder|condition))\b|\b(she|he|they|the patient) (has|have) (a |an )?[\w -]{0,30}\b(disease|disorder|nephropathy|neuropathy|retinopathy|syndrome|failure|cancer)\b/i,
   },
   {
     id: 'EMERGENCY_CERTAINTY',

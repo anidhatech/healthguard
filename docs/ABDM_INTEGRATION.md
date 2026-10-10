@@ -240,9 +240,9 @@ export interface HealthRecordExchangePort {
 | Capability | Phase 1 demo: simulated | Phase 2: sandbox prototype | Phase 3+: real |
 |---|---|---|---|
 | ABHA verification | A fixture profile for Ananya with the address `ananya.demo@simulated`; no ABHA number is shown or stored | Sandbox test identities in a separate environment | Real verification; identifiers encrypted at rest |
-| Care-context linking | `POST /interop/abdm/simulated/link` derives care contexts from Ananya's encounters and shows them; nothing is sent | HIP-initiated and patient-initiated linking against the sandbox | Production |
-| Consent artefact | One fixture artefact from a fictional facility, used to walk through the checks in section 5; no `Consent` row is created | Sandbox artefacts mirrored as `Consent` rows | Production |
-| Record sharing | `POST /interop/abdm/simulated/share` runs the HIP checks and previews the Phase 1 FHIR export (base R4, tagged synthetic) as "what would be shared"; no encryption, nothing leaves | NRCeS bundles encrypted and pushed to sandbox HIUs | Production, after functional testing and the security audit |
+| Care-context linking | `POST /api/v1/patients/{id}/abdm-simulation/link` (patient only) derives care contexts from Ananya's encounters and shows them; nothing is sent | HIP-initiated and patient-initiated linking against the sandbox | Production |
+| Consent artefact | Not built in Phase 1: the patient's own HealthGuard consents govern the preview | Sandbox artefacts mirrored as `Consent` rows | Production |
+| Record sharing | `GET /api/v1/patients/{id}/abdm-simulation/share-preview` (patient only, after linking) runs the access checks and previews the Phase 1 FHIR export (base R4, tagged synthetic) as "what would be shared"; no encryption, nothing leaves | NRCeS bundles encrypted and pushed to sandbox HIUs | Production, after functional testing and the security audit |
 | Requesting records (HIU) | Not simulated | Not built | Sandbox in Phase 3; production in Phase 4 |
 | What is stored | Audit events only: a `READ` for the care-context list and an `EXPORT` with channel `ABDM_SIMULATED` for the preview | Sandbox environment data only | Full, per sections 3–5 |
 
