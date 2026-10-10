@@ -26,6 +26,8 @@ import { AuditModule } from './modules/audit/audit.controller.js';
 import { AuditCoreModule } from './modules/audit/audit.service.js';
 import { AuthGuard } from './modules/auth/auth.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
+import { CareTeamModule } from './modules/care-team/care-team.module.js';
+import { DosesModule } from './modules/doses/doses.module.js';
 import { CliniciansModule } from './modules/clinicians/clinicians.module.js';
 import { ConsentModule } from './modules/consent/consent.module.js';
 import { DemoModule } from './modules/demo/demo.module.js';
@@ -108,6 +110,8 @@ export class AppModule implements NestModule {
         RecordsModule,
         MedicationsModule,
         AdherenceModule,
+        DosesModule,
+        CareTeamModule,
         LabsModule,
         ActivityModule,
         AppointmentsModule,

@@ -12,6 +12,14 @@ export const PatientListQuerySchema = z.strictObject({
 export type PatientListQuery = z.infer<typeof PatientListQuerySchema>;
 
 /** One row of the clinician's patient list. Demographics only. */
+export const PATIENT_FLAGS = [
+  'MISSED_DOSES',
+  'CALLBACK_OPEN',
+  'LAB_TO_CONFIRM',
+  'APPOINTMENT_AWAITING_PATIENT',
+] as const;
+export type PatientFlag = (typeof PATIENT_FLAGS)[number];
+
 export const PatientListItemSchema = z.object({
   id: UuidSchema,
   displayName: z.string(),
@@ -22,6 +30,11 @@ export const PatientListItemSchema = z.object({
   primaryClinician: PersonRefSchema.nullable(),
   careRelationship: z.boolean(),
   isSynthetic: z.boolean(),
+  /**
+   * Calculated work-list flags, only for patients whose data the caller may
+   * see. They prompt a look; they are not clinical judgements.
+   */
+  flags: z.array(z.enum(PATIENT_FLAGS)),
 });
 export type PatientListItem = z.infer<typeof PatientListItemSchema>;
 

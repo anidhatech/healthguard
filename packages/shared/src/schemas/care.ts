@@ -64,3 +64,48 @@ export const ScheduleItemSchema = AppointmentViewSchema.extend({
   patient: z.object({ id: UuidSchema, displayName: z.string(), mrn: z.string() }),
 });
 export type ScheduleItem = z.infer<typeof ScheduleItemSchema>;
+
+/** Emergency numbers shown before any "Need help" form (India). */
+export const EMERGENCY_NUMBERS = [
+  { number: '112', label: 'National emergency' },
+  { number: '108', label: 'Ambulance' },
+] as const;
+
+export const HELP_REASONS = ['SIDE_EFFECT', 'MEDICINE_QUESTION', 'MISSED_DOSES', 'OTHER'] as const;
+
+/** "Need help": asks the care team to call back. Not an emergency channel. */
+export const HelpRequestSchema = z.strictObject({
+  reason: z.enum(HELP_REASONS),
+  doseId: UuidSchema.optional(),
+  note: z.string().trim().max(280).optional(),
+});
+export type HelpRequest = z.infer<typeof HelpRequestSchema>;
+
+export const HelpRequestResultSchema = z.object({
+  followUpId: UuidSchema,
+  status: z.string(),
+  dueDate: IsoDateSchema,
+  emergencyNumbers: z.array(z.object({ number: z.string(), label: z.string() })),
+  message: z.string(),
+});
+export type HelpRequestResult = z.infer<typeof HelpRequestResultSchema>;
+
+export const CareQueueItemSchema = z.object({
+  id: UuidSchema,
+  kind: z.literal('FACT'),
+  patient: z.object({ id: UuidSchema, displayName: z.string(), mrn: z.string() }),
+  type: z.string(),
+  origin: z.enum(['CLINICIAN', 'RULE', 'PATIENT_REQUEST']),
+  reason: z.string(),
+  status: z.string(),
+  dueDate: IsoDateSchema,
+  overdue: z.boolean(),
+  assignedTo: z.string().nullable(),
+  createdAt: IsoDateTimeSchema,
+});
+export type CareQueueItem = z.infer<typeof CareQueueItemSchema>;
+
+export const CompleteFollowUpSchema = z.strictObject({
+  outcome: z.enum(['CALLED_RESOLVED', 'CALLED_ESCALATED_TO_DOCTOR', 'NO_ANSWER_CLOSED']),
+});
+export type CompleteFollowUp = z.infer<typeof CompleteFollowUpSchema>;

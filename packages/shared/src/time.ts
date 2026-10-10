@@ -84,3 +84,11 @@ export function zonedDayStart(isoDate: string, timeZone: string): Date {
   const offset = timeZoneOffsetMinutes(utcMidnight, timeZone);
   return new Date(utcMidnight.getTime() - offset * 60_000);
 }
+
+/** The instant of a local wall-clock time (`HH:MM`) on a calendar day in a time zone. */
+export function zonedDateTime(isoDate: string, clock: string, timeZone: string): Date {
+  const [hours, minutes] = clock.split(':').map(Number);
+  const naive = parseIsoDate(isoDate).getTime() + ((hours ?? 0) * 60 + (minutes ?? 0)) * 60_000;
+  const offset = timeZoneOffsetMinutes(new Date(naive), timeZone);
+  return new Date(naive - offset * 60_000);
+}

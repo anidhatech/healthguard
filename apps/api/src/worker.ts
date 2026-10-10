@@ -1,13 +1,18 @@
 /**
- * Background worker (BullMQ on Redis). Phase 1 runs maintenance only:
- * expiring consents whose validity window has passed. Reminders, missed-dose
- * inference and notification delivery are the next phase.
+ * Background worker (BullMQ on Redis):
+ * - `dose-engine` every minute: creates today's doses from signed plans, sends
+ *   simulated phone reminders, infers missed doses and raises call-backs.
+ * - `expire-consents` hourly.
+ * Nothing here contacts an outside service; reminders go to the in-app
+ * simulated phone.
  */
 import { Queue, Worker, type Job } from 'bullmq';
 import { buildConfig } from './config/env.js';
 import { loadRootEnv } from './config/load-env.js';
 import { createPrismaClient } from './infrastructure/prisma/create-client.js';
+import { readDemoClock } from './infrastructure/clock/clock.service.js';
 import { auditContentHash } from './modules/audit/audit-hash.js';
+import { runDoseEngine } from './modules/doses/dose-engine.js';
 import { randomUUID } from 'node:crypto';
 
 const QUEUE = 'maintenance';
@@ -56,6 +61,7 @@ async function main(): Promise<void> {
     { every: 60 * 60 * 1000 },
     { name: 'expire-consents' },
   );
+  await queue.upsertJobScheduler('dose-engine', { every: 60 * 1000 }, { name: 'dose-engine' });
 
   const worker = new Worker(
     QUEUE,
@@ -63,6 +69,11 @@ async function main(): Promise<void> {
       switch (job.name) {
         case 'expire-consents':
           return { expired: await expireConsents(db) };
+        case 'dose-engine':
+          return runDoseEngine(db, {
+            demo: config.demoMode ? await readDemoClock(db) : null,
+            real: new Date(),
+          });
         default:
           return { skipped: job.name };
       }
@@ -73,7 +84,7 @@ async function main(): Promise<void> {
   worker.on('failed', (job, error) =>
     console.error(`[worker] ${job?.name ?? 'job'} failed: ${error.message}`),
   );
-  console.warn('[worker] maintenance worker started');
+  console.warn('[worker] started: dose-engine (every minute), expire-consents (hourly)');
 
   const shutdown = async () => {
     await worker.close();

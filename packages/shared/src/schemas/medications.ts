@@ -135,3 +135,42 @@ export const DoseEventViewSchema = z.object({
   missedInferred: z.boolean(),
 });
 export type DoseEventView = z.infer<typeof DoseEventViewSchema>;
+
+/** A dose due today, with the approved instruction in the reader's language. */
+export const TodayDoseViewSchema = DoseEventViewSchema.extend({
+  instruction: z.string().nullable(),
+  reminderCount: z.number().int(),
+  remindAt: IsoDateTimeSchema,
+  /** True when the signed-in user is this patient and the dose can still be answered. */
+  canRespond: z.boolean(),
+});
+export type TodayDoseView = z.infer<typeof TodayDoseViewSchema>;
+
+export const TodayDosesQuerySchema = z.strictObject({
+  locale: z.enum(SUPPORTED_LOCALES).optional(),
+});
+export type TodayDosesQuery = z.infer<typeof TodayDosesQuerySchema>;
+
+export const DoseParamsSchema = z.strictObject({
+  patientId: UuidSchema,
+  doseId: UuidSchema,
+});
+export type DoseParams = z.infer<typeof DoseParamsSchema>;
+
+export const SNOOZE_MINUTES = [10, 30, 60] as const;
+
+/** The patient's answer to a reminder. Only the patient can record it. */
+export const DoseResponseRequestSchema = z.discriminatedUnion('action', [
+  z.strictObject({ action: z.literal('TAKEN'), idempotencyKey: z.string().min(8).max(64) }),
+  z.strictObject({
+    action: z.literal('SKIPPED'),
+    idempotencyKey: z.string().min(8).max(64),
+    reason: z.enum(['FELT_UNWELL', 'RAN_OUT', 'FORGOT_TO_CARRY', 'OTHER']),
+  }),
+  z.strictObject({
+    action: z.literal('SNOOZED'),
+    idempotencyKey: z.string().min(8).max(64),
+    minutes: z.union([z.literal(10), z.literal(30), z.literal(60)]),
+  }),
+]);
+export type DoseResponseRequest = z.infer<typeof DoseResponseRequestSchema>;

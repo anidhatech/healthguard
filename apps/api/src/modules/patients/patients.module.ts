@@ -7,6 +7,7 @@ import {
   resolveLocale,
   type PatientIdParams,
   type PatientListItem,
+  type PatientFlag,
   type PatientListQuery,
   type PatientProfileView,
 } from '@healthguard/shared';
@@ -23,7 +24,9 @@ import { zod } from '../../common/zod.pipe.js';
 import { ClockService } from '../../infrastructure/clock/clock.service.js';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { AccessService } from '../consent/access.service.js';
 import { PatientAccessService } from '../consent/patient-access.service.js';
+import { MISSED_RUN_FOR_CALLBACK } from '../doses/dose-engine.js';
 
 @ApiTags('patients')
 @Controller({ path: 'patients', version: '1' })
@@ -33,6 +36,7 @@ export class PatientsController {
     private readonly patientAccess: PatientAccessService,
     private readonly audit: AuditService,
     private readonly clock: ClockService,
+    private readonly access: AccessService,
   ) {}
 
   @Get()
@@ -74,6 +78,11 @@ export class PatientsController {
         })
       : [];
     const seen = new Set(encounters.map((row) => row.patientProfileId));
+    const flags = await this.flags(
+      actor,
+      organizationId,
+      rows.map((row) => row.id),
+    );
     const today = new Date(`${await this.clock.today()}T00:00:00Z`);
     const items = rows.map((row) => ({
       id: row.id,
@@ -89,6 +98,7 @@ export class PatientsController {
         Boolean(actor.clinicianId) &&
         (row.primaryClinicianId === actor.clinicianId || seen.has(row.id)),
       isSynthetic: row.isSynthetic,
+      flags: flags.get(row.id) ?? [],
     }));
     await this.audit.record({
       actor,
@@ -100,6 +110,77 @@ export class PatientsController {
       metadata: { count: items.length, searched: Boolean(search) },
     });
     return query.scope === 'my-care' ? items.filter((item) => item.careRelationship) : items;
+  }
+
+  /**
+   * Work-list flags, computed only for patients whose adherence and care-plan
+   * data the caller is allowed to see.
+   */
+  private async flags(
+    actor: ActorContext,
+    organizationId: string,
+    patientIds: string[],
+  ): Promise<Map<string, PatientFlag[]>> {
+    const result = new Map<string, PatientFlag[]>();
+    const scoped = this.prisma.tenant(organizationId);
+    for (const patientId of patientIds) {
+      const [adherence, carePlan, labs, appointments] = await Promise.all([
+        this.access.decide(actor, patientId, 'ADHERENCE'),
+        this.access.decide(actor, patientId, 'CARE_PLAN'),
+        this.access.decide(actor, patientId, 'LABS'),
+        this.access.decide(actor, patientId, 'APPOINTMENTS'),
+      ]);
+      const list: PatientFlag[] = [];
+      if (adherence.allowed) {
+        const plans = await scoped.medicationPlan.findMany({
+          where: { patientProfileId: patientId, status: 'ACTIVE' },
+          select: { id: true },
+        });
+        for (const plan of plans) {
+          const recent = await scoped.medicationDoseEvent.findMany({
+            where: { medicationPlanId: plan.id, status: { in: ['TAKEN', 'SKIPPED', 'MISSED'] } },
+            orderBy: { scheduledAt: 'desc' },
+            take: MISSED_RUN_FOR_CALLBACK,
+            select: { status: true },
+          });
+          if (
+            recent.length === MISSED_RUN_FOR_CALLBACK &&
+            recent.every((dose) => dose.status === 'MISSED')
+          ) {
+            list.push('MISSED_DOSES');
+            break;
+          }
+        }
+      }
+      if (carePlan.allowed) {
+        const open = await scoped.followUp.count({
+          where: {
+            patientProfileId: patientId,
+            type: 'CALLBACK',
+            status: { in: ['PLANNED', 'DUE', 'OVERDUE'] },
+          },
+        });
+        if (open > 0) list.push('CALLBACK_OPEN');
+      }
+      if (labs.allowed) {
+        const unconfirmed = await scoped.labResult.count({
+          where: {
+            patientProfileId: patientId,
+            recordSource: 'DOCUMENT_EXTRACTION',
+            verification: 'UNVERIFIED',
+          },
+        });
+        if (unconfirmed > 0) list.push('LAB_TO_CONFIRM');
+      }
+      if (appointments.allowed) {
+        const proposed = await scoped.appointment.count({
+          where: { patientProfileId: patientId, status: 'PROPOSED' },
+        });
+        if (proposed > 0) list.push('APPOINTMENT_AWAITING_PATIENT');
+      }
+      result.set(patientId, list);
+    }
+    return result;
   }
 
   @Get(':patientId')

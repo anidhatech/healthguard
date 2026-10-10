@@ -17,6 +17,30 @@ type Template = Record<SupportedLocale, { title: string; body: string }>;
 
 /** Reviewed notification templates. Parameters are inserted, never generated. */
 export const NOTIFICATION_TEMPLATES: Record<string, Template> = {
+  'dose.reminder': {
+    'en-IN': {
+      title: 'Medicine reminder',
+      body: 'Time for {medication} ({time}). Open HealthGuard to mark it taken, skipped or snooze.',
+    },
+    'hi-IN': {
+      title: 'दवा की याद',
+      body: '{medication} लेने का समय ({time})। ली, छोड़ी या बाद में याद दिलाएँ — HealthGuard में बताएँ।',
+    },
+    'te-IN': {
+      title: 'మందుల గుర్తు',
+      body: '{medication} తీసుకునే సమయం ({time}). తీసుకున్నారా, వదిలేశారా లేదా తర్వాత గుర్తు చేయాలా — HealthGuard‌లో తెలపండి.',
+    },
+  },
+  'care.callback_requested': {
+    'en-IN': { title: 'Call-back requested', body: 'A patient asked the care team to call back. See the care queue.' },
+    'hi-IN': { title: 'कॉल-बैक का अनुरोध', body: 'एक मरीज़ ने केयर टीम से कॉल-बैक माँगा है। केयर क्यू देखें।' },
+    'te-IN': { title: 'కాల్-బ్యాక్ అభ్యర్థన', body: 'ఒక రోగి కేర్ టీమ్ నుండి కాల్-బ్యాక్ కోరారు. కేర్ క్యూ చూడండి.' },
+  },
+  'care.callback_missed_doses': {
+    'en-IN': { title: 'Missed doses: call-back due', body: 'Doses were recorded as missed twice in a row. See the care queue.' },
+    'hi-IN': { title: 'छूटी खुराकें: कॉल-बैक करें', body: 'लगातार दो खुराकें छूटी दर्ज हुई हैं। केयर क्यू देखें।' },
+    'te-IN': { title: 'తప్పిన మోతాదులు: కాల్-బ్యాక్', body: 'వరుసగా రెండు మోతాదులు తప్పినట్లు నమోదైంది. కేర్ క్యూ చూడండి.' },
+  },
   'lab.result_available': {
     'en-IN': {
       title: 'New lab result',
