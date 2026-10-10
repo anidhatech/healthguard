@@ -7,6 +7,7 @@ import {
   resolveLocale,
   type MedicationCatalogueItem,
   type MedicationCatalogueQuery,
+  type MedicationInstructionView,
   type MedicationPlansQuery,
   type MedicationPlanView,
   type PatientIdParams,
@@ -26,11 +27,20 @@ import {
   strength,
 } from '../../common/mapping.js';
 import { zod } from '../../common/zod.pipe.js';
+import type {
+  ClinicianProfile,
+  Medication,
+  MedicationInstruction,
+  MedicationPlan,
+  PatientProfile,
+} from '../../generated/prisma/client.js';
 import { PrismaService } from '../../infrastructure/prisma/prisma.service.js';
 import { PatientAccessService } from '../consent/patient-access.service.js';
+import { toPlanView } from './plan-view.js';
+import { PrescribingController } from './prescribing.controller.js';
 
-export const SYNTHETIC_PLAN_NOTICE =
-  'Synthetic demo plan. Real generic medicine used for realism; not a prescription and not medical advice.';
+export { SYNTHETIC_PLAN_NOTICE } from './plan-view.js';
+
 
 @ApiTags('medications')
 @Controller({ version: '1' })
@@ -95,59 +105,9 @@ export class MedicationsController {
       },
       orderBy: [{ status: 'asc' }, { startDate: 'desc' }],
     });
-    return rows.map((row) => {
-      const instruction = row.instructions[0];
-      return {
-        id: row.id,
-        kind: 'FACT',
-        provenance: provenance(row),
-        medication: {
-          id: row.medication.id,
-          genericName: row.medication.genericName,
-          strength: strength(row.medication),
-          form: row.medication.form,
-        },
-        doseQuantity: num(row.doseQuantity) ?? 0,
-        doseUnit: row.doseUnit,
-        route: row.route,
-        frequency: row.frequency,
-        period: row.period,
-        periodUnit: row.periodUnit,
-        timingEvents: row.timingEvents,
-        timingOffsetMinutes: row.timingOffsetMinutes,
-        timesOfDay: row.timesOfDay,
-        asNeeded: row.asNeeded,
-        durationDays: row.durationDays,
-        startDate: dateOnly(row.startDate),
-        endDate: dateOnlyOrNull(row.endDate),
-        indication: row.indication,
-        specialInstructions: row.specialInstructions,
-        status: row.status,
-        version: row.version,
-        signedAt: isoOrNull(row.signedAt),
-        prescriber: row.prescriber
-          ? { id: row.prescriber.id, displayName: row.prescriber.displayName }
-          : null,
-        instruction: instruction
-          ? {
-              id: instruction.id,
-              locale: resolveLocale(instruction.locale),
-              doseText: instruction.doseText,
-              notesText: instruction.notesText,
-              method: instruction.method,
-              templateKey: instruction.templateKey,
-              status: instruction.status,
-              approvedAt: isoOrNull(instruction.approvedAt),
-            }
-          : null,
-        syntheticNotice:
-          row.recordSource === 'SYNTHETIC_SEED' || patient.isSynthetic
-            ? SYNTHETIC_PLAN_NOTICE
-            : null,
-      };
-    });
+    return rows.map((row) => toPlanView(row, row.instructions[0] ?? null, patient));
   }
 }
 
-@Module({ controllers: [MedicationsController] })
+@Module({ controllers: [MedicationsController, PrescribingController] })
 export class MedicationsModule {}

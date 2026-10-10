@@ -53,6 +53,37 @@ const TIMING_PHRASES: Record<string, { withOffset?: PhraseTable; plain: PhraseTa
       'te-IN': 'ఉదయం టిఫిన్ చేయడానికి ముందు',
     },
   },
+  PCV: {
+    withOffset: {
+      'en-IN': '{offset} minutes after dinner',
+      'hi-IN': 'रात का खाना खाने के {offset} मिनट बाद',
+      'te-IN': 'రాత్రి భోజనం చేసిన {offset} నిమిషాల తర్వాత',
+    },
+    plain: {
+      'en-IN': 'after dinner',
+      'hi-IN': 'रात का खाना खाने के बाद',
+      'te-IN': 'రాత్రి భోజనం చేసిన తర్వాత',
+    },
+  },
+  ACV: {
+    withOffset: {
+      'en-IN': '{offset} minutes before dinner',
+      'hi-IN': 'रात का खाना खाने से {offset} मिनट पहले',
+      'te-IN': 'రాత్రి భోజనం చేయడానికి {offset} నిమిషాల ముందు',
+    },
+    plain: {
+      'en-IN': 'before dinner',
+      'hi-IN': 'रात का खाना खाने से पहले',
+      'te-IN': 'రాత్రి భోజనం చేయడానికి ముందు',
+    },
+  },
+  HS: {
+    plain: {
+      'en-IN': 'at bedtime',
+      'hi-IN': 'सोने से पहले',
+      'te-IN': 'నిద్రపోయే ముందు',
+    },
+  },
   MORN: {
     plain: {
       'en-IN': 'in the morning',
@@ -162,4 +193,58 @@ export function checkInstructionPreservation(
     problems.push('duration missing');
   }
   return { passed: problems.length === 0, problems };
+}
+
+/** Timing events the reviewed template covers (the prescribing form offers only these). */
+export const SUPPORTED_TIMING_EVENTS = Object.keys(TIMING_PHRASES);
+
+/** Timing events that accept a minutes offset in the reviewed phrases. */
+export const OFFSET_TIMING_EVENTS = Object.entries(TIMING_PHRASES)
+  .filter(([, phrases]) => Boolean(phrases.withOffset))
+  .map(([event]) => event);
+
+/**
+ * Reviewed note phrases a prescriber can add to an instruction. They are
+ * chosen, never typed, so every language says the same thing; no model
+ * translates them.
+ */
+export const NOTE_PHRASES = {
+  SWALLOW_WHOLE: {
+    'en-IN': 'Swallow whole with water. Do not crush or chew.',
+    'hi-IN': 'पानी के साथ पूरी निगलें। तोड़ें या चबाएँ नहीं।',
+    'te-IN': 'నీటితో మొత్తంగా మింగండి. నలపవద్దు, నమలవద్దు.',
+  },
+  WITH_FOOD: {
+    'en-IN': 'Take with food.',
+    'hi-IN': 'खाने के साथ लें।',
+    'te-IN': 'ఆహారంతో పాటు తీసుకోండి.',
+  },
+  EMPTY_STOMACH: {
+    'en-IN': 'Take on an empty stomach.',
+    'hi-IN': 'खाली पेट लें।',
+    'te-IN': 'ఖాళీ కడుపుతో తీసుకోండి.',
+  },
+  DO_NOT_STOP: {
+    'en-IN': 'Do not stop this medicine without talking to your doctor.',
+    'hi-IN': 'डॉक्टर से बात किए बिना यह दवा बंद न करें।',
+    'te-IN': 'డాక్టర్‌తో మాట్లాడకుండా ఈ మందు ఆపవద్దు.',
+  },
+  REPORT_SIDE_EFFECTS: {
+    'en-IN': 'If you feel unwell after taking it, use "Need help" or call the clinic.',
+    'hi-IN': 'लेने के बाद तबीयत ठीक न लगे तो "मदद चाहिए" दबाएँ या क्लिनिक को फ़ोन करें।',
+    'te-IN': 'తీసుకున్న తర్వాత ఆరోగ్యం బాగోలేకపోతే "సహాయం కావాలి" నొక్కండి లేదా క్లినిక్‌కు ఫోన్ చేయండి.',
+  },
+} as const satisfies Record<string, PhraseTable>;
+export type NotePhraseKey = keyof typeof NOTE_PHRASES;
+export const NOTE_PHRASE_KEYS = Object.keys(NOTE_PHRASES) as NotePhraseKey[];
+
+/** The reviewed notes for a plan, joined in the order the prescriber chose. */
+export function renderNotePhrases(
+  keys: readonly string[],
+  locale: InstructionLocale,
+): string | null {
+  const parts = keys
+    .filter((key): key is NotePhraseKey => key in NOTE_PHRASES)
+    .map((key) => NOTE_PHRASES[key][locale]);
+  return parts.length ? parts.join(' ') : null;
 }

@@ -174,3 +174,64 @@ export const DoseResponseRequestSchema = z.discriminatedUnion('action', [
   }),
 ]);
 export type DoseResponseRequest = z.infer<typeof DoseResponseRequestSchema>;
+
+// ---------------------------------------------------------------------------
+// Prescribing (doctor). Drafts are checked, then signed by the prescriber.
+// ---------------------------------------------------------------------------
+
+export const PRESCRIBABLE_TIMINGS = ['MORN', 'ACM', 'PCM', 'ACV', 'PCV', 'HS'] as const;
+export const NOTE_PHRASE_CODES = [
+  'SWALLOW_WHOLE',
+  'WITH_FOOD',
+  'EMPTY_STOMACH',
+  'DO_NOT_STOP',
+  'REPORT_SIDE_EFFECTS',
+] as const;
+
+export const DraftPlanRequestSchema = z.strictObject({
+  medicationId: UuidSchema,
+  doseQuantity: z.number().positive().max(4).multipleOf(0.5),
+  timingEvent: z.enum(PRESCRIBABLE_TIMINGS),
+  timingOffsetMinutes: z.number().int().min(0).max(60).nullable(),
+  durationDays: z.number().int().min(1).max(365).nullable(),
+  indication: z.string().trim().min(2).max(80),
+  notePhrases: z.array(z.enum(NOTE_PHRASE_CODES)).max(5).default([]),
+  /** The active plan this one replaces (a dose change is a new version). */
+  replacesPlanId: UuidSchema.optional(),
+  encounterId: UuidSchema.optional(),
+});
+export type DraftPlanRequest = z.infer<typeof DraftPlanRequestSchema>;
+
+export const PlanParamsSchema = z.strictObject({
+  patientId: UuidSchema,
+  planId: UuidSchema,
+});
+export type PlanParams = z.infer<typeof PlanParamsSchema>;
+
+export const PlanCheckSchema = z.object({
+  code: z.enum(['ALLERGY_CONFLICT', 'DUPLICATE_ACTIVE', 'INSTRUCTION_TEMPLATE', 'PRESERVATION']),
+  severity: z.enum(['BLOCK', 'WARN', 'PASS']),
+  message: z.string(),
+});
+export type PlanCheck = z.infer<typeof PlanCheckSchema>;
+
+export const PlanReviewSchema = z.object({
+  plan: MedicationPlanViewSchema,
+  checks: z.array(PlanCheckSchema),
+  instructions: z.array(MedicationInstructionViewSchema),
+  canSign: z.boolean(),
+  /** Always shown: the app checks a short list of rules; it is not a full drug-interaction check. */
+  limitations: z.string(),
+});
+export type PlanReview = z.infer<typeof PlanReviewSchema>;
+
+export const SignPlanRequestSchema = z.strictObject({
+  /** The prescriber has read the instruction in every language. */
+  instructionsReviewed: z.literal(true),
+});
+export type SignPlanRequest = z.infer<typeof SignPlanRequestSchema>;
+
+export const StopPlanRequestSchema = z.strictObject({
+  reason: z.enum(['COURSE_NOT_NEEDED', 'SIDE_EFFECT_REPORTED', 'CHANGED_TREATMENT', 'ENTERED_IN_ERROR']),
+});
+export type StopPlanRequest = z.infer<typeof StopPlanRequestSchema>;
