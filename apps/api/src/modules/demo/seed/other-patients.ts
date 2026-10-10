@@ -1,4 +1,4 @@
-import type { Prisma } from '../../src/generated/prisma/client.js';
+import type { Prisma } from '../../../generated/prisma/client.js';
 import { insertConsent, insertDailyDoses, insertPlan, SYNTHETIC, type SeedDb } from './helpers.js';
 import { CLINICIAN, ORG, PATIENT, ROUTINES, USER } from './people.js';
 import { LAB_TESTS, labTestId } from './reference-data.js';
@@ -21,10 +21,10 @@ const ALL_CATEGORIES = [
 ] as const;
 
 /** Rahul Mehta: hypertension, Dr. Arjun Reddy's patient, Hindi. No AI consent. */
-async function seedRahul(db: SeedDb): Promise<void> {
+async function seedRahul(db: SeedDb, until: number): Promise<void> {
   const org = ORG.hdmc;
   const patientId = PATIENT.rahul;
-  const encounterId = seedId('encounter:rahul:30');
+  const encounterId = seedId('encounter:rahul:-60');
   await db.encounter.create({
     data: {
       id: encounterId,
@@ -34,8 +34,8 @@ async function seedRahul(db: SeedDb): Promise<void> {
       type: 'OUTPATIENT',
       status: 'COMPLETED',
       reasonForVisit: 'Blood pressure review',
-      startedAt: at(30, '12:00'),
-      endedAt: at(30, '12:20'),
+      startedAt: at(-60, '12:00'),
+      endedAt: at(-60, '12:20'),
       recordedByUserId: USER.arjun,
       ...SYNTHETIC,
     },
@@ -64,7 +64,7 @@ async function seedRahul(db: SeedDb): Promise<void> {
     timing: 'MORN',
     offsetMinutes: null,
     durationDays: null,
-    startDay: 31,
+    startDay: -59,
     status: 'ACTIVE',
     indication: 'Blood pressure',
     approvedByUserId: USER.arjun,
@@ -78,21 +78,21 @@ async function seedRahul(db: SeedDb): Promise<void> {
     routine: ROUTINES.rahul,
     timing: 'MORN',
     offsetMinutes: null,
-    startDay: 31,
-    days: 61,
+    startDay: -59,
+    days: until + 59,
     outcome: (day) => (day % 9 === 0 ? 'MISSED' : 'TAKEN'),
     seed: 41,
   });
   const random = prng(42);
   const vitals: Prisma.VitalCreateManyInput[] = [];
-  for (let day = 30; day <= 91; day += 7) {
+  for (let day = -60; day <= until; day += 7) {
     vitals.push({
       id: seedId(`vital:rahul:bp:${day}`),
       organizationId: org,
       patientProfileId: patientId,
       type: 'BLOOD_PRESSURE',
-      value: Math.round(146 - (day - 30) / 6 + random() * 4),
-      value2: Math.round(92 - (day - 30) / 10 + random() * 3),
+      value: Math.round(146 - (day + 60) / 10 + random() * 4),
+      value2: Math.round(92 - (day + 60) / 16 + random() * 3),
       unit: 'mmHg',
       measuredAt: at(day, '07:00'),
       ...SYNTHETIC,
@@ -101,7 +101,7 @@ async function seedRahul(db: SeedDb): Promise<void> {
   await db.vital.createMany({ data: vitals });
   await db.labResult.create({
     data: {
-      id: seedId('lab:rahul:creatinine:30'),
+      id: seedId('lab:rahul:creatinine:-60'),
       organizationId: org,
       patientProfileId: patientId,
       labTestId: labTestId('CREATININE'),
@@ -111,44 +111,46 @@ async function seedRahul(db: SeedDb): Promise<void> {
       referenceLow: LAB_TESTS.CREATININE.referenceLow,
       referenceHigh: LAB_TESTS.CREATININE.referenceHigh,
       interpretation: 'NORMAL',
-      effectiveAt: at(30, '09:00'),
+      effectiveAt: at(-60, '09:00'),
       ...SYNTHETIC,
     },
   });
-  await db.appointment.create({
-    data: {
-      id: seedId('appointment:rahul:92'),
-      organizationId: org,
-      patientProfileId: patientId,
-      clinicianId: CLINICIAN.arjun,
-      status: 'CONFIRMED',
-      startAt: at(92, '11:30'),
-      endAt: at(92, '11:50'),
-      reason: 'Blood pressure follow-up',
-      proposedAt: at(84, '10:00'),
-      patientApprovedAt: at(84, '18:00'),
-      patientApprovedByUserId: USER.rahul,
-      confirmedAt: at(85, '09:00'),
-      confirmedByUserId: USER.ravi,
-    },
-  });
+  if (until >= 85) {
+    await db.appointment.create({
+      data: {
+        id: seedId('appointment:rahul:92'),
+        organizationId: org,
+        patientProfileId: patientId,
+        clinicianId: CLINICIAN.arjun,
+        status: 'CONFIRMED',
+        startAt: at(92, '11:30'),
+        endAt: at(92, '11:50'),
+        reason: 'Blood pressure follow-up',
+        proposedAt: at(84, '10:00'),
+        patientApprovedAt: at(84, '18:00'),
+        patientApprovedByUserId: USER.rahul,
+        confirmedAt: at(84, '19:00'),
+        confirmedByUserId: USER.ravi,
+      },
+    });
+  }
   await insertConsent(db, {
     key: 'rahul:consultation',
     organizationId: org,
     patientId,
     purpose: 'CONSULTATION',
     categories: [...ALL_CATEGORIES],
-    grantedDay: 30,
+    grantedDay: -60,
     validDays: 365,
     locale: 'hi-IN',
   });
 }
 
 /** Priya Nair: hypothyroidism, short history, English. Has AI consent. */
-async function seedPriya(db: SeedDb): Promise<void> {
+async function seedPriya(db: SeedDb, until: number): Promise<void> {
   const org = ORG.hdmc;
   const patientId = PATIENT.priya;
-  const encounterId = seedId('encounter:priya:60');
+  const encounterId = seedId('encounter:priya:-30');
   await db.encounter.create({
     data: {
       id: encounterId,
@@ -158,8 +160,8 @@ async function seedPriya(db: SeedDb): Promise<void> {
       type: 'TELECONSULT',
       status: 'COMPLETED',
       reasonForVisit: 'Thyroid results review',
-      startedAt: at(60, '17:00'),
-      endedAt: at(60, '17:15'),
+      startedAt: at(-30, '17:00'),
+      endedAt: at(-30, '17:15'),
       recordedByUserId: USER.meera,
       ...SYNTHETIC,
     },
@@ -173,7 +175,7 @@ async function seedPriya(db: SeedDb): Promise<void> {
       codeSystem: 'ICD-10',
       code: 'E03.9',
       display: 'Hypothyroidism, unspecified',
-      onsetDate: dayDate(60),
+      onsetDate: dayDate(-30),
       verification: 'CLINICIAN_VERIFIED',
       ...SYNTHETIC,
     },
@@ -188,7 +190,7 @@ async function seedPriya(db: SeedDb): Promise<void> {
     timing: 'ACM',
     offsetMinutes: 30,
     durationDays: null,
-    startDay: 61,
+    startDay: -29,
     status: 'ACTIVE',
     indication: 'Thyroid',
     approvedByUserId: USER.meera,
@@ -202,14 +204,14 @@ async function seedPriya(db: SeedDb): Promise<void> {
     routine: ROUTINES.priya,
     timing: 'ACM',
     offsetMinutes: 30,
-    startDay: 61,
-    days: 31,
-    outcome: (day) => (day === 75 ? 'SKIPPED' : 'TAKEN'),
+    startDay: -29,
+    days: until + 29,
+    outcome: (day) => (day === -15 || day === 75 ? 'SKIPPED' : 'TAKEN'),
     seed: 51,
   });
   await db.labResult.create({
     data: {
-      id: seedId('lab:priya:tsh:58'),
+      id: seedId('lab:priya:tsh:-32'),
       organizationId: org,
       patientProfileId: patientId,
       labTestId: labTestId('TSH'),
@@ -218,7 +220,7 @@ async function seedPriya(db: SeedDb): Promise<void> {
       referenceLow: LAB_TESTS.TSH.referenceLow,
       referenceHigh: LAB_TESTS.TSH.referenceHigh,
       interpretation: 'HIGH',
-      effectiveAt: at(58, '08:30'),
+      effectiveAt: at(-32, '08:30'),
       ...SYNTHETIC,
     },
   });
@@ -231,10 +233,11 @@ async function seedPriya(db: SeedDb): Promise<void> {
       type: 'REPEAT_TEST',
       origin: 'CLINICIAN',
       reason: 'Repeat TSH after 6 weeks',
-      dueDate: dayDate(103),
-      windowStart: dayDate(100),
-      windowEnd: dayDate(110),
-      status: 'PLANNED',
+      dueDate: dayDate(12),
+      windowStart: dayDate(10),
+      windowEnd: dayDate(20),
+      status: until >= 13 ? 'COMPLETED' : until >= 10 ? 'DUE' : 'PLANNED',
+      completedAt: until >= 13 ? at(12, '09:00') : null,
       createdByUserId: USER.meera,
     },
   });
@@ -244,7 +247,7 @@ async function seedPriya(db: SeedDb): Promise<void> {
     patientId,
     purpose: 'CONSULTATION',
     categories: [...ALL_CATEGORIES],
-    grantedDay: 60,
+    grantedDay: -30,
     validDays: 365,
     locale: 'en-IN',
   });
@@ -263,7 +266,7 @@ async function seedPriya(db: SeedDb): Promise<void> {
       'VITALS',
       'ACTIVITY',
     ],
-    grantedDay: 60,
+    grantedDay: -30,
     validDays: 365,
     locale: 'en-IN',
   });
@@ -275,21 +278,21 @@ async function seedKiran(db: SeedDb): Promise<void> {
   const patientId = PATIENT.kiran;
   await db.encounter.create({
     data: {
-      id: seedId('encounter:kiran:50'),
+      id: seedId('encounter:kiran:-40'),
       organizationId: org,
       patientProfileId: patientId,
       clinicianId: CLINICIAN.sameer,
       type: 'OUTPATIENT',
       status: 'COMPLETED',
       reasonForVisit: 'Annual check-up',
-      startedAt: at(50, '09:30'),
-      endedAt: at(50, '09:50'),
+      startedAt: at(-40, '09:30'),
+      endedAt: at(-40, '09:50'),
       ...SYNTHETIC,
     },
   });
   await db.labResult.create({
     data: {
-      id: seedId('lab:kiran:hba1c:50'),
+      id: seedId('lab:kiran:hba1c:-40'),
       organizationId: org,
       patientProfileId: patientId,
       labTestId: labTestId('HBA1C'),
@@ -298,7 +301,7 @@ async function seedKiran(db: SeedDb): Promise<void> {
       referenceLow: 4,
       referenceHigh: 5.6,
       interpretation: 'NORMAL',
-      effectiveAt: at(50, '08:30'),
+      effectiveAt: at(-40, '08:30'),
       ...SYNTHETIC,
     },
   });
@@ -308,14 +311,15 @@ async function seedKiran(db: SeedDb): Promise<void> {
     patientId,
     purpose: 'CONSULTATION',
     categories: [...ALL_CATEGORIES],
-    grantedDay: 50,
+    grantedDay: -40,
     validDays: 365,
     locale: 'hi-IN',
   });
 }
 
-export async function seedOtherPatients(db: SeedDb): Promise<void> {
-  await seedRahul(db);
-  await seedPriya(db);
+/** The other patients' histories mostly predate day 0, so every checkpoint shows them. */
+export async function seedOtherPatients(db: SeedDb, until: number): Promise<void> {
+  await seedRahul(db, until);
+  await seedPriya(db, until);
   await seedKiran(db);
 }

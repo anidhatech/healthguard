@@ -11,8 +11,8 @@ import type {
   DoseStatus,
   EventTiming,
   Prisma,
-} from '../../src/generated/prisma/client.js';
-import { auditContentHash } from '../../src/modules/audit/audit-hash.js';
+} from '../../../generated/prisma/client.js';
+import { auditContentHash } from '../../audit/audit-hash.js';
 import { MEDICATIONS, medicationId, purposeId, type MedicationKey } from './reference-data.js';
 import { at, calendarDate, dayDate, prng, seedId } from './scenario.js';
 

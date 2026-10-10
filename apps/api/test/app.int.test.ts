@@ -14,7 +14,7 @@ import { configureApp } from '../src/bootstrap/configure-app.js';
 import { buildConfig } from '../src/config/env.js';
 import { loadRootEnv } from '../src/config/load-env.js';
 import { createPrismaClient } from '../src/infrastructure/prisma/create-client.js';
-import { PATIENT, seedDemoData } from '../prisma/seed/run.js';
+import { PATIENT, seedDemoData } from '../src/modules/demo/seed/run.js';
 
 loadRootEnv();
 const DATABASE_URL =

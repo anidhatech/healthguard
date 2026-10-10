@@ -1,5 +1,5 @@
 import { averageOverWindow, calculateAdherence } from '@healthguard/clinical';
-import type { DbClient } from '../../src/infrastructure/prisma/create-client.js';
+import type { DbClient } from '../../../infrastructure/prisma/create-client.js';
 import { HERO, seedAnanya } from './ananya.js';
 import { insertAuditEvents, type SeedDb } from './helpers.js';
 import { seedOtherPatients } from './other-patients.js';
@@ -177,10 +177,22 @@ const TABLES = [
  * Resets the database to the demo scenario. Refuses to run if any
  * non-demo organization exists, so it can never wipe real tenants.
  */
+/** Story days the demo console can jump to. Day 92 is the default demo day. */
+export const DEMO_CHECKPOINTS = [0, 6, 42, 85, 88, 92] as const;
+export type DemoCheckpoint = (typeof DEMO_CHECKPOINTS)[number];
+
+export function isDemoCheckpoint(day: number): day is DemoCheckpoint {
+  return (DEMO_CHECKPOINTS as readonly number[]).includes(day);
+}
+
 export async function seedDemoData(
   db: DbClient,
-  options: { passwordHash: string },
-): Promise<HeroNumbers> {
+  options: { passwordHash: string; checkpointDay?: number },
+): Promise<HeroNumbers | null> {
+  const until = options.checkpointDay ?? TODAY_OFFSET_DAYS;
+  if (!isDemoCheckpoint(until)) {
+    throw new Error(`Unknown demo checkpoint ${String(until)}; use one of ${DEMO_CHECKPOINTS.join(', ')}.`);
+  }
   const realTenants = await db.organization.count({ where: { isDemo: false } });
   if (realTenants > 0) {
     throw new Error(
@@ -194,14 +206,14 @@ export async function seedDemoData(
       );
       await seedReferenceData(tx);
       await seedPeople(tx, options.passwordHash);
-      await seedAnanya(tx);
-      await seedOtherPatients(tx);
+      await seedAnanya(tx, until);
+      await seedOtherPatients(tx, until);
       await tx.systemSetting.create({
         data: {
           key: 'demo.clock',
           value: {
             anchorDay0: ANCHOR_DAY0,
-            offsetDays: TODAY_OFFSET_DAYS,
+            offsetDays: until,
             timezone: DEMO_TIMEZONE,
           },
         },
@@ -210,7 +222,7 @@ export async function seedDemoData(
         {
           key: 'demo-reset',
           organizationId: null,
-          day: TODAY_OFFSET_DAYS,
+          day: until,
           clock: '07:00',
           actorUserId: null,
           actorRoles: ['SYSTEM'],
@@ -218,9 +230,11 @@ export async function seedDemoData(
           action: 'DEMO_RESET',
           resourceType: 'Database',
           resourceId: null,
-          metadata: { anchorDay0: ANCHOR_DAY0 },
+          metadata: { anchorDay0: ANCHOR_DAY0, checkpointDay: until },
         },
       ]);
+      // The hero numbers describe day 92; earlier checkpoints are partial stories.
+      if (until !== TODAY_OFFSET_DAYS) return null;
       const measured = await measureHeroNumbers(tx);
       assertHeroNumbers(measured);
       return measured;

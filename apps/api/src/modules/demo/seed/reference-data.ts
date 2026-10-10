@@ -4,7 +4,7 @@ import type {
   DoseForm,
   MemberRole,
   Route,
-} from '../../src/generated/prisma/client.js';
+} from '../../../generated/prisma/client.js';
 import { seedId } from './scenario.js';
 
 /** Real generic medicines, used in a synthetic scenario. Not prescriptions. */

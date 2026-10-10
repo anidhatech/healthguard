@@ -1,5 +1,5 @@
 import { DEMO_ORGANIZATIONS } from '@healthguard/shared';
-import type { MemberRole } from '../../src/generated/prisma/client.js';
+import type { MemberRole } from '../../../generated/prisma/client.js';
 import type { SeedDb } from './helpers.js';
 import { at, calendarAt, seedId } from './scenario.js';
 

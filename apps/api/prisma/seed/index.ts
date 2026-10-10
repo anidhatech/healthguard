@@ -7,7 +7,7 @@ import { fileURLToPath } from 'node:url';
 import { hash } from '@node-rs/argon2';
 import { DEMO_DATA_NOTICE } from '@healthguard/shared';
 import { createPrismaClient } from '../../src/infrastructure/prisma/create-client.js';
-import { seedDemoData } from './run.js';
+import { seedDemoData } from '../../src/modules/demo/seed/run.js';
 
 export const DEFAULT_DEMO_PASSWORD = 'HealthGuard-Demo-2026';
 
@@ -26,12 +26,11 @@ async function main(): Promise<void> {
   try {
     const passwordHash = await hash(process.env.DEMO_ACCOUNT_PASSWORD ?? DEFAULT_DEMO_PASSWORD);
     const started = Date.now();
-    const hero = await seedDemoData(db, { passwordHash });
+    const checkpointDay = Number(process.env.DEMO_CHECKPOINT_DAY ?? '92');
+    const hero = await seedDemoData(db, { passwordHash, checkpointDay });
     console.warn(`[seed] ${DEMO_DATA_NOTICE}`);
-    console.warn(
-      `[seed] Demo data ready in ${Date.now() - started} ms. Hero numbers verified:`,
-      hero,
-    );
+    console.warn(`[seed] Demo data ready at day ${checkpointDay} in ${Date.now() - started} ms.`);
+    if (hero) console.warn('[seed] Hero numbers verified:', hero);
   } finally {
     await db.$disconnect();
   }
