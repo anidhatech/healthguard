@@ -1,7 +1,7 @@
 # ABDM integration plan — HealthGuard
 
-> **Status:** decision 1 agreed; decision 2 open. Configuration and the ABDM client are written and unit-tested. No sandbox call has been made.
-> **Updated:** 2026-11-18 · **Steps done:** 2 of 17 (12%)
+> **Status:** decision 1 agreed; decision 2 open. Configuration and the ABDM client are written and unit-tested. The sandbox has not answered yet: it blocks the cloud session's network (step 5).
+> **Updated:** 2026-11-18 · **Steps done:** 3 of 17 (18%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
 
@@ -56,8 +56,8 @@ Decision 1 is agreed. Decision 2 blocks patient registration (step 6) and every 
 | 1 | Install the skill and set up `abdm-ft/` | Skill files in the repository; workbook and scripts copied; the workbook check exits 0 | done | Commit `99ce544`; `abdm_env.py workbook` exit 0, 2026-11-18 |
 | 2 | Survey the codebase and write this plan | Every row of section 2 names a path or "none, add at" | done | This file, 2026-11-18 |
 | 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | blocked | Decision 1 agreed 2026-11-18. Question: do you agree with decision 2 as proposed? |
-| 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; the owner has set `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings | in progress | Settings added to `apps/api/src/config/env.ts` and `.env.example`; unit tests pass, 2026-11-18. Credentials not yet set |
-| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | pending | Code and 15 unit tests written in `apps/api/src/modules/abdm/`, 2026-11-18. Exit condition not yet observed: needs the credentials from step 4 |
+| 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; the owner has set `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings | done | Settings in `apps/api/src/config/env.ts` and `.env.example`; both variables present in the cloud environment, 2026-11-18 |
+| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | blocked | Code and 15 unit tests in `apps/api/src/modules/abdm/`. Smoke check `pnpm --filter @healthguard/api abdm:smoke` run 2026-11-18 from the cloud session: the sandbox's CDN answered 403 "Request blocked" before the request reached ABDM (request `3c43ca6c-9d38-44d9-8278-caae5c787a23`; the session's network leaves from the US). Question: can you run the smoke check from a machine in India? |
 | 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | pending | |
 | 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | pending | |
 | 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | pending | |

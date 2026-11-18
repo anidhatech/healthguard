@@ -16,6 +16,7 @@
     "db:migrate:dev": "prisma migrate dev",
     "db:seed": "tsx prisma/seed/index.ts",
     "db:reset": "prisma migrate reset --force",
+    "abdm:smoke": "tsx src/modules/abdm/abdm-smoke.ts",
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc-watch -p tsconfig.build.json --onSuccess \"node --enable-source-maps dist/main.js\"",
     "start": "node --enable-source-maps dist/main.js",
