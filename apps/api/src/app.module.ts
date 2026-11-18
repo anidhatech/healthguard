@@ -18,6 +18,7 @@ import { APP_CONFIG, type AppConfig } from './config/env.js';
 import { ClockModule } from './infrastructure/clock/clock.service.js';
 import { PrismaModule } from './infrastructure/prisma/prisma.service.js';
 import { RedisModule } from './infrastructure/redis/redis.service.js';
+import { AbdmModule } from './modules/abdm/abdm.module.js';
 import { ActivityModule } from './modules/activity/activity.module.js';
 import { AdherenceModule } from './modules/adherence/adherence.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
@@ -99,6 +100,7 @@ export class AppModule implements NestModule {
         RedisModule,
         ClockModule,
         AuditCoreModule,
+        AbdmModule,
         AuthModule,
         ConsentModule,
         HealthModule,

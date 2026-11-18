@@ -1,6 +1,6 @@
 # ABDM integration plan — HealthGuard
 
-> **Status:** proposed, waiting for the owner's agreement. No application code has changed and no sandbox call has been made.
+> **Status:** decision 1 agreed; decision 2 open. Configuration and the ABDM client are written and unit-tested. No sandbox call has been made.
 > **Updated:** 2026-11-18 · **Steps done:** 2 of 17 (12%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
@@ -13,7 +13,7 @@
 | Entity type | Private |
 | Role | Health information provider (HIP) front desk: create, verify and receive ABHA profiles at registration |
 | Module and skill | M1 → `abdm-m1` |
-| Sandbox credentials | The owner holds them; requested through the secure credential form when step 4 is due, never in chat |
+| Sandbox credentials | The owner holds them and enters them as `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings, never in chat. They travel in a request body, so they must be environment variables |
 | In scope | Functionalities 1–7 in the tracker below (32 mandatory cases, 1 of them conditional) |
 | Optional, not in scope | Update mobile, read ABHA QR, face, fingerprint or iris routes, driving licence. Added only by a "yes" in section 3 or on request |
 | Not applicable | Demographic authentication and benefit lookup (government only) |
@@ -40,9 +40,9 @@ Read from the tree on 2026-11-18, not from the documents.
 
 ## 3. Decisions needed from the owner
 
-The plan is `blocked` on the first two. The rest can be answered when their step is reached.
+Decision 1 is agreed. Decision 2 blocks patient registration (step 6) and every journey after it. The rest can be answered when their step is reached.
 
-1. **Aadhaar handling.** `docs/ABDM_INTEGRATION.md` §3.1 says HealthGuard verifies an ABHA but never creates one and never asks for an Aadhaar number. The private-entity mandatory cases require creating an ABHA by Aadhaar OTP and logging in by Aadhaar OTP, so the desk must collect an Aadhaar number. Proposed: accept it, encrypt it in the API with ABDM's public key, forward it, and never store or log it; then update §3.1. **Agree?**
+1. **Aadhaar handling.** `docs/ABDM_INTEGRATION.md` §3.1 says HealthGuard verifies an ABHA but never creates one and never asks for an Aadhaar number. The private-entity mandatory cases require creating an ABHA by Aadhaar OTP and logging in by Aadhaar OTP, so the desk must collect an Aadhaar number. Proposed: accept it, encrypt it in the API with ABDM's public key, forward it, and never store or log it; then update §3.1. **Agreed by the owner, 2026-11-18.** §3.1 is updated.
 2. **Where real identities live.** Demo organizations accept only synthetic patients, and the sandbox journeys need a real Aadhaar holder. Proposed: a separate non-demo organization in a separate environment with `DEMO_MODE=false`, as the roadmap's Phase 2 requires. **Agree?**
 3. **Who works the counter.** Proposed: the care coordinator role, with a new "Register patient" screen.
 4. **Deployment questions** (each "yes" adds an optional route): Does the record hold the patient's mobile at check-in? Is there a fingerprint or iris reader at the desk? Do patients arrive with the ABHA app? Do you create ABHAs from a driving licence?
@@ -55,9 +55,9 @@ The plan is `blocked` on the first two. The rest can be answered when their step
 |---|---|---|---|---|
 | 1 | Install the skill and set up `abdm-ft/` | Skill files in the repository; workbook and scripts copied; the workbook check exits 0 | done | Commit `99ce544`; `abdm_env.py workbook` exit 0, 2026-11-18 |
 | 2 | Survey the codebase and write this plan | Every row of section 2 names a path or "none, add at" | done | This file, 2026-11-18 |
-| 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | blocked | Question: do you agree with decisions 1 and 2 as proposed? |
-| 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; credentials saved through the secure form | pending | |
-| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | pending | |
+| 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | blocked | Decision 1 agreed 2026-11-18. Question: do you agree with decision 2 as proposed? |
+| 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; the owner has set `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings | in progress | Settings added to `apps/api/src/config/env.ts` and `.env.example`; unit tests pass, 2026-11-18. Credentials not yet set |
+| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | pending | Code and 15 unit tests written in `apps/api/src/modules/abdm/`, 2026-11-18. Exit condition not yet observed: needs the credentials from step 4 |
 | 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | pending | |
 | 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | pending | |
 | 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | pending | |
@@ -80,9 +80,9 @@ All new unless marked.
 | Touchpoint | File |
 |---|---|
 | Settings | `apps/api/src/config/env.ts` (existing), `.env.example` (existing) |
-| HTTP client, request ids, timestamps | `apps/api/src/modules/abdm/abdm-http.client.ts` |
-| Gateway session token and cache | `apps/api/src/modules/abdm/abdm-session.service.ts` |
-| Public certificate and field encryption | `apps/api/src/modules/abdm/abdm-crypto.ts` |
+| HTTP client, request ids, timestamps | `apps/api/src/modules/abdm/abdm-http.client.ts` (written) |
+| Gateway session token and cache | `apps/api/src/modules/abdm/abdm-session.service.ts` (written) |
+| Public certificate and field encryption | `apps/api/src/modules/abdm/abdm-crypto.ts` (written) |
 | M1 journeys (create, login, find, profile, card) | `apps/api/src/modules/abdm/abha.service.ts`, `abha.controller.ts` |
 | Scan-and-share callback receiver | `apps/api/src/modules/abdm/abdm-callback.controller.ts` |
 | Shared request and response schemas | `packages/shared/src/schemas/abdm.ts` |

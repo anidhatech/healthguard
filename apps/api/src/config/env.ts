@@ -55,7 +55,15 @@ export const EnvSchema = z
       .default('info'),
     LOG_PRETTY: bool.default(false),
     SWAGGER_ENABLED: bool.optional(),
-    ABDM_ADAPTER: z.enum(['disabled', 'sandbox-mock']).default('disabled'),
+    // `sandbox-mock` is the labelled in-app simulation (no network). `sandbox`
+    // is the real adapter against the ABDM sandbox and is refused in demo mode.
+    ABDM_ADAPTER: z.enum(['disabled', 'sandbox-mock', 'sandbox']).default('disabled'),
+    ABDM_CLIENT_ID: z.string().optional(),
+    ABDM_CLIENT_SECRET: z.string().optional(),
+    ABDM_GATEWAY_URL: z.url().default('https://dev.abdm.gov.in'),
+    ABDM_ABHA_URL: z.url().default('https://abhasbx.abdm.gov.in'),
+    ABDM_CM_ID: z.string().min(1).default('sbx'),
+    ABDM_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(30_000),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.DEMO_MODE && !env.ALLOW_DEMO_IN_PRODUCTION) {
@@ -75,6 +83,23 @@ export const EnvSchema = z
         path: ['ANTHROPIC_API_KEY'],
         message: 'AI_PROVIDER=anthropic needs ANTHROPIC_API_KEY (or AI_FALLBACK_TO_DEMO=true)',
       });
+    }
+    if (env.ABDM_ADAPTER === 'sandbox') {
+      if (!env.ABDM_CLIENT_ID || !env.ABDM_CLIENT_SECRET) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ABDM_CLIENT_ID'],
+          message: 'ABDM_ADAPTER=sandbox needs ABDM_CLIENT_ID and ABDM_CLIENT_SECRET',
+        });
+      }
+      if (env.DEMO_MODE) {
+        ctx.addIssue({
+          code: 'custom',
+          path: ['ABDM_ADAPTER'],
+          message:
+            'ABDM_ADAPTER=sandbox cannot run with DEMO_MODE=true: demo data is synthetic only',
+        });
+      }
     }
     if (Boolean(env.JWT_PRIVATE_KEY) !== Boolean(env.JWT_PUBLIC_KEY)) {
       ctx.addIssue({
