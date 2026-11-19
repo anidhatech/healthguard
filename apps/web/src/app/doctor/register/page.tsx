@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { PageHeader } from '@/components/layout/page-header';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import { ErrorState } from '@/components/ui/states';
 import { api } from '@/lib/api';
 import { useAction } from '@/lib/queries';
@@ -80,108 +80,120 @@ export default function RegisterPatientPage() {
           </div>
         </Card>
       ) : (
-        <Card>
-          <form
-            className="grid gap-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              register.mutate({
-                givenName: givenName.trim(),
-                ...(familyName.trim() ? { familyName: familyName.trim() } : {}),
-                dateOfBirth,
-                sex,
-                ...(phone.trim() ? { phone: phone.replace(/[\s-]+/g, '') } : {}),
-                preferredLocale: locale,
-              });
-            }}
-          >
-            <div className="grid items-start gap-4 sm:grid-cols-2">
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('givenName')}</span>
-                <input
-                  required
-                  maxLength={100}
-                  autoComplete="off"
-                  value={givenName}
-                  onChange={(event) => setGivenName(event.target.value)}
-                  className={FIELD}
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('familyName')}</span>
-                <input
-                  maxLength={100}
-                  autoComplete="off"
-                  value={familyName}
-                  onChange={(event) => setFamilyName(event.target.value)}
-                  className={FIELD}
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('dateOfBirth')}</span>
-                <input
-                  required
-                  type="date"
-                  max={today}
-                  value={dateOfBirth}
-                  onChange={(event) => setDateOfBirth(event.target.value)}
-                  className={FIELD}
-                />
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('sex')}</span>
-                <select
-                  value={sex}
-                  onChange={(event) => setSex(event.target.value as (typeof SEXES)[number])}
-                  className={FIELD}
-                >
-                  {SEXES.map((value) => (
-                    <option key={value} value={value}>
-                      {t(`sexes.${value}`)}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('phone')}</span>
-                <input
-                  type="tel"
-                  inputMode="tel"
-                  autoComplete="off"
-                  pattern="\+?[0-9\s\-]{10,20}"
-                  value={phone}
-                  onChange={(event) => setPhone(event.target.value)}
-                  aria-describedby="register-phone-hint"
-                  className={FIELD}
-                />
-                <span id="register-phone-hint" className="text-xs text-muted">
-                  {t('phoneHint')}
-                </span>
-              </label>
-              <label className="grid gap-1 text-sm">
-                <span className="font-medium">{t('language')}</span>
-                <select
-                  value={locale}
-                  onChange={(event) => setLocale(event.target.value as SupportedLocale)}
-                  className={FIELD}
-                >
-                  {SUPPORTED_LOCALES.map((value) => (
-                    <option key={value} value={value}>
-                      {LOCALE_LABELS[value].native}
-                    </option>
-                  ))}
-                </select>
-              </label>
-            </div>
-            <p className="text-xs text-muted">{t('abhaNote')}</p>
-            {register.error ? <ErrorState error={register.error} /> : null}
-            <div>
-              <Button type="submit" disabled={register.isPending}>
-                {t('submit')}
-              </Button>
-            </div>
-          </form>
-        </Card>
+        <>
+          <Card>
+            <CardHeader
+              title={t('abhaTitle')}
+              subtitle={t('abhaNote')}
+              action={
+                <Button asChild variant="secondary">
+                  <Link href="/doctor/abha/create">{t('createAbha')}</Link>
+                </Button>
+              }
+            />
+          </Card>
+          <Card>
+            <form
+              className="grid gap-4"
+              onSubmit={(event) => {
+                event.preventDefault();
+                register.mutate({
+                  givenName: givenName.trim(),
+                  ...(familyName.trim() ? { familyName: familyName.trim() } : {}),
+                  dateOfBirth,
+                  sex,
+                  ...(phone.trim() ? { phone: phone.replace(/[\s-]+/g, '') } : {}),
+                  preferredLocale: locale,
+                });
+              }}
+            >
+              <div className="grid items-start gap-4 sm:grid-cols-2">
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('givenName')}</span>
+                  <input
+                    required
+                    maxLength={100}
+                    autoComplete="off"
+                    value={givenName}
+                    onChange={(event) => setGivenName(event.target.value)}
+                    className={FIELD}
+                  />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('familyName')}</span>
+                  <input
+                    maxLength={100}
+                    autoComplete="off"
+                    value={familyName}
+                    onChange={(event) => setFamilyName(event.target.value)}
+                    className={FIELD}
+                  />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('dateOfBirth')}</span>
+                  <input
+                    required
+                    type="date"
+                    max={today}
+                    value={dateOfBirth}
+                    onChange={(event) => setDateOfBirth(event.target.value)}
+                    className={FIELD}
+                  />
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('sex')}</span>
+                  <select
+                    value={sex}
+                    onChange={(event) => setSex(event.target.value as (typeof SEXES)[number])}
+                    className={FIELD}
+                  >
+                    {SEXES.map((value) => (
+                      <option key={value} value={value}>
+                        {t(`sexes.${value}`)}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('phone')}</span>
+                  <input
+                    type="tel"
+                    inputMode="tel"
+                    autoComplete="off"
+                    pattern="\+?[0-9\s\-]{10,20}"
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                    aria-describedby="register-phone-hint"
+                    className={FIELD}
+                  />
+                  <span id="register-phone-hint" className="text-xs text-muted">
+                    {t('phoneHint')}
+                  </span>
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('language')}</span>
+                  <select
+                    value={locale}
+                    onChange={(event) => setLocale(event.target.value as SupportedLocale)}
+                    className={FIELD}
+                  >
+                    {SUPPORTED_LOCALES.map((value) => (
+                      <option key={value} value={value}>
+                        {LOCALE_LABELS[value].native}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              {register.error ? <ErrorState error={register.error} /> : null}
+              <div>
+                <Button type="submit" disabled={register.isPending}>
+                  {t('submit')}
+                </Button>
+              </div>
+            </form>
+          </Card>
+        </>
       )}
     </div>
   );

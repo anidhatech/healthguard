@@ -128,3 +128,46 @@ describe('problem types', () => {
     expect(problemType('ACCESS_DENIED')).toBe('https://healthguard.example/problems/access-denied');
   });
 });
+
+describe('ABHA helpers', () => {
+  it('checks each ABHA address rule on its own', async () => {
+    const { abhaAddressRules } = await import('./schemas/abha.js');
+    const met = (handle: string) =>
+      Object.fromEntries(abhaAddressRules(handle, '@sbx').map((rule) => [rule.key, rule.met]));
+    expect(met('test.person')).toEqual({
+      length: true,
+      characters: true,
+      specials: true,
+      edges: true,
+    });
+    expect(met('abc')).toMatchObject({ length: false });
+    expect(met('abcdefghijklmnop')).toMatchObject({ length: false });
+    expect(met('test person!')).toMatchObject({ characters: false });
+    expect(met('a.b.c_d')).toMatchObject({ specials: false });
+    expect(met('a_b_c.d')).toMatchObject({ specials: false });
+    expect(met('.test')).toMatchObject({ edges: false });
+    expect(met('test_')).toMatchObject({ edges: false });
+    expect(met('')).toMatchObject({ edges: false, characters: false });
+  });
+
+  it('masks an Aadhaar number to its last four digits', async () => {
+    const { maskAadhaar } = await import('./schemas/abha.js');
+    expect(maskAadhaar('000011112222')).toBe('XXXX XXXX 2222');
+    expect(maskAadhaar('12345')).toBe('XXXXX');
+  });
+
+  it('shows the consent declarations to a private entity without the word government', async () => {
+    const consent = await import('./abha-consent.js');
+    expect(consent.ABHA_DECLARATIONS.map((item) => item.key)).toEqual([
+      'aadhaarSharing',
+      'otherDocument',
+      'recordsLinking',
+      'recordsSharing',
+      'anonymizedUse',
+    ]);
+    expect(JSON.stringify(consent.ABHA_DECLARATIONS)).not.toMatch(/government/i);
+    expect(consent.ABHA_TERMS_AND_CONDITIONS.startsWith('I, hereby declare')).toBe(true);
+    expect(consent.abhaWorkerConfirmation('A B')).toContain('I, A B, confirm');
+    expect(consent.abhaBeneficiaryConfirmation('C D')).toContain('I, C D, have been explained');
+  });
+});
