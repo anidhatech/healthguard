@@ -1,0 +1,5 @@
+# Findings reviewed and confirmed not to be secrets. One fingerprint per line.
+
+# A made-up sign-in password for a test-only user that the integration test
+# creates and deletes in the test database. Not a credential for any system.
+0147e209081b5d43df057d7a9de8860bc0e102be:apps/api/test/abha-enrolment.int.test.ts:generic-api-key:20

@@ -17,7 +17,8 @@ import { db, EMAIL, resetTo, signIn, startApp, type Session } from './harness.js
 const CLINIC = '019f0000-0000-7000-8000-0000000ab4a0';
 const DESK_USER = '019f0000-0000-7000-8000-0000000ab4a1';
 const OTHER_USER = '019f0000-0000-7000-8000-0000000ab4a2';
-const PASSWORD = 'Abha-Journey-Test-2026';
+// Test-only, for a user this file creates and deletes. Same value as the registration test.
+const PASSWORD = 'Registration-Test-2026';
 const AADHAAR = '000000000000';
 const ABHA_NUMBER = '91-0000-0000-0042';
 const LINKED_MOBILE = '0000000042';
