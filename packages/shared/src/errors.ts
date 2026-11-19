@@ -19,6 +19,7 @@ export const ERROR_CODES = [
   'AI_TASK_NOT_AVAILABLE',
   'NOT_IMPLEMENTED',
   'SERVICE_UNAVAILABLE',
+  'ABDM_REFUSED',
   'INTERNAL_ERROR',
 ] as const;
 export type ErrorCode = (typeof ERROR_CODES)[number];

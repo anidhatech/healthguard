@@ -739,6 +739,7 @@ model PatientProfile {
 
   @@unique([organizationId, id])
   @@unique([organizationId, mrn])
+  @@unique([organizationId, abhaNumber])
   @@unique([organizationId, abhaAddress])
   @@index([userId])
 }

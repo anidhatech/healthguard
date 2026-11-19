@@ -11,3 +11,6 @@ test-results
 docs
 packages/ai/prompts
 packages/ai/fixtures
+.claude
+abdm-ft
+INTEGRATION-PLAN.md

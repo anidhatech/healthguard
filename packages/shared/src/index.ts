@@ -14,5 +14,7 @@ export * from './schemas/common.js';
 export * from './schemas/consent.js';
 export * from './schemas/medications.js';
 export * from './schemas/organizations.js';
+export * from './abha-consent.js';
+export * from './schemas/abha.js';
 export * from './schemas/patients.js';
 export * from './schemas/system.js';

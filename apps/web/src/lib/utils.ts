@@ -42,3 +42,23 @@ export function readCookie(name: string): string | null {
   const match = document.cookie.split('; ').find((part) => part.startsWith(`${name}=`));
   return match ? decodeURIComponent(match.slice(name.length + 1)) : null;
 }
+
+/**
+ * Whether the "DEMO • SYNTHETIC HEALTH DATA" notice applies. It stays on before
+ * sign-in and for anyone in a demo organization, and comes off only when the
+ * signed-in person is working in an organization that holds real records.
+ */
+export function showsDemoNotice(
+  session:
+    | {
+        activeOrganization: { isDemo: boolean } | null;
+        patientProfiles: { organization: { isDemo: boolean } }[];
+      }
+    | null
+    | undefined,
+): boolean {
+  if (!session) return true;
+  if (session.activeOrganization) return session.activeOrganization.isDemo;
+  if (session.patientProfiles.length === 0) return true;
+  return session.patientProfiles.some((profile) => profile.organization.isDemo);
+}

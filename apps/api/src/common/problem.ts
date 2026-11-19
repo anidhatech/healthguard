@@ -64,6 +64,12 @@ export const Problems = {
     new ProblemException('AI_REQUEST_PROHIBITED', 422, 'AI request refused', { reason, detail }),
   aiNotAvailable: (detail: string) =>
     new ProblemException('AI_TASK_NOT_AVAILABLE', 422, 'AI task not available', { detail }),
+  /** ABDM said no. Its own message is passed on unchanged, never reworded. */
+  abdmRefused: (message: string | null, code: string | null) =>
+    new ProblemException('ABDM_REFUSED', 422, 'ABDM refused the request', {
+      detail: message ?? 'ABDM refused the request and gave no reason.',
+      ...(code ? { reason: code } : {}),
+    }),
   serviceUnavailable: (detail: string) =>
     new ProblemException('SERVICE_UNAVAILABLE', 503, 'Service unavailable', { detail }),
 };

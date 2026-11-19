@@ -1,0 +1,1281 @@
+{
+ "module": "m1",
+ "skill": "abdm-m1",
+ "generated": "by scripts/build-skills.mjs from catalogue/hiecm/tests/m1.yaml and each functionality file. Do not edit by hand.",
+ "functionalities": [
+  {
+   "id": "create-abha-aadhaar-otp",
+   "order": 1,
+   "title": "Create ABHA by Aadhaar OTP",
+   "group": "ABHA creation through Aadhaar OTP",
+   "applies": "all",
+   "file": "references/functionalities/create-abha-aadhaar-otp.md",
+   "cases": [
+    "CRT_ABHA_101",
+    "CRT_ABHA_104",
+    "CRT_ABHA_102",
+    "CRT_ABHA_103",
+    "CRT_ABHA_105",
+    "CRT_ABHA_106",
+    "CRT_ABHA_107",
+    "CRT_ABHA_108",
+    "CRT_ABHA_109",
+    "CRT_ABHA_112",
+    "CRT_ABHA_113",
+    "CRT_ABHA_114",
+    "CRT_ABHA_115",
+    "CRT_ABHA_116"
+   ],
+   "titles": {
+    "CRT_ABHA_101": "Create ABHA Option",
+    "CRT_ABHA_104": "Aadhaar Collection and Error Handling",
+    "CRT_ABHA_102": "Consent collection",
+    "CRT_ABHA_103": "Consent collection should be multilingual",
+    "CRT_ABHA_105": "Aadhaar OTP Collection",
+    "CRT_ABHA_106": "Resend OTP",
+    "CRT_ABHA_107": "OTP based Aadhaar Authentication",
+    "CRT_ABHA_108": "Communication Mobile Number Verification – I",
+    "CRT_ABHA_109": "Communication Mobile Number verification-II",
+    "CRT_ABHA_112": "Suggested ABHA Address",
+    "CRT_ABHA_113": "Display of ABHA Number",
+    "CRT_ABHA_114": "View and Download ABHA details. (If integrators is generating ABHA card)",
+    "CRT_ABHA_115": "View and Download ABHA details. (If integrators is not generating ABHA card)",
+    "CRT_ABHA_116": "Returning patient"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Show the terms and conditions word for word, with nothing cut, and require an explicit \"I agree\" before the Aadhaar number is sent",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "Each of the five declarations of the consent language has its own checkbox. In an Aadhaar flow the second one, creation with a document other than Aadhaar, is left unchecked; checking it leads to creation by driving licence",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "The healthcare worker's confirmation names the person logged in to your system, filled from that login. The beneficiary's confirmation shows the patient's name dynamically, from what the screen already holds. Nobody types either name",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "A private entity removes the word \"government\" from the consent language. A government entity shows it as written",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "Nothing is sent until the terms are agreed and the declarations and both confirmations are in. Store who agreed, who confirmed and when, against the patient",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "Offering the consent in a language other than English is optional, and is what CRT_ABHA_103, an optional case, tests. Where you offer it, the screen has a language choice and the text in another language is the facility's approved translation, loaded as supplied and never machine translated",
+     "cases": [
+      "CRT_ABHA_103"
+     ]
+    },
+    {
+     "requirement": "`enrol/byAadhaar` carries the `consent` block with `code` `abha-enrollment` and `version` `1.4`, which records agreement to the terms and conditions",
+     "cases": [
+      "CRT_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "Registration offers \"Create ABHA\", with Aadhaar OTP as a method",
+     "cases": [
+      "CRT_ABHA_101"
+     ]
+    },
+    {
+     "requirement": "The Aadhaar field takes 12 digits and nothing else. Fewer or more digits, a letter or a special character shows \"Aadhaar Number is not valid\" on the screen, and no call is sent. Show the number masked once it is entered",
+     "cases": [
+      "CRT_ABHA_104"
+     ]
+    },
+    {
+     "requirement": "The OTP screen names where the OTP went with the masked mobile the `request/otp` response carries in `message`, as the sheet writes it, `*******XXXX`. Never a mobile your system typed in",
+     "cases": [
+      "CRT_ABHA_105"
+     ]
+    },
+    {
+     "requirement": "The OTP field takes six digits and nothing else. The verify button enables itself once six digits are in",
+     "cases": [
+      "CRT_ABHA_105",
+      "CRT_ABHA_107"
+     ]
+    },
+    {
+     "requirement": "An incomplete, wrong or expired OTP shows the message ABDM returned, as it came. On every M1 screen, a message ABDM returns is never replaced by your own wording. The fixed texts the cases quote, such as \"Aadhaar Number is not valid\" or the not found message of VRFY_ABHA_303, are your product's own and are shown as the cases write them",
+     "cases": [
+      "CRT_ABHA_105",
+      "CRT_ABHA_107",
+      "VRFY_ABHA_307",
+      "VRFY_ABHA_402"
+     ]
+    },
+    {
+     "requirement": "A wrong OTP keeps the transaction. The person enters the OTP again on the same screen, and the retry carries the same `txnId`. They never re-enter the Aadhaar number, and the right OTP then succeeds. This holds on every OTP screen in M1",
+     "cases": [
+      "CRT_ABHA_107",
+      "VRFY_ABHA_201",
+      "VRFY_ABHA_307",
+      "VRFY_ABHA_402"
+     ]
+    },
+    {
+     "requirement": "Resend stays disabled for 60 seconds after each send, and enables itself after that",
+     "cases": [
+      "CRT_ABHA_106",
+      "CRT_ABHA_109",
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201",
+      "VRFY_ABHA_405"
+     ]
+    },
+    {
+     "requirement": "At most two resends. A third attempt does not call ABDM and shows \"Maximum OTP resend attempts reached. Please try again after 30 mins\". Only the Resend control counts toward this limit. A second press of Send OTP is not a resend",
+     "cases": [
+      "CRT_ABHA_106",
+      "VRFY_ABHA_304",
+      "VRFY_ABHA_405"
+     ]
+    },
+    {
+     "requirement": "The tester note asks that the \"OTP Counter should be visible\". A Resend control that does nothing visible gives the person no answer at all",
+     "cases": [
+      "CRT_ABHA_106",
+      "VRFY_ABHA_405"
+     ]
+    },
+    {
+     "requirement": "A resend reuses the `txnId` of the first send",
+     "cases": [
+      "CRT_ABHA_106"
+     ]
+    },
+    {
+     "requirement": "A communication mobile that is the Aadhaar linked one goes straight on to creation, with no second OTP",
+     "cases": [
+      "CRT_ABHA_108"
+     ]
+    },
+    {
+     "requirement": "A different one is verified by OTP, with the resend and wrong OTP rules above",
+     "cases": [
+      "CRT_ABHA_109"
+     ]
+    },
+    {
+     "requirement": "The communication mobile, whichever it is, is the one the ABHA card and profile show",
+     "cases": [
+      "CRT_ABHA_109"
+     ]
+    },
+    {
+     "requirement": "`isNew` `false` is not a stop and not an error screen. Carry on from that response exactly as for a new account",
+     "cases": [
+      "CRT_ABHA_112",
+      "CRT_ABHA_113",
+      "CRT_ABHA_114"
+     ]
+    },
+    {
+     "requirement": "Show the profile from `ABHAProfile`, the card with `tokens.token` as `X-token`, and the address step with the same `txnId`",
+     "cases": [
+      "CRT_ABHA_112",
+      "CRT_ABHA_113",
+      "CRT_ABHA_114"
+     ]
+    },
+    {
+     "requirement": "The address step stays open for an existing account. A person can create more than one ABHA address for the same ABHA number, so never refuse a new one because one exists, and never state a limit",
+     "cases": [
+      "CRT_ABHA_112"
+     ]
+    },
+    {
+     "requirement": "Show at least three suggestions from `enrol/suggestion` to pick from",
+     "cases": [
+      "CRT_ABHA_112"
+     ]
+    },
+    {
+     "requirement": "Offer a free field for an address of the person's own, with the rules printed beside it: 8 to 18 characters including `@sbx` or `@abdm`, letters and digits, at most one dot and one underscore, neither first nor last. Each rule shows green when met and red when not",
+     "cases": [
+      "CRT_ABHA_112"
+     ]
+    },
+    {
+     "requirement": "An address already in use shows \"ABHA address already exists.\" with two choices: go on with the existing address, or create a new one",
+     "cases": [
+      "CRT_ABHA_112"
+     ]
+    },
+    {
+     "requirement": "After creation, show the 14 digit ABHA number and the ABHA address together with the profile details",
+     "cases": [
+      "CRT_ABHA_113"
+     ]
+    },
+    {
+     "requirement": "Show the ABHA card as the API returned it, and let the person download it. A non-KYC ABHA address cannot download a card; say so rather than showing a broken one",
+     "cases": [
+      "CRT_ABHA_114"
+     ]
+    },
+    {
+     "requirement": "A system that prints its own programme or scheme card instead prints the ABHA number and the ABHA address on it, both required",
+     "cases": [
+      "CRT_ABHA_115"
+     ]
+    },
+    {
+     "requirement": "Before registering, search your own records by mobile, name, gender and age, and by your own beneficiary id when one is given. A full match links this visit to the existing id. A new id is created only when no match holds",
+     "cases": [
+      "CRT_ABHA_116"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "login-abha-number",
+   "order": 2,
+   "title": "Log in with ABHA number",
+   "group": "Login Via ABHA Number",
+   "applies": "all",
+   "file": "references/functionalities/login-abha-number.md",
+   "cases": [
+    "VRFY_ABHA_101",
+    "VRFY_ABHA_201"
+   ],
+   "titles": {
+    "VRFY_ABHA_101": "ABHA Number Verification using Aadhaar OTP",
+    "VRFY_ABHA_201": "ABHA Number Verification using Mobile OTP (ABHA Linked Mobile Number)"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Build both routes: ABHA number with Aadhaar OTP, and ABHA number with the ABHA linked mobile OTP. The deployment interview never switches either off, because a journey a mandatory case needs is not optional",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ]
+    },
+    {
+     "requirement": "After the OTP verifies, fetch the profile and fill your registration form from it: name, date of birth, gender, mobile, photo, address, state, district, ABHA number and ABHA address. Nobody types what the profile holds",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ]
+    },
+    {
+     "requirement": "On any form filled from an ABHA, name, date of birth and gender are read only. Address, email, mobile, state, district and city stay editable. This holds for every M1 route that fills the form",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201",
+      "VRFY_ABHA_102",
+      "VRFY_ABHA_202",
+      "VRFY_ABHA_306"
+     ]
+    },
+    {
+     "requirement": "Save what was fetched and link the ABHA number and ABHA address to your own beneficiary id",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ]
+    },
+    {
+     "requirement": "When the mobile in your record differs from the one on the ABHA profile, offer a Yes or No choice to update the ABHA profile's mobile. Yes runs the update mobile calls with this login's `X-token`",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ]
+    },
+    {
+     "requirement": "A wrong OTP keeps the transaction and the right one then succeeds, and resend follows the shared rule: both are under Screen requirements in create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "A non-KYC ABHA address cannot download a card. Say so on the screen rather than offering a download that fails",
+     "cases": [
+      "VRFY_ABHA_101",
+      "VRFY_ABHA_201"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "login-abha-address",
+   "order": 3,
+   "title": "Log in with ABHA address",
+   "group": "Login Via ABHA address",
+   "applies": "all",
+   "file": "references/functionalities/login-abha-address.md",
+   "cases": [
+    "VRFY_ABHA_102",
+    "VRFY_ABHA_202"
+   ],
+   "titles": {
+    "VRFY_ABHA_102": "ABHA Address Verification using Aadhaar OTP",
+    "VRFY_ABHA_202": "ABHA address Verification using Mobile OTP (ABHA Linked Mobile Number)"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Search the address first. Offer exactly the methods the search response lists in `authMethods`, and nothing your system decided in advance",
+     "cases": [
+      "VRFY_ABHA_102",
+      "VRFY_ABHA_202"
+     ]
+    },
+    {
+     "requirement": "A method the search does not list is not shown, even when your screen has a route for it",
+     "cases": [
+      "VRFY_ABHA_102"
+     ]
+    },
+    {
+     "requirement": "The fetched profile fills the registration form under the read only rule in login-abha-number, and is saved and linked to your beneficiary id",
+     "cases": [
+      "VRFY_ABHA_102",
+      "VRFY_ABHA_202"
+     ],
+     "delegates_to": [
+      "login-abha-number"
+     ]
+    },
+    {
+     "requirement": "The Yes or No offer to update the mobile is shown when your record's mobile differs. No published call updates the mobile with an ABHA address login's token, so never show the update as done unless an update call returned success",
+     "cases": [
+      "VRFY_ABHA_102",
+      "VRFY_ABHA_202"
+     ]
+    },
+    {
+     "requirement": "The OTP, wrong OTP and resend rules are under Screen requirements in create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_102",
+      "VRFY_ABHA_202"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "find-abha-mobile",
+   "order": 4,
+   "title": "Find a forgotten ABHA by mobile",
+   "group": "Login Via Mobile: Find ABHA via Mobile Number(OTP)",
+   "applies": "all",
+   "file": "references/functionalities/find-abha-mobile.md",
+   "cases": [
+    "VRFY_ABHA_301",
+    "VRFY_ABHA_302",
+    "VRFY_ABHA_303",
+    "VRFY_ABHA_304",
+    "VRFY_ABHA_305",
+    "VRFY_ABHA_306",
+    "VRFY_ABHA_307",
+    "VRFY_ABHA_308"
+   ],
+   "titles": {
+    "VRFY_ABHA_301": "Validate Communication Mobile Number Input",
+    "VRFY_ABHA_302": "Fetch Associated ABHA Profiles Using Communication Mobile Number",
+    "VRFY_ABHA_303": "No ABHA Profile Linked with Communication Mobile Number",
+    "VRFY_ABHA_304": "Select Required ABHA Profile and Trigger OTP",
+    "VRFY_ABHA_305": "Verify OTP and Open Selected ABHA Profile",
+    "VRFY_ABHA_306": "Auto-populate ABHA Profile Details in HMIS Registration Form",
+    "VRFY_ABHA_307": "Incorrect OTP Handling",
+    "VRFY_ABHA_308": "Selected ABHA Profile Already Linked in HMIS"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "The mobile field takes ten digits and nothing else. Anything else shows \"Please enter a valid mobile number.\" and no search is sent",
+     "cases": [
+      "VRFY_ABHA_301"
+     ]
+    },
+    {
+     "requirement": "Search first and list every ABHA on the mobile, each with enough to tell them apart: the masked ABHA number, the ABHA address and the name, as the search returns them",
+     "cases": [
+      "VRFY_ABHA_302"
+     ]
+    },
+    {
+     "requirement": "No OTP is sent before a profile is chosen. Send OTP appears only after the choice, and the OTP request carries the chosen profile's `index` and the search's `txnId`",
+     "cases": [
+      "VRFY_ABHA_302",
+      "VRFY_ABHA_304"
+     ]
+    },
+    {
+     "requirement": "The chosen profile stays chosen until the OTP verifies",
+     "cases": [
+      "VRFY_ABHA_304"
+     ]
+    },
+    {
+     "requirement": "A mobile with no ABHA shows \"ABHA details not found. We did not find any ABHA number linked to this mobile number. Please use an ABHA-linked mobile number.\", offers to create an ABHA, and opens no OTP screen",
+     "cases": [
+      "VRFY_ABHA_303"
+     ]
+    },
+    {
+     "requirement": "After the OTP verifies, open the chosen profile only, never another ABHA on the same mobile",
+     "cases": [
+      "VRFY_ABHA_305"
+     ]
+    },
+    {
+     "requirement": "The profile fills the registration form under the read only rule in login-abha-number, and the ABHA number and address are linked to your beneficiary id",
+     "cases": [
+      "VRFY_ABHA_306"
+     ],
+     "delegates_to": [
+      "login-abha-number"
+     ]
+    },
+    {
+     "requirement": "A wrong OTP opens nothing and shows ABDM's message, under the OTP rules in create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_307"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "When the chosen ABHA is already linked in your records, show \"This ABHA profile is already linked to HMIS Beneficiary ID.\" and a comparison screen: the details from the ABHA beside the details your record holds. No second registration is created",
+     "cases": [
+      "VRFY_ABHA_308"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "login-aadhaar-otp",
+   "order": 5,
+   "title": "Log in with Aadhaar OTP",
+   "group": "Login Via Aadhaar(OTP)",
+   "applies": "all",
+   "file": "references/functionalities/login-aadhaar-otp.md",
+   "cases": [
+    "VRFY_ABHA_401",
+    "VRFY_ABHA_402",
+    "VRFY_ABHA_403",
+    "VRFY_ABHA_404",
+    "VRFY_ABHA_405"
+   ],
+   "titles": {
+    "VRFY_ABHA_401": "Fetch ABHA Details Using Aadhaar Number",
+    "VRFY_ABHA_402": "Incorrect OTP",
+    "VRFY_ABHA_403": "ABHA Details Not Found for Aadhaar Number",
+    "VRFY_ABHA_404": "ABHA Details Exist for Aadhaar Number",
+    "VRFY_ABHA_405": "Resend OTP Functionality"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "The Aadhaar field follows the rule in create-abha-aadhaar-otp: 12 digits, a refusal on the screen, no call, the number masked once entered",
+     "cases": [
+      "VRFY_ABHA_401"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Where this route asks for consent, it shows the published consent screen from create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_401"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "The OTP screen says where the OTP went, as the case's steps write it: \"OTP sent to Aadhaar linked mobile number ending with ******XXXX\", with the last digits the `request/otp` response carries. A screen that names no mobile fails the case",
+     "cases": [
+      "VRFY_ABHA_403",
+      "VRFY_ABHA_404"
+     ]
+    },
+    {
+     "requirement": "A wrong OTP stops progress and shows ABDM's message, under the OTP rules in create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_402"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "No ABHA on the Aadhaar shows a clear message, such as \"NO ABHA user registered with this Aadhaar Number\", and offers to create one. Creation carries on from what this screen already holds and never asks for the Aadhaar again",
+     "cases": [
+      "VRFY_ABHA_403"
+     ]
+    },
+    {
+     "requirement": "An ABHA on the Aadhaar shows the profile, lets the person download the card, and offers to register and link it to your beneficiary id",
+     "cases": [
+      "VRFY_ABHA_404"
+     ]
+    },
+    {
+     "requirement": "Resend follows the shared rule in create-abha-aadhaar-otp, including the message on the third attempt",
+     "cases": [
+      "VRFY_ABHA_405"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "link-one-abha-per-patient",
+   "order": 6,
+   "title": "Link one ABHA number to one patient record",
+   "group": "Verify one ABHA Number is linked to the unique patient ID in HMIS",
+   "applies": "all",
+   "file": "references/functionalities/link-one-abha-per-patient.md",
+   "cases": [
+    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER"
+   ],
+   "titles": {
+    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "Verify one ABHA Number is linked to the unique patient ID in HMIS"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Before creating a patient id, look up the ABHA number in your records",
+     "cases": [
+      "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER"
+     ]
+    },
+    {
+     "requirement": "Not found: tag the ABHA number to the new patient id",
+     "cases": [
+      "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER"
+     ]
+    },
+    {
+     "requirement": "Found: open the existing patient id and create no new one",
+     "cases": [
+      "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "scan-and-share",
+   "order": 7,
+   "title": "Scan and share at a counter",
+   "group": "Share Profile",
+   "applies": "all",
+   "file": "references/functionalities/scan-and-share.md",
+   "cases": [
+    "SHARE_PATIENT_PROFILE_701",
+    "SHARE_PATIENT_PROFILE_702"
+   ],
+   "titles": {
+    "SHARE_PATIENT_PROFILE_701": "Share Patient Profile",
+    "SHARE_PATIENT_PROFILE_702": "Returing patient"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "A new patient is registered from the shared profile automatically, with no click and no data entry, and gets a token in the `on-share` answer",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_701"
+     ]
+    },
+    {
+     "requirement": "The `on-share` answer carries the token number your queue issued, in `acknowledgement.profile.tokenNumber`, with `status` `SUCCESS` and no `error` beside it. The case expects the patient to receive a token valid for 60 minutes. The specification gives `expiry` as a number and names no unit, so confirm the unit at onboarding before you set it",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_701"
+     ]
+    },
+    {
+     "requirement": "Match a returning patient on name, mobile, gender, ABHA number and ABHA address against your records",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "A certain match registers automatically under the existing beneficiary id, and the visit's care context is created under it",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "An uncertain match may take one confirmation from the operator, a single choice on the screen. Never any typing",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "No match: a new beneficiary id is created, as for a new patient",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "The same person sharing a different ABHA address of theirs updates the ABHA address on the existing beneficiary id. No new id",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "The same QR code, the same ABHA address and an active queue entry: no new queue entry. Only a new token number may be issued under your queue rules, and the existing queue association stays as it was",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    },
+    {
+     "requirement": "The QR code of a different counter or queue: a new queue entry for that queue, with the same patient details and a new token number for it",
+     "cases": [
+      "SHARE_PATIENT_PROFILE_702"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "update-mobile",
+   "order": 8,
+   "title": "Update the mobile on an ABHA",
+   "group": "Profile update",
+   "applies": "all",
+   "file": "references/functionalities/update-mobile.md",
+   "cases": [
+    "PROF_ABHA_601"
+   ],
+   "titles": {
+    "PROF_ABHA_601": "Mobile Update"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Take the new mobile, send the OTP to it, and verify it, with the `X-token` of an ABHA number login",
+     "cases": [
+      "PROF_ABHA_601"
+     ]
+    },
+    {
+     "requirement": "Show the mobile as updated only after the verify call returns success, then read the profile again so the screen shows the mobile the ABHA now holds",
+     "cases": [
+      "PROF_ABHA_601"
+     ]
+    },
+    {
+     "requirement": "Both OTPs on this screen follow create-abha-aadhaar-otp: its OTP field, wrong OTP and resend rules",
+     "cases": [
+      "PROF_ABHA_601"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "read-abha-qr",
+   "order": 9,
+   "title": "Read an ABHA QR code",
+   "group": "Reading ABHA Info using ABHA QR Code",
+   "applies": "all",
+   "file": "references/functionalities/read-abha-qr.md",
+   "cases": [
+    "VRFY_ABHA_501"
+   ],
+   "titles": {
+    "VRFY_ABHA_501": "Reading ABHA Profile Info using ABHA QR Code"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Scan the ABHA QR code and fill name, date of birth, gender, mobile and the other details it carries into the registration form",
+     "cases": [
+      "VRFY_ABHA_501"
+     ]
+    },
+    {
+     "requirement": "Nobody types what the QR code carried, and the read only rule in login-abha-number holds on the filled form",
+     "cases": [
+      "VRFY_ABHA_501"
+     ],
+     "delegates_to": [
+      "login-abha-number"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "create-abha-face-auth",
+   "order": 10,
+   "title": "Create ABHA by face authentication",
+   "group": "ABHA creation via Face Auth",
+   "applies": "all",
+   "file": "references/functionalities/create-abha-face-auth.md",
+   "cases": [
+    "CRT_ABHA_101_FA",
+    "CRT_ABHA_102_FA",
+    "CRT_ABHA_103_FA",
+    "CRT_ABHA_104_FA",
+    "CRT_ABHA_105_FA",
+    "CRT_ABHA_106_FA",
+    "CRT_ABHA_107_FA",
+    "CRT_ABHA_108_FA",
+    "CRT_ABHA_109_FA",
+    "CRT_ABHA_110_FA",
+    "CRT_ABHA_111_FA",
+    "CRT_ABHA_112_FA",
+    "CRT_ABHA_113_FA",
+    "CRT_ABHA_114_FA",
+    "CRT_ABHA_115_FA",
+    "CRT_ABHA_116_FA",
+    "CRT_ABHA_117_FA"
+   ],
+   "titles": {
+    "CRT_ABHA_101_FA": "Create ABHA Option using Face Auth",
+    "CRT_ABHA_102_FA": "Aadhaar Collection and Error Handling",
+    "CRT_ABHA_103_FA": "Consent Collection",
+    "CRT_ABHA_104_FA": "Consent Collection should be Multilingual",
+    "CRT_ABHA_105_FA": "Generate Face Auth QR Code after Aadhaar Entry",
+    "CRT_ABHA_106_FA": "Scan Face Auth QR Code using ABHA App",
+    "CRT_ABHA_107_FA": "Redirect for ABHA Face RD App Installation",
+    "CRT_ABHA_108_FA": "Successful Aadhaar Face Authentication",
+    "CRT_ABHA_109_FA": "Face Authentication Failure / PID Error Handling",
+    "CRT_ABHA_110_FA": "Communication Mobile Number Collection after Face Auth",
+    "CRT_ABHA_111_FA": "Communication Mobile Number OTP Collection",
+    "CRT_ABHA_112_FA": "Resend OTP for Communication Mobile Number",
+    "CRT_ABHA_113_FA": "Suggested ABHA Address",
+    "CRT_ABHA_114_FA": "Display of Created ABHA Number",
+    "CRT_ABHA_115_FA": "View and Download ABHA Card (If Integrator is Generating ABHA Card)",
+    "CRT_ABHA_116_FA": "View ABHA Details if Integrator is not Generating ABHA Card",
+    "CRT_ABHA_117_FA": "Returning Patient / Revisit Handling"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Creation offers face authentication as a method for Aadhaar based creation",
+     "cases": [
+      "CRT_ABHA_101_FA"
+     ]
+    },
+    {
+     "requirement": "An invalid Aadhaar number is refused on the screen with \"Aadhaar Number is not valid\", and no QR code is generated",
+     "cases": [
+      "CRT_ABHA_102_FA"
+     ]
+    },
+    {
+     "requirement": "The consent screen from create-abha-aadhaar-otp, with its language choice, comes before the QR code. No QR code until consent is in",
+     "cases": [
+      "CRT_ABHA_103_FA",
+      "CRT_ABHA_104_FA"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Show the QR code clearly on your screen, with the instruction to scan it with the scanner on the ABHA app's logged out landing page",
+     "cases": [
+      "CRT_ABHA_105_FA"
+     ]
+    },
+    {
+     "requirement": "Wait for the face authentication status, polling `capturePID`, and move to the communication mobile only on success",
+     "cases": [
+      "CRT_ABHA_108_FA"
+     ]
+    },
+    {
+     "requirement": "A failed face authentication stops the journey and shows the PID error code and message the API returned. The person can retry, or a new QR code is generated",
+     "cases": [
+      "CRT_ABHA_109_FA"
+     ]
+    },
+    {
+     "requirement": "The communication mobile is always verified by OTP in this route, whether or not it is the Aadhaar linked one. The OTP and resend rules are in create-abha-aadhaar-otp",
+     "cases": [
+      "CRT_ABHA_110_FA",
+      "CRT_ABHA_111_FA",
+      "CRT_ABHA_112_FA"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "The address step, the profile, the card and a returning patient follow create-abha-aadhaar-otp, and the profile and card show the communication mobile verified here",
+     "cases": [
+      "CRT_ABHA_113_FA",
+      "CRT_ABHA_114_FA",
+      "CRT_ABHA_115_FA",
+      "CRT_ABHA_116_FA",
+      "CRT_ABHA_117_FA"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Scanning the QR code and installing the ABHA Face RD app happen in the ABHA app on the patient's phone, and are judged on the case text there. Your product's part is the QR code and the instruction beside it",
+     "cases": [
+      "CRT_ABHA_106_FA",
+      "CRT_ABHA_107_FA"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "find-abha-face-auth",
+   "order": 11,
+   "title": "Find ABHA by mobile with face authentication",
+   "group": "Login Via Mobile: Find ABHA via Face Auth",
+   "applies": "all",
+   "file": "references/functionalities/find-abha-face-auth.md",
+   "cases": [
+    "VRFY_ABHA_301_FA",
+    "VRFY_ABHA_302_FA",
+    "VRFY_ABHA_303_FA",
+    "VRFY_ABHA_304_FA",
+    "VRFY_ABHA_305_FA",
+    "VRFY_ABHA_306_FA",
+    "VRFY_ABHA_307_FA",
+    "VRFY_ABHA_308_FA",
+    "VRFY_ABHA_309_FA"
+   ],
+   "titles": {
+    "VRFY_ABHA_301_FA": "Validate Communication Mobile Number Input",
+    "VRFY_ABHA_302_FA": "Fetch Associated ABHA Profiles Using Communication Mobile Number",
+    "VRFY_ABHA_303_FA": "No ABHA Profile Linked with Communication Mobile Number",
+    "VRFY_ABHA_304_FA": "Select Required ABHA Profile and Generate Face Auth QR Code",
+    "VRFY_ABHA_305_FA": "Scan Face Authentication QR Code using ABHA App",
+    "VRFY_ABHA_306_FA": "Redirect for ABHA Face RD App Installation",
+    "VRFY_ABHA_307_FA": "Successful Face Authentication through ABHA Face RD App",
+    "VRFY_ABHA_308_FA": "Fetch Selected ABHA Profile Details after Successful Face Authentication",
+    "VRFY_ABHA_309_FA": "Face Authentication Failure / PID Error Handling"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "The mobile check and the list follow find-abha-mobile, and an invalid mobile starts neither a search nor a QR code",
+     "cases": [
+      "VRFY_ABHA_301_FA",
+      "VRFY_ABHA_302_FA"
+     ],
+     "delegates_to": [
+      "find-abha-mobile"
+     ]
+    },
+    {
+     "requirement": "No face authentication QR code before a profile is chosen",
+     "cases": [
+      "VRFY_ABHA_302_FA"
+     ]
+    },
+    {
+     "requirement": "A mobile with no ABHA shows the not found message from find-abha-mobile, offers creation, and generates no QR code",
+     "cases": [
+      "VRFY_ABHA_303_FA"
+     ],
+     "delegates_to": [
+      "find-abha-mobile"
+     ]
+    },
+    {
+     "requirement": "Choosing a profile generates the QR code for that profile, and the choice holds until authentication completes",
+     "cases": [
+      "VRFY_ABHA_304_FA"
+     ]
+    },
+    {
+     "requirement": "After success, open the chosen profile only",
+     "cases": [
+      "VRFY_ABHA_307_FA",
+      "VRFY_ABHA_308_FA"
+     ]
+    },
+    {
+     "requirement": "A failure shows the PID error from the API, fills nothing, and allows a retry or a new QR code",
+     "cases": [
+      "VRFY_ABHA_309_FA"
+     ]
+    },
+    {
+     "requirement": "The scan and the ABHA Face RD install for a chosen profile happen in the ABHA app on the patient's phone, judged on the case text there; your screen shows the QR code for the chosen profile",
+     "cases": [
+      "VRFY_ABHA_305_FA",
+      "VRFY_ABHA_306_FA"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "create-abha-biometric",
+   "order": 12,
+   "title": "Create ABHA by fingerprint or iris",
+   "group": "ABHA Creation Through Aadhaar Biometric(Fingerprint/Iris)",
+   "applies": "all",
+   "file": "references/functionalities/create-abha-biometric.md",
+   "cases": [
+    "CRT_ABHA_201",
+    "CRT_ABHA_204",
+    "CRT_ABHA_202",
+    "CRT_ABHA_203",
+    "CRT_ABHA_205",
+    "CRT_ABHA_206",
+    "CRT_ABHA_207",
+    "CRT_ABHA_208",
+    "CRT_ABHA_209",
+    "CRT_ABHA_210",
+    "CRT_ABHA_211"
+   ],
+   "titles": {
+    "CRT_ABHA_201": "Create ABHA Option",
+    "CRT_ABHA_204": "Aadhaar Collection and Error Handling",
+    "CRT_ABHA_202": "Consent collection",
+    "CRT_ABHA_203": "Consent collection should be multilingual",
+    "CRT_ABHA_205": "Biometric based Aadhaar Authentication",
+    "CRT_ABHA_206": "Communication Mobile Number Verification – I",
+    "CRT_ABHA_207": "Communication Mobile Number verification-II",
+    "CRT_ABHA_208": "Suggested ABHA Address",
+    "CRT_ABHA_209": "Display of ABHA Number",
+    "CRT_ABHA_210": "View and Download ABHA details. (If integrators is generating ABHA card)",
+    "CRT_ABHA_211": "View and Download ABHA details. (If integrators is not generating ABHA card)"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Creation offers Aadhaar biometric as a method",
+     "cases": [
+      "CRT_ABHA_201"
+     ]
+    },
+    {
+     "requirement": "The Aadhaar field and the consent screen follow create-abha-aadhaar-otp",
+     "cases": [
+      "CRT_ABHA_204",
+      "CRT_ABHA_202",
+      "CRT_ABHA_203"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Capture the fingerprint or iris on the device and verify. A failed scan shows the API's error and the person scans again",
+     "cases": [
+      "CRT_ABHA_205"
+     ]
+    },
+    {
+     "requirement": "The communication mobile, the address step, the profile and the card follow create-abha-aadhaar-otp",
+     "cases": [
+      "CRT_ABHA_206",
+      "CRT_ABHA_207",
+      "CRT_ABHA_208",
+      "CRT_ABHA_209",
+      "CRT_ABHA_210",
+      "CRT_ABHA_211"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "find-abha-biometric",
+   "order": 13,
+   "title": "Find ABHA by mobile with fingerprint or iris",
+   "group": "Find ABHA (Biometrics - Fingerprint/Iris)",
+   "applies": "all",
+   "file": "references/functionalities/find-abha-biometric.md",
+   "cases": [
+    "VRFY_ABHA_601",
+    "VRFY_ABHA_602",
+    "VRFY_ABHA_603"
+   ],
+   "titles": {
+    "VRFY_ABHA_601": "ABHA Retrieval Using Communication Mobile OTP",
+    "VRFY_ABHA_602": "ABHA Retrieval – No ABHA Linked to Communication Mobile Number",
+    "VRFY_ABHA_603": "ABHA Details Exist for Communication Mobile Number"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "An invalid mobile shows \"Please enter a valid mobile number.\" and goes no further",
+     "cases": [
+      "VRFY_ABHA_601"
+     ]
+    },
+    {
+     "requirement": "A mobile with no ABHA shows the not found message from find-abha-mobile and offers to create an ABHA",
+     "cases": [
+      "VRFY_ABHA_602"
+     ],
+     "delegates_to": [
+      "find-abha-mobile"
+     ]
+    },
+    {
+     "requirement": "List every ABHA on the mobile, verify the chosen one by biometric, then show its profile",
+     "cases": [
+      "VRFY_ABHA_603"
+     ]
+    },
+    {
+     "requirement": "Already linked in your records: show \"This ABHA profile is already linked to HMIS Beneficiary ID.\" Not linked: let the person register and link it",
+     "cases": [
+      "VRFY_ABHA_603"
+     ]
+    },
+    {
+     "requirement": "Offer the ABHA card download where the ABHA is KYC verified",
+     "cases": [
+      "VRFY_ABHA_603"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "login-aadhaar-biometric",
+   "order": 14,
+   "title": "Log in with Aadhaar by fingerprint or iris",
+   "group": "Login Via Aadhaar (Biometrics)",
+   "applies": "all",
+   "file": "references/functionalities/login-aadhaar-biometric.md",
+   "cases": [
+    "VRFY_ABHA_801",
+    "VRFY_ABHA_802",
+    "VRFY_ABHA_803",
+    "VRFY_ABHA_804"
+   ],
+   "titles": {
+    "VRFY_ABHA_801": "Fetch ABHA Details Using Aadhaar Number",
+    "VRFY_ABHA_802": "Biometric based Aadhaar Authentication",
+    "VRFY_ABHA_803": "ABHA Details Not Found for Aadhaar Number",
+    "VRFY_ABHA_804": "ABHA Details Exist for Aadhaar Number"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "The Aadhaar field follows create-abha-aadhaar-otp",
+     "cases": [
+      "VRFY_ABHA_801"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "A failed scan shows the API's error, and a good one lets the person through",
+     "cases": [
+      "VRFY_ABHA_802"
+     ]
+    },
+    {
+     "requirement": "No ABHA on the Aadhaar and an ABHA on it end on the screens login-aadhaar-otp names",
+     "cases": [
+      "VRFY_ABHA_803",
+      "VRFY_ABHA_804"
+     ],
+     "delegates_to": [
+      "login-aadhaar-otp"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "create-abha-driving-licence",
+   "order": 15,
+   "title": "Create ABHA by driving licence",
+   "group": "ABHA Creation Through Driving License",
+   "applies": "all",
+   "file": "references/functionalities/create-abha-driving-licence.md",
+   "cases": [
+    "CRT_ABHA_401",
+    "CRT_ABHA_402",
+    "CRT_ABHA_403",
+    "CRT_ABHA_404",
+    "CRT_ABHA_405",
+    "CRT_ABHA_406",
+    "CRT_ABHA_407",
+    "CRT_ABHA_408",
+    "CRT_ABHA_410",
+    "CRT_ABHA_411"
+   ],
+   "titles": {
+    "CRT_ABHA_401": "Create ABHA Option",
+    "CRT_ABHA_402": "Consent Collection",
+    "CRT_ABHA_403": "Communication Mobile Number",
+    "CRT_ABHA_404": "Mobile Number Verification",
+    "CRT_ABHA_405": "Document Verification",
+    "CRT_ABHA_406": "Document Upload",
+    "CRT_ABHA_407": "Manual Verification and ABHA Creation",
+    "CRT_ABHA_408": "Display of ABHA Number",
+    "CRT_ABHA_410": "View and Download ABHA details (If integrators is generating ABHA card)",
+    "CRT_ABHA_411": "View and Download ABHA details (If integrators is not generating ABHA card)"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Creation offers the driving licence as a method",
+     "cases": [
+      "CRT_ABHA_401"
+     ]
+    },
+    {
+     "requirement": "The consent screen from create-abha-aadhaar-otp, where the declaration about a document other than Aadhaar is the one that leads here",
+     "cases": [
+      "CRT_ABHA_402"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Take the communication mobile and verify it by OTP",
+     "cases": [
+      "CRT_ABHA_403",
+      "CRT_ABHA_404"
+     ]
+    },
+    {
+     "requirement": "Take the licence number with the name, date of birth and gender as the document shows them",
+     "cases": [
+      "CRT_ABHA_405"
+     ]
+    },
+    {
+     "requirement": "Upload a photo of the front and of the back of the licence",
+     "cases": [
+      "CRT_ABHA_406"
+     ]
+    },
+    {
+     "requirement": "An operator checks the documents and approves or rejects the creation",
+     "cases": [
+      "CRT_ABHA_407"
+     ]
+    },
+    {
+     "requirement": "Show the 14 digit number as the ABHA number, never as a Health ID",
+     "cases": [
+      "CRT_ABHA_408"
+     ]
+    },
+    {
+     "requirement": "Show the ABHA card, or print the ABHA number and address on your own card, saved and linked to your beneficiary id",
+     "cases": [
+      "CRT_ABHA_410",
+      "CRT_ABHA_411"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "create-abha-demo-auth",
+   "order": 16,
+   "title": "Create ABHA by demographic authentication",
+   "group": "ABHA Creation Through Demo Auth/ Offline Mode",
+   "applies": "government",
+   "file": "references/functionalities/create-abha-demo-auth.md",
+   "cases": [
+    "CRT_ABHA_301",
+    "CRT_ABHA_302",
+    "CRT_ABHA_303",
+    "CRT_ABHA_304",
+    "CRT_ABHA_305",
+    "CRT_ABHA_306",
+    "CRT_ABHA_307",
+    "CRT_ABHA_308",
+    "CRT_ABHA_309"
+   ],
+   "titles": {
+    "CRT_ABHA_301": "Create ABHA Option",
+    "CRT_ABHA_302": "Consent collection",
+    "CRT_ABHA_303": "Consent collection should be multilingual",
+    "CRT_ABHA_304": "Aadhaar Collection and Error Handling",
+    "CRT_ABHA_305": "Demographic Information Based Authentication",
+    "CRT_ABHA_306": "Profile Completion",
+    "CRT_ABHA_307": "Display of ABHA Number",
+    "CRT_ABHA_308": "View and Download ABHA details. (If integrators is generating ABHA card)",
+    "CRT_ABHA_309": "View and Download ABHA details. (If integrators is not generating ABHA card)"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Creation offers \"Create ABHA using Demographics\"",
+     "cases": [
+      "CRT_ABHA_301"
+     ]
+    },
+    {
+     "requirement": "The consent screen and the Aadhaar field follow create-abha-aadhaar-otp",
+     "cases": [
+      "CRT_ABHA_302",
+      "CRT_ABHA_303",
+      "CRT_ABHA_304"
+     ],
+     "delegates_to": [
+      "create-abha-aadhaar-otp"
+     ]
+    },
+    {
+     "requirement": "Take name, date of birth, gender, Aadhaar number and mobile, and authenticate them against Aadhaar",
+     "cases": [
+      "CRT_ABHA_305"
+     ]
+    },
+    {
+     "requirement": "After authentication, name, date of birth and gender are filled and read only. Address, email, mobile, state, district and the photo stay editable, and the person can complete the profile and go on",
+     "cases": [
+      "CRT_ABHA_305",
+      "CRT_ABHA_306"
+     ]
+    },
+    {
+     "requirement": "Show the 14 digit ABHA number and the ABHA address created",
+     "cases": [
+      "CRT_ABHA_307"
+     ]
+    },
+    {
+     "requirement": "The card from the API carries the ABHA number, the QR code, date of birth, gender and the ABHA address, the photo optional. A system that prints its own card prints the ABHA number and address, saved and linked to your beneficiary id",
+     "cases": [
+      "CRT_ABHA_308",
+      "CRT_ABHA_309"
+     ]
+    }
+   ]
+  },
+  {
+   "id": "find-abha-benefit",
+   "order": 17,
+   "title": "Find the benefits linked to an ABHA",
+   "group": "Find ABHA for benefit",
+   "applies": "government",
+   "file": "references/functionalities/find-abha-benefit.md",
+   "cases": [
+    "VRFY_ABHA_701"
+   ],
+   "titles": {
+    "VRFY_ABHA_701": "Retrieve benefit programs linked to an ABHA number"
+   },
+   "screen_requirements": [
+    {
+     "requirement": "Given a valid ABHA number, show the list of benefit programmes the call returns for it",
+     "cases": [
+      "VRFY_ABHA_701"
+     ]
+    }
+   ]
+  }
+ ]
+}

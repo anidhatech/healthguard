@@ -58,3 +58,47 @@ export const PatientProfileViewSchema = z.object({
   abhaLinked: z.boolean(),
 });
 export type PatientProfileView = z.infer<typeof PatientProfileViewSchema>;
+
+/** What the front desk enters to register a patient. ABHA details never come from this form. */
+export const RegisterPatientSchema = z.strictObject({
+  givenName: z.string().trim().min(1).max(100),
+  familyName: z.string().trim().min(1).max(100).optional(),
+  dateOfBirth: IsoDateSchema,
+  sex: SexSchema,
+  /** Digits with an optional leading plus; stored as entered, shown masked. */
+  phone: z
+    .string()
+    .trim()
+    .regex(/^\+?[0-9]{10,15}$/)
+    .optional(),
+  preferredLocale: z.enum(SUPPORTED_LOCALES).optional(),
+});
+export type RegisterPatient = z.infer<typeof RegisterPatientSchema>;
+
+export const PatientRegistrationResultSchema = z.object({
+  /**
+   * `EXISTING` means a verified ABHA number was already linked to this patient,
+   * so no second record was created.
+   */
+  status: z.enum(['CREATED', 'EXISTING']),
+  patient: z.object({
+    id: UuidSchema,
+    mrn: z.string(),
+    displayName: z.string(),
+    abhaLinked: z.boolean(),
+  }),
+});
+export type PatientRegistrationResult = z.infer<typeof PatientRegistrationResultSchema>;
+
+/**
+ * The form ABHA numbers are stored and compared in: digits only. The check is
+ * no stricter than that, so a number ABDM issued is never refused here.
+ */
+export function normalizeAbhaNumber(value: string): string {
+  return value.replace(/[\s-]+/g, '').trim();
+}
+
+/** ABHA addresses compare without regard to case or surrounding space. */
+export function normalizeAbhaAddress(value: string): string {
+  return value.trim().toLowerCase();
+}

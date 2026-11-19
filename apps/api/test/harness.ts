@@ -42,10 +42,15 @@ export const testConfig = buildConfig({
 export const db = createPrismaClient(DATABASE_URL);
 let passwordHash: string | null = null;
 
-export async function startApp(): Promise<INestApplication> {
-  const moduleRef = await Test.createTestingModule({
-    imports: [AppModule.forRoot(testConfig)],
-  }).compile();
+/** `overrides` swaps providers, for example a fake ABDM gateway that makes no network calls. */
+export async function startApp(
+  overrides: { provide: symbol; useValue: unknown }[] = [],
+): Promise<INestApplication> {
+  let builder = Test.createTestingModule({ imports: [AppModule.forRoot(testConfig)] });
+  for (const override of overrides) {
+    builder = builder.overrideProvider(override.provide).useValue(override.useValue);
+  }
+  const moduleRef = await builder.compile();
   const app = moduleRef.createNestApplication({ logger: false });
   configureApp(app, testConfig);
   await app.init();
