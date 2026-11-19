@@ -19,6 +19,7 @@ import { ClockModule } from './infrastructure/clock/clock.service.js';
 import { PrismaModule } from './infrastructure/prisma/prisma.service.js';
 import { RedisModule } from './infrastructure/redis/redis.service.js';
 import { AbdmModule } from './modules/abdm/abdm.module.js';
+import { AbhaModule } from './modules/abdm/abha.controller.js';
 import { ActivityModule } from './modules/activity/activity.module.js';
 import { AdherenceModule } from './modules/adherence/adherence.module.js';
 import { AiModule } from './modules/ai/ai.module.js';
@@ -107,6 +108,7 @@ export class AppModule implements NestModule {
         DemoModule,
         OrganizationsModule,
         PatientsModule,
+        AbhaModule,
         CliniciansModule,
         EncountersModule,
         RecordsModule,
