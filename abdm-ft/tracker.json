@@ -1,4 +1,16 @@
 {
  "entity": "private",
- "module": "m1"
+ "module": "m1",
+ "functionalities": {
+  "link-one-abha-per-patient": {
+   "state": "building",
+   "date": "2026-11-19",
+   "snapshot": {
+    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "open"
+   }
+  }
+ },
+ "screens": {
+  "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record"
+ }
 }

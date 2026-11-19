@@ -117,6 +117,17 @@ export default function DoctorDashboard() {
               </button>
             ))}
           </div>
+          {!session?.activeOrganization?.isDemo &&
+          session?.roles.some((role) =>
+            ['FRONT_DESK', 'NURSE', 'CARE_COORDINATOR'].includes(role),
+          ) ? (
+            <Link
+              href="/doctor/register"
+              className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-brand-700 hover:bg-brand-50"
+            >
+              {t('registerPatient')}
+            </Link>
+          ) : null}
           <label className="relative">
             <span className="sr-only">{t('search')}</span>
             <Search aria-hidden className="absolute top-2.5 left-2.5 size-4 text-muted" />

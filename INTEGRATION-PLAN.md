@@ -1,7 +1,7 @@
 # ABDM integration plan — HealthGuard
 
-> **Status:** decision 1 agreed; decision 2 open. Configuration and the ABDM client are written and unit-tested. The sandbox has not answered yet: it blocks the cloud session's network (step 5).
-> **Updated:** 2026-11-18 · **Steps done:** 3 of 17 (18%)
+> **Status:** decisions 1 and 2 agreed. Configuration, the ABDM client, patient registration and the one-ABHA-per-patient rule are built and tested. The sandbox has not answered yet: it blocks the cloud session's network (step 5), and every ABHA journey waits on that.
+> **Updated:** 2026-11-19 · **Steps done:** 6 of 17 (35%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
 
@@ -30,9 +30,9 @@ Read from the tree on 2026-11-18, not from the documents.
 | Frontend and backend | `apps/web` (Next.js 16) calls `apps/api` (NestJS 12) through `apps/web/src/lib/api.ts` | Counter screens go in web; every ABDM call goes through the API |
 | Outbound HTTP client in the backend | None. Add at `apps/api/src/modules/abdm/abdm-http.client.ts` | Built on Node's `fetch`; one client for all ABDM hosts |
 | Secrets and configuration | `apps/api/src/config/env.ts` (zod, environment only), `.env.example` | `ABDM_ADAPTER` exists with `disabled` and `sandbox-mock`; add `sandbox` plus client id, secret and host settings |
-| Patient model and identifiers | `PatientProfile` in `apps/api/prisma/schema.prisma:709–711` (`abhaNumber`, `abhaAddress`, `abhaVerifiedAt`) | `abhaAddress` is unique per organization; `abhaNumber` has **no** unique rule yet |
+| Patient model and identifiers | `PatientProfile` in `apps/api/prisma/schema.prisma:709–711` (`abhaNumber`, `abhaAddress`, `abhaVerifiedAt`) | `abhaAddress` and, since 2026-11-19, `abhaNumber` are unique per organization |
 | Visit model | `Encounter` in the same schema | Not needed for M1 |
-| Patient registration | **None.** `apps/api/src/modules/patients/patients.module.ts` only lists and reads; patients exist only through the demo seed | M1 needs a registration route and screen; this is the largest new piece |
+| Patient registration | Was none on 2026-11-18. Added 2026-11-19: `POST /api/v1/patients` and `apps/web/src/app/doctor/register/page.tsx` | Demo organizations stay seeded-only |
 | Inbound routing and public URL | NestJS controllers under `/api/v1`, cookie session and CSRF; `API_PUBLIC_URL` defaults to localhost | No public URL exists; scan and share is blocked on one |
 | Cryptography helpers | `apps/api/src/common/hashing.ts`, `jose` in `apps/api/src/modules/auth/token.service.ts` | No RSA encryption helper. Add at `apps/api/src/modules/abdm/abdm-crypto.ts` using `node:crypto` |
 | Errors and logging | `apps/api/src/common/problem.filter.ts` (problem responses), pino with a logging allowlist in `apps/api/src/app.module.ts` | Tokens, OTPs and identifiers must stay out of the allowlist |
@@ -40,11 +40,11 @@ Read from the tree on 2026-11-18, not from the documents.
 
 ## 3. Decisions needed from the owner
 
-Decision 1 is agreed. Decision 2 blocks patient registration (step 6) and every journey after it. The rest can be answered when their step is reached.
+Decisions 1 and 2 are agreed. The rest can be answered when their step is reached.
 
 1. **Aadhaar handling.** `docs/ABDM_INTEGRATION.md` §3.1 says HealthGuard verifies an ABHA but never creates one and never asks for an Aadhaar number. The private-entity mandatory cases require creating an ABHA by Aadhaar OTP and logging in by Aadhaar OTP, so the desk must collect an Aadhaar number. Proposed: accept it, encrypt it in the API with ABDM's public key, forward it, and never store or log it; then update §3.1. **Agreed by the owner, 2026-11-18.** §3.1 is updated.
-2. **Where real identities live.** Demo organizations accept only synthetic patients, and the sandbox journeys need a real Aadhaar holder. Proposed: a separate non-demo organization in a separate environment with `DEMO_MODE=false`, as the roadmap's Phase 2 requires. **Agree?**
-3. **Who works the counter.** Proposed: the care coordinator role, with a new "Register patient" screen.
+2. **Where real identities live.** Demo organizations accept only synthetic patients, and the sandbox journeys need a real Aadhaar holder. Proposed: a separate non-demo organization in a separate environment with `DEMO_MODE=false`, as the roadmap's Phase 2 requires. **Agreed by the owner, 2026-11-19.** Registration is refused in demo organizations, and the sandbox adapter is refused in demo mode.
+3. **Who works the counter.** Built for the front desk role and the care team (nurse, care coordinator), on a "Register a patient" screen. Say if it should be narrower.
 4. **Deployment questions** (each "yes" adds an optional route): Does the record hold the patient's mobile at check-in? Is there a fingerprint or iris reader at the desk? Do patients arrive with the ABHA app? Do you create ABHAs from a driving licence?
 5. **ABHA card.** Will HealthGuard show and download the ABHA card itself (case CRT_ABHA_114)? A private entity has no alternative case.
 6. **Public callback URL** and two counter QR codes, registered with the ABDM bridge, for scan and share.
@@ -55,11 +55,11 @@ Decision 1 is agreed. Decision 2 blocks patient registration (step 6) and every 
 |---|---|---|---|---|
 | 1 | Install the skill and set up `abdm-ft/` | Skill files in the repository; workbook and scripts copied; the workbook check exits 0 | done | Commit `99ce544`; `abdm_env.py workbook` exit 0, 2026-11-18 |
 | 2 | Survey the codebase and write this plan | Every row of section 2 names a path or "none, add at" | done | This file, 2026-11-18 |
-| 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | blocked | Decision 1 agreed 2026-11-18. Question: do you agree with decision 2 as proposed? |
+| 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | done | Decision 1 agreed 2026-11-18; decision 2 agreed 2026-11-19 |
 | 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; the owner has set `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings | done | Settings in `apps/api/src/config/env.ts` and `.env.example`; both variables present in the cloud environment, 2026-11-18 |
 | 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | blocked | Code and 15 unit tests in `apps/api/src/modules/abdm/`. Smoke check `pnpm --filter @healthguard/api abdm:smoke` run 2026-11-18 from the cloud session: the sandbox's CDN answered 403 "Request blocked" before the request reached ABDM (request `3c43ca6c-9d38-44d9-8278-caae5c787a23`; the session's network leaves from the US). Question: can you run the smoke check from a machine in India? |
-| 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | pending | |
-| 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | pending | |
+| 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | done | `POST /api/v1/patients` and `/doctor/register`; `apps/api/test/registration.int.test.ts` passes (10 tests); screen driven in a browser against a local clinic organization, 2026-11-19 |
+| 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | done | Migration `20261119090000_abha_number_unique`; `PatientRegistrationService.register` and `linkAbha`; same test file, 2026-11-19 |
 | 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | pending | |
 | 9 | Functionality 2: log in with ABHA number | Same | pending | |
 | 10 | Functionality 3: log in with ABHA address | Same | pending | |
@@ -86,8 +86,8 @@ All new unless marked.
 | M1 journeys (create, login, find, profile, card) | `apps/api/src/modules/abdm/abha.service.ts`, `abha.controller.ts` |
 | Scan-and-share callback receiver | `apps/api/src/modules/abdm/abdm-callback.controller.ts` |
 | Shared request and response schemas | `packages/shared/src/schemas/abdm.ts` |
-| Patient registration and ABHA uniqueness | `apps/api/src/modules/patients/patients.module.ts` (existing), `apps/api/prisma/schema.prisma` (existing) plus a migration |
-| Counter screens | `apps/web/src/app/coordinator/register/` and `apps/web/src/components/abha/` |
+| Patient registration and ABHA uniqueness | `apps/api/src/modules/patients/patient-registration.service.ts` (written), `patients.module.ts` and `apps/api/prisma/schema.prisma` (existing) plus migration `20261119090000_abha_number_unique` (written) |
+| Counter screens | `apps/web/src/app/doctor/register/` (written; the staff area is `/doctor`) and `apps/web/src/components/abha/` |
 | Screen text in three languages | `apps/web/messages/en-IN.json`, `hi-IN.json`, `te-IN.json` (existing) |
 | Audit of attempts, without identifiers | `apps/api/src/modules/audit/audit.service.ts` (existing) |
 | Tests | `apps/api/test/` (integration, existing folder), `tests/e2e/specs/` (existing folder) |
@@ -98,9 +98,9 @@ One row per functionality, written by `abdm-ft/abdm_report.py tracker`. Never ed
 
 <!-- abdm-tracker start: written by abdm_report.py tracker. Never edit it by hand -->
 
-Entity type: private. Run: ui. Workbook: M1_ABHA_CREATION_VERIFICATION_SCAN_AND_SHARE.xlsx. Written 2026-11-18.
+Entity type: private. Run: ui. Workbook: M1_ABHA_CREATION_VERIFICATION_SCAN_AND_SHARE.xlsx. Written 2026-11-19.
 
-In scope: 7 functionalities. 7 not started. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
+In scope: 7 functionalities. 1 building, 6 not started. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
 
 | # | Functionality | Mandatory cases and results | Screen or route | State | Date | Build |
 |---|---|---|---|---|---|---|
@@ -109,7 +109,7 @@ In scope: 7 functionalities. 7 not started. Mandatory cases: 32, 0 passed, 0 fai
 | 3 | Log in with ABHA address (`login-abha-address`) | VRFY_ABHA_102 open, VRFY_ABHA_202 open | VRFY_ABHA_102: not mapped; VRFY_ABHA_202: not mapped | not started |  |  |
 | 4 | Find a forgotten ABHA by mobile (`find-abha-mobile`) | VRFY_ABHA_301 open, VRFY_ABHA_302 open, VRFY_ABHA_303 open, VRFY_ABHA_304 open, VRFY_ABHA_305 open, VRFY_ABHA_306 open, VRFY_ABHA_307 open, VRFY_ABHA_308 open | VRFY_ABHA_301: not mapped; VRFY_ABHA_302: not mapped; VRFY_ABHA_303: not mapped; VRFY_ABHA_304: not mapped; VRFY_ABHA_305: not mapped; VRFY_ABHA_306: not mapped; VRFY_ABHA_307: not mapped; VRFY_ABHA_308: not mapped | not started |  |  |
 | 5 | Log in with Aadhaar OTP (`login-aadhaar-otp`) | VRFY_ABHA_401 open, VRFY_ABHA_402 open, VRFY_ABHA_403 open, VRFY_ABHA_404 open, VRFY_ABHA_405 open | VRFY_ABHA_401: not mapped; VRFY_ABHA_402: not mapped; VRFY_ABHA_403: not mapped; VRFY_ABHA_404: not mapped; VRFY_ABHA_405: not mapped | not started |  |  |
-| 6 | Link one ABHA number to one patient record (`link-one-abha-per-patient`) | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER open | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER: not mapped | not started |  |  |
+| 6 | Link one ABHA number to one patient record (`link-one-abha-per-patient`) | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER open | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER: Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record | building | 2026-11-19 |  |
 | 7 | Scan and share at a counter (`scan-and-share`) | SHARE_PATIENT_PROFILE_701 open, SHARE_PATIENT_PROFILE_702 open | SHARE_PATIENT_PROFILE_701: not mapped; SHARE_PATIENT_PROFILE_702: not mapped | not started |  |  |
 | 8 | Update the mobile on an ABHA (`update-mobile`) | none for a private entity |  | optional, not in scope |  |  |
 | 9 | Read an ABHA QR code (`read-abha-qr`) | none for a private entity |  | optional, not in scope |  |  |

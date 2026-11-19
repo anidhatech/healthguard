@@ -1,15 +1,18 @@
-import { Controller, Get, Module, Param, Query } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Module, Param, Post, Query } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   ageInYears,
   PatientIdParamsSchema,
   PatientListQuerySchema,
+  RegisterPatientSchema,
   resolveLocale,
   type PatientIdParams,
   type PatientListItem,
   type PatientFlag,
   type PatientListQuery,
   type PatientProfileView,
+  type PatientRegistrationResult,
+  type RegisterPatient,
 } from '@healthguard/shared';
 import {
   CurrentActor,
@@ -27,6 +30,7 @@ import { AuditService } from '../audit/audit.service.js';
 import { AccessService } from '../consent/access.service.js';
 import { PatientAccessService } from '../consent/patient-access.service.js';
 import { MISSED_RUN_FOR_CALLBACK } from '../doses/dose-engine.js';
+import { PatientRegistrationService } from './patient-registration.service.js';
 
 @ApiTags('patients')
 @Controller({ path: 'patients', version: '1' })
@@ -37,7 +41,22 @@ export class PatientsController {
     private readonly audit: AuditService,
     private readonly clock: ClockService,
     private readonly access: AccessService,
+    private readonly registration: PatientRegistrationService,
   ) {}
+
+  @Post()
+  @HttpCode(201)
+  @Roles('FRONT_DESK', 'CARE_TEAM')
+  @ApiOperation({
+    summary: 'Register a patient at the front desk (clinic organizations only, never demo ones)',
+  })
+  register(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Body(zod(RegisterPatientSchema)) body: RegisterPatient,
+  ): Promise<PatientRegistrationResult> {
+    return this.registration.register(actor, meta, body);
+  }
 
   @Get()
   @Roles('DOCTOR', 'CARE_TEAM', 'FRONT_DESK')
@@ -234,5 +253,9 @@ export class PatientsController {
   }
 }
 
-@Module({ controllers: [PatientsController] })
+@Module({
+  controllers: [PatientsController],
+  providers: [PatientRegistrationService],
+  exports: [PatientRegistrationService],
+})
 export class PatientsModule {}

@@ -267,7 +267,8 @@
       "APPOINTMENT_AWAITING_PATIENT": "Awaiting patient approval"
     },
     "todayDoses": "Today's doses",
-    "appointments": "Appointments"
+    "appointments": "Appointments",
+    "registerPatient": "Register a patient"
   },
   "admin": {
     "title": "Organization",
@@ -480,5 +481,31 @@
     "resetConfirm": "Reset and sign everyone out",
     "resetDone": "Done. Signing you out…",
     "cancel": "Cancel"
+  },
+  "register": {
+    "title": "Register a patient",
+    "givenName": "Given name",
+    "familyName": "Family name (optional)",
+    "dateOfBirth": "Date of birth",
+    "sex": "Sex",
+    "sexes": {
+      "FEMALE": "Female",
+      "MALE": "Male",
+      "OTHER": "Other",
+      "UNKNOWN": "Not stated"
+    },
+    "phone": "Mobile number (optional)",
+    "phoneHint": "Digits only, with the country code if you have it. For example +91 followed by 10 digits.",
+    "language": "Preferred language",
+    "abhaNote": "An ABHA is optional. This form does not ask for one; ABHA creation and verification will be a separate step.",
+    "submit": "Register patient",
+    "done": "{name} is registered",
+    "recordNumber": "Record number: {mrn}",
+    "openRecord": "Open the record",
+    "another": "Register another patient",
+    "demoTitle": "Registration is not available here",
+    "demoBody": "This is a demo organization. It holds synthetic patients only, so real patients cannot be registered in it.",
+    "notAllowedTitle": "Your role cannot register patients",
+    "notAllowedBody": "Registration is done by the front desk or the care team."
   }
 }
