@@ -132,7 +132,11 @@ function challenge(body: unknown, requestId: string, path: string): OtpChallenge
 export class AbhaEnrollmentClient {
   constructor(private readonly gateway: AbdmGateway) {}
 
-  /** Sends the Aadhaar OTP. Pass the first send's `txnId` to resend within the same transaction. */
+  /**
+   * Sends the Aadhaar OTP and returns the transaction id for the calls that
+   * follow. A resend is another send with no `txnId`: the sandbox refuses one
+   * that carries the first id, and answers a fresh send with a new id.
+   */
   async requestAadhaarOtp(aadhaarNumber: string, txnId = ''): Promise<OtpChallenge> {
     const path = `${ENROLLMENT}/request/otp`;
     const { body, requestId } = await this.gateway.http.request({

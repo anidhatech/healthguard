@@ -39,6 +39,7 @@ const abdm = {
   takenAddresses: new Set<string>(['taken.name@sbx']),
   profileMobile: LINKED_MOBILE,
   addresses: ['test.person@sbx'],
+  aadhaarSends: 0,
 };
 
 function profile() {
@@ -80,8 +81,12 @@ const fakeFetch = ((url: string | URL, init?: RequestInit) => {
   const otp = (body?.authData as { otp?: { txnId?: string } } | undefined)?.otp;
   if (path.endsWith('/enrollment/request/otp')) {
     const mobile = body?.loginHint === 'mobile';
+    // Like the sandbox: a resend that carries a transaction id is refused with a
+    // bare 400, and every fresh Aadhaar send returns a new id.
+    if (!mobile && body?.txnId) return json({ txnId: 'x', timestamp: '2026-11-20 00:32:32' }, 400);
+    if (!mobile) abdm.aadhaarSends += 1;
     return json({
-      txnId: mobile ? 'txn-mobile' : 'txn-aadhaar',
+      txnId: mobile ? 'txn-mobile' : `txn-aadhaar-${abdm.aadhaarSends}`,
       message: mobile
         ? 'OTP sent to mobile number ending with ******0099'
         : 'OTP sent to Aadhaar registered mobile number ending with ******0042',
@@ -322,7 +327,8 @@ describe('consent and the Aadhaar OTP', () => {
       vi.setSystemTime(Date.now() + 61_000);
       const first = await resend().expect(200);
       expect(first.body.data.resendsLeft).toBe(1);
-      expect(abdm.calls[0]?.body?.txnId).toBe('txn-aadhaar');
+      // A resend is a fresh send, never one that carries the first transaction id.
+      expect(abdm.calls[0]?.body?.txnId).toBe('');
       vi.setSystemTime(Date.now() + 61_000);
       expect((await resend().expect(200)).body.data.resendsLeft).toBe(0);
       vi.setSystemTime(Date.now() + 61_000);
@@ -332,6 +338,10 @@ describe('consent and the Aadhaar OTP', () => {
     } finally {
       vi.useRealTimers();
     }
+    // The OTP is then verified against the newest transaction, not the first.
+    await post(desk, `/${journeyId}/verify`, { otp: RIGHT_OTP, mobile: LINKED_MOBILE }).expect(200);
+    const verify = abdm.calls.at(-1)?.body?.authData as { otp: { txnId: string } };
+    expect(verify.otp.txnId).toBe(`txn-aadhaar-${abdm.aadhaarSends}`);
   });
 
   it('keeps the transaction after a wrong OTP and passes on ABDM’s message unchanged', async () => {
@@ -358,7 +368,9 @@ describe('consent and the Aadhaar OTP', () => {
     const otps = abdm.calls.map(
       (call) => (call.body?.authData as { otp: { txnId: string } }).otp.txnId,
     );
-    expect(otps).toEqual(['txn-aadhaar', 'txn-aadhaar']);
+    expect(otps).toHaveLength(2);
+    expect(new Set(otps).size).toBe(1);
+    expect(otps[0]).toBe(`txn-aadhaar-${abdm.aadhaarSends}`);
     expect(verified.body.data).toMatchObject({
       isNew: false,
       message: 'This account already exist',

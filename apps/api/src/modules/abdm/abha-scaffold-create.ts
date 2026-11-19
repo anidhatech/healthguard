@@ -183,11 +183,14 @@ async function main(): Promise<number> {
     return 0;
   }
 
-  if ((await ask('Test a resend in the same transaction? Type y or n: ')).toLowerCase() === 'y') {
-    const again = await step('1b. Resend Aadhaar OTP, same txnId', () =>
-      client.requestAadhaarOtp(aadhaar, sent.txnId),
+  if ((await ask('Send a second OTP, as a resend does? Type y or n: ')).toLowerCase() === 'y') {
+    const again = await step('1b. Send the Aadhaar OTP again, as a resend does', () =>
+      client.requestAadhaarOtp(aadhaar),
     );
-    print(`same txnId returned: ${again ? again.txnId === sent.txnId : 'n/a'}`);
+    if (again) {
+      print('A new transaction id was returned. Use the newest OTP.');
+      sent.txnId = again.txnId;
+    }
   }
 
   const mobile = (

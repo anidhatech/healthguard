@@ -183,9 +183,10 @@ export class AbhaEnrolmentService {
     const journey = await this.load(actor, journeyId);
     const client = this.requireClient();
     this.checkResend(journey.aadhaar);
-    const sent = await this.abdm(() =>
-      client.requestAadhaarOtp(aadhaarNumber, journey.aadhaar.txnId),
-    );
+    // The sandbox refuses a resend that carries the first transaction id (a bare
+    // 400, observed 2026-11-19, 65 seconds after the send), and accepts a fresh
+    // send, which returns a new id. Later calls use the newest id.
+    const sent = await this.abdm(() => client.requestAadhaarOtp(aadhaarNumber));
     journey.aadhaar = {
       txnId: sent.txnId,
       sentAt: Date.now(),

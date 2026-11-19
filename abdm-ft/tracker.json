@@ -36,7 +36,7 @@
   "CRT_ABHA_104": "/doctor/abha/create step 1 Details: Aadhaar number, 12 digits only, masked once entered, 'Aadhaar Number is not valid' with no call",
   "CRT_ABHA_102": "/doctor/abha/create step 2 Consent: terms word for word with I agree, five declarations, both confirmations with names filled; recorded in the audit trail before any call",
   "CRT_ABHA_105": "/doctor/abha/create step 3 Aadhaar OTP: [redacted] digits only, ABDM's message with the masked mobile",
-  "CRT_ABHA_106": "/doctor/abha/create step 3 Aadhaar OTP: [redacted] OTP with a 60 second counter, two resends, same txnId",
+  "CRT_ABHA_106": "/doctor/abha/create step 3 Aadhaar OTP: [redacted] OTP with a 60 second counter and two resends; each resend is a fresh send with a new txnId, as the sandbox requires",
   "CRT_ABHA_107": "/doctor/abha/create step 3 Aadhaar OTP: [redacted] enables at six digits; a wrong OTP shows ABDM's message and keeps the transaction",
   "CRT_ABHA_108": "/doctor/abha/create step 3 Aadhaar OTP: [redacted] mobile prefilled; the Aadhaar-linked mobile goes straight to step 5",
   "CRT_ABHA_109": "/doctor/abha/create step 4 Mobile: OTP for a different communication mobile, same resend and wrong-OTP rules",

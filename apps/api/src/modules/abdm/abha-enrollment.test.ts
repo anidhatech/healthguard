@@ -74,7 +74,7 @@ const ENROL_PATH = '/abha/api/v3/enrollment/enrol/byAadhaar';
 const AADHAAR = '000000000000';
 
 describe('Aadhaar OTP', () => {
-  it('sends the Aadhaar number encrypted, and resends within the same transaction', async () => {
+  it('sends the Aadhaar number encrypted, and can carry a transaction id when asked', async () => {
     const { client, calls } = setup({
       [OTP_PATH]: [
         {
