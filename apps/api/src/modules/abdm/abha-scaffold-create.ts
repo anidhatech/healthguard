@@ -54,15 +54,20 @@ const output = new Writable({
 });
 let terminal: Interface | null = null;
 
+/**
+ * Asks one question. The question is readline's own prompt, so the terminal
+ * never erases it; for a hidden answer the echo is muted only after the
+ * prompt has been written.
+ */
 function ask(question: string, hidden = false): Promise<string> {
   return new Promise((resolve) => {
-    process.stdout.write(question);
-    muted = hidden;
-    terminal?.question('', (answer) => {
+    muted = false;
+    terminal?.question(question, (answer) => {
       muted = false;
       if (hidden) process.stdout.write('\n');
       resolve(answer.trim());
     });
+    muted = hidden;
   });
 }
 
@@ -122,14 +127,16 @@ async function main(): Promise<number> {
   print('Create ABHA by Aadhaar OTP: sandbox run.');
   print('This sends a real OTP and creates a sandbox ABHA for the Aadhaar you enter');
   print('(or returns the ABHA it already holds). Values you type are not printed.');
-  if (
-    (await ask('\nType "I agree" to confirm you consent to this for your own Aadhaar: ')) !==
-    'I agree'
-  ) {
+  print();
+  const consent = await ask('Type the words I agree to consent to this for your own Aadhaar: ');
+  if (consent.replace(/["']/g, '').toLowerCase() !== 'i agree') {
     print('Stopped: no consent given. Nothing was sent.');
     return 1;
   }
-  const aadhaar = (await ask('Aadhaar number (hidden): ', true)).replace(/\s+/g, '');
+  const aadhaar = (await ask('Aadhaar number, 12 digits (hidden as you type): ', true)).replace(
+    /\s+/g,
+    '',
+  );
   if (!/^[0-9]{12}$/.test(aadhaar)) {
     print('Aadhaar Number is not valid');
     return 1;
@@ -138,20 +145,19 @@ async function main(): Promise<number> {
   const sent = await step('1. Send Aadhaar OTP', () => client.requestAadhaarOtp(aadhaar));
   if (!sent) return 1;
 
-  if ((await ask('\nTest a resend in the same transaction? (y/N): ')).toLowerCase() === 'y') {
+  if ((await ask('Test a resend in the same transaction? Type y or n: ')).toLowerCase() === 'y') {
     const again = await step('1b. Resend Aadhaar OTP, same txnId', () =>
       client.requestAadhaarOtp(aadhaar, sent.txnId),
     );
     print(`same txnId returned: ${again ? again.txnId === sent.txnId : 'n/a'}`);
   }
 
-  const mobile = (await ask('\nCommunication mobile, 10 digits (hidden): ', true)).replace(
-    /\D+/g,
-    '',
-  );
+  const mobile = (
+    await ask('Communication mobile, 10 digits (hidden as you type): ', true)
+  ).replace(/\D+/g, '');
   let enrolled = null;
   for (let attempt = 1; attempt <= 3 && !enrolled; attempt += 1) {
-    const otp = await ask(`Aadhaar OTP, attempt ${attempt} of 3 (hidden): `, true);
+    const otp = await ask(`Aadhaar OTP, attempt ${attempt} of 3 (hidden as you type): `, true);
     enrolled = await step('2. Verify Aadhaar OTP and enrol', () =>
       client.enrolByAadhaar({ txnId: sent.txnId, otp, mobile }),
     );
@@ -166,12 +172,14 @@ async function main(): Promise<number> {
   print(`ABHA number present: ${Boolean(enrolled.profile.abhaNumber)}`);
   print(`ABHA addresses on the profile: ${enrolled.profile.abhaAddresses.length}`);
 
-  if ((await ask('\nVerify the communication mobile by OTP now? (y/N): ')).toLowerCase() === 'y') {
+  if (
+    (await ask('Verify the communication mobile by OTP now? Type y or n: ')).toLowerCase() === 'y'
+  ) {
     const challenge = await step('3. Send mobile OTP', () =>
       client.requestMobileOtp(txnId, mobile),
     );
     if (challenge) {
-      const otp = await ask('Mobile OTP (hidden): ', true);
+      const otp = await ask('Mobile OTP (hidden as you type): ', true);
       const verified = await step('4. Verify mobile OTP', () =>
         client.verifyMobileOtp(challenge.txnId, otp),
       );
