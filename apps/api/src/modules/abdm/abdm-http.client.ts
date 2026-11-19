@@ -31,6 +31,13 @@ export interface AbdmResponse<T> {
   requestId: string;
 }
 
+export interface AbdmBinaryResponse {
+  status: number;
+  bytes: Buffer;
+  contentType: string | null;
+  requestId: string;
+}
+
 /** What is safe to log about a call: never a body, a token or an identifier. */
 export interface AbdmCallLog {
   requestId: string;
@@ -76,6 +83,16 @@ export function readAbdmError(body: unknown): { code: string | null; message: st
   };
 }
 
+/** A body that is empty or not JSON reads as `null`, never as a thrown error. */
+function parseJson(text: string): unknown {
+  if (text.trim().length === 0) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return null;
+  }
+}
+
 /** A call ABDM refused, or one that never got an answer (`status` 0). */
 export class AbdmApiError extends Error {
   constructor(
@@ -104,6 +121,20 @@ export class AbdmHttpClient {
   ) {}
 
   async request<T>(request: AbdmRequest): Promise<AbdmResponse<T>> {
+    const { status, bytes, requestId } = await this.send(request, 'application/json');
+    return { status, body: parseJson(bytes.toString('utf8')) as T | null, requestId };
+  }
+
+  /** For the few calls that answer with a file, such as the ABHA card image. */
+  async requestBinary(request: AbdmRequest): Promise<AbdmBinaryResponse> {
+    const { status, bytes, contentType, requestId } = await this.send(request, '*/*');
+    return { status, bytes, contentType, requestId };
+  }
+
+  private async send(
+    request: AbdmRequest,
+    accept: string,
+  ): Promise<{ status: number; bytes: Buffer; contentType: string | null; requestId: string }> {
     const requestId = randomUUID();
     const base = request.host === 'gateway' ? this.config.gatewayUrl : this.config.abhaUrl;
     const url = `${base.replace(/\/+$/, '')}${request.path}`;
@@ -112,7 +143,7 @@ export class AbdmHttpClient {
       // UTC, ISO 8601 with milliseconds and a trailing Z.
       TIMESTAMP: new Date(this.deps.now()).toISOString(),
       'X-CM-ID': this.config.cmId,
-      Accept: 'application/json',
+      Accept: accept,
       ...request.headers,
     };
     if (request.body !== undefined) headers['Content-Type'] = 'application/json';
@@ -129,7 +160,7 @@ export class AbdmHttpClient {
     this.deps.log?.('abdm.request', call);
 
     let response: Response;
-    let text: string;
+    let bytes: Buffer;
     try {
       response = await this.deps.fetch(url, {
         method: request.method,
@@ -137,27 +168,23 @@ export class AbdmHttpClient {
         body: request.body === undefined ? undefined : JSON.stringify(request.body),
         signal: AbortSignal.timeout(this.config.timeoutMs),
       });
-      text = await response.text();
+      bytes = Buffer.from(await response.arrayBuffer());
     } catch {
       this.deps.log?.('abdm.failure', { ...call, status: 0 });
       throw new AbdmApiError(0, null, null, requestId, request.path);
     }
 
-    let body: unknown = null;
-    if (text.trim().length > 0) {
-      try {
-        body = JSON.parse(text);
-      } catch {
-        body = null;
-      }
-    }
-
     if (!response.ok) {
-      const { code, message } = readAbdmError(body);
+      const { code, message } = readAbdmError(parseJson(bytes.toString('utf8')));
       this.deps.log?.('abdm.failure', { ...call, status: response.status, code });
       throw new AbdmApiError(response.status, code, message, requestId, request.path);
     }
     this.deps.log?.('abdm.response', { ...call, status: response.status });
-    return { status: response.status, body: body as T | null, requestId };
+    return {
+      status: response.status,
+      bytes,
+      contentType: response.headers.get('content-type'),
+      requestId,
+    };
   }
 }

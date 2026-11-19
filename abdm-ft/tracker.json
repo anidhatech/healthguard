@@ -8,9 +8,41 @@
    "snapshot": {
     "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "open"
    }
+  },
+  "create-abha-aadhaar-otp": {
+   "state": "building",
+   "date": "2026-11-19",
+   "snapshot": {
+    "CRT_ABHA_101": "open",
+    "CRT_ABHA_104": "open",
+    "CRT_ABHA_102": "open",
+    "CRT_ABHA_103": "open",
+    "CRT_ABHA_105": "open",
+    "CRT_ABHA_106": "open",
+    "CRT_ABHA_107": "open",
+    "CRT_ABHA_108": "open",
+    "CRT_ABHA_109": "open",
+    "CRT_ABHA_112": "open",
+    "CRT_ABHA_113": "open",
+    "CRT_ABHA_114": "open",
+    "CRT_ABHA_115": "open",
+    "CRT_ABHA_116": "open"
+   }
   }
  },
  "screens": {
-  "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record"
+  "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record",
+  "CRT_ABHA_101": "Register a patient (/doctor/register): Create ABHA, method Aadhaar OTP, opens /doctor/abha/create",
+  "CRT_ABHA_104": "Create ABHA step 1, Aadhaar number: 12 digits only, masked once entered, 'Aadhaar Number is not valid' with no call",
+  "CRT_ABHA_102": "Create ABHA step 2, consent: terms word for word, five declarations, both confirmations, stored before any call",
+  "CRT_ABHA_105": "Create ABHA step 3, Aadhaar OTP: [redacted] digits, ABDM's message with the masked mobile",
+  "CRT_ABHA_106": "Create ABHA step 3, Resend: 60 second counter, two resends, same txnId",
+  "CRT_ABHA_107": "Create ABHA step 3, Verify: enabled at six digits, ABDM's message on a wrong OTP, same txnId on retry",
+  "CRT_ABHA_108": "Create ABHA step 3, communication mobile prefilled from the desk's record: same as Aadhaar-linked goes straight on",
+  "CRT_ABHA_109": "Create ABHA step 4, mobile OTP when the communication mobile differs",
+  "CRT_ABHA_112": "Create ABHA step 5, ABHA address: [masked], own address with live rules, already-exists choices",
+  "CRT_ABHA_113": "Create ABHA step 6, created ABHA: number, address and profile details",
+  "CRT_ABHA_114": "Create ABHA step 6, ABHA card: view and download as ABDM returned it",
+  "CRT_ABHA_116": "Create ABHA step 7, save to HealthGuard: match on ABHA number, then mobile, name, gender and age, or record number; link or create"
  }
 }
