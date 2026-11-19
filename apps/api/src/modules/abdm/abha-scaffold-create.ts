@@ -11,6 +11,11 @@
  *
  * It really sends OTPs, and it really creates a sandbox ABHA for that Aadhaar
  * (or returns the one it already holds).
+ *
+ * With `--resend-test` it only checks how ABDM answers a resend: it sends one
+ * OTP, waits 65 seconds, and resends. No OTP is entered and no ABHA is touched.
+ *
+ *   pnpm --filter @healthguard/api abdm:scaffold-create --resend-test
  */
 import { createInterface, type Interface } from 'node:readline';
 import { Writable } from 'node:stream';
@@ -23,7 +28,16 @@ import { createAbdmGateway } from './abdm.module.js';
 const print = (line = '') => process.stdout.write(`${line}\n`);
 
 /** Keys whose values are ABDM's own wording or flags, safe to show as they came. */
-const SHOW_VALUE = new Set(['message', 'isNew', 'authResult', 'code', 'abhaStatus', 'abhaType']);
+const SHOW_VALUE = new Set([
+  'message',
+  'isNew',
+  'authResult',
+  'code',
+  'abhaStatus',
+  'abhaType',
+  'error',
+  'timestamp',
+]);
 
 /** Key names and value types only: `string(12)`, `number`, `array(3) of string`. */
 export function shape(value: unknown, key = ''): unknown {
@@ -144,6 +158,30 @@ async function main(): Promise<number> {
 
   const sent = await step('1. Send Aadhaar OTP', () => client.requestAadhaarOtp(aadhaar));
   if (!sent) return 1;
+
+  if (process.argv.includes('--resend-test')) {
+    print('\nWaiting 65 seconds before the resend. Do not type anything.');
+    for (let left = 65; left > 0; left -= 5) {
+      process.stdout.write(`  ${left}s `);
+      await new Promise((resolve) => setTimeout(resolve, 5000));
+    }
+    print();
+    const same = await step('R1. Resend after 65 seconds, with the first txnId', () =>
+      client.requestAadhaarOtp(aadhaar, sent.txnId),
+    );
+    if (same) {
+      print(`R1 accepted. same txnId returned: ${same.txnId === sent.txnId}`);
+    } else {
+      const fresh = await step('R2. Send again with an empty txnId', () =>
+        client.requestAadhaarOtp(aadhaar),
+      );
+      print(
+        `R2 ${fresh ? 'accepted' : 'refused'}. new txnId differs from the first: ${fresh ? fresh.txnId !== sent.txnId : 'n/a'}`,
+      );
+    }
+    print('\nResend test done. The OTPs that arrived can be ignored.');
+    return 0;
+  }
 
   if ((await ask('Test a resend in the same transaction? Type y or n: ')).toLowerCase() === 'y') {
     const again = await step('1b. Resend Aadhaar OTP, same txnId', () =>

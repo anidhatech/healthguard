@@ -213,6 +213,43 @@ describe('enrolment', () => {
       readAbhaProfile({ abhaNumber: '1', preferredAbhaAddress: 'a@sbx', pincode: 500001 }),
     ).toMatchObject({ abhaNumber: '1', preferredAbhaAddress: 'a@sbx', pinCode: '500001' });
     expect(readAbhaProfile(null)).toMatchObject({ abhaNumber: null, abhaAddresses: [] });
+    // The keys the sandbox returned on 2026-11-19: enrolment, then the profile call.
+    expect(
+      readAbhaProfile({
+        ABHANumber: '91-0000-0000-0001',
+        preferredAddress: 'test.person@sbx',
+        phrAddress: ['test.person@sbx'],
+        dob: '01-01-1980',
+        pinCode: '500001',
+        communicationMobile: null,
+      }),
+    ).toMatchObject({
+      preferredAbhaAddress: 'test.person@sbx',
+      dateOfBirth: '01-01-1980',
+      kycVerified: null,
+    });
+    expect(
+      readAbhaProfile({
+        ABHANumber: '91-0000-0000-0001',
+        preferredAbhaAddress: 'test.person@sbx',
+        name: 'Test Person',
+        yearOfBirth: '1980',
+        monthOfBirth: '1',
+        dayOfBirth: '01',
+        pincode: '500001',
+        profilePhoto: 'aGk=',
+        status: 'ACTIVE',
+        kycVerified: true,
+        mobileVerified: true,
+      }),
+    ).toMatchObject({
+      dateOfBirth: '01-01-1980',
+      pinCode: '500001',
+      photo: 'aGk=',
+      abhaStatus: 'ACTIVE',
+      kycVerified: true,
+      mobileVerified: true,
+    });
   });
 });
 

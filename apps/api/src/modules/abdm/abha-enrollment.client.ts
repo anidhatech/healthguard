@@ -22,7 +22,7 @@ export interface AbhaProfile {
   firstName: string | null;
   middleName: string | null;
   lastName: string | null;
-  /** As ABDM sends it; the format is not assumed here. */
+  /** As ABDM sends it, or `DD-MM-YYYY` put together from the parts the profile call sends. */
   dateOfBirth: string | null;
   gender: string | null;
   mobile: string | null;
@@ -34,6 +34,9 @@ export interface AbhaProfile {
   /** Base64 image, when ABDM sends one. */
   photo: string | null;
   abhaStatus: string | null;
+  mobileVerified: boolean | null;
+  /** A card can be downloaded only for a KYC-verified ABHA. The profile call says which it is. */
+  kycVerified: boolean | null;
 }
 
 export interface EnrolmentResult {
@@ -81,6 +84,12 @@ function strings(value: unknown): string[] {
     : [];
 }
 
+/** The profile call sends the date of birth as three parts; enrolment sends it whole as `dob`. */
+function dateFromParts(row: Json): string | null {
+  const [day, month, year] = [text(row.dayOfBirth), text(row.monthOfBirth), text(row.yearOfBirth)];
+  return day && month && year ? `${day.padStart(2, '0')}-${month.padStart(2, '0')}-${year}` : null;
+}
+
 /** Reads a profile whether its keys come as the enrolment or the profile call writes them. */
 export function readAbhaProfile(source: unknown): AbhaProfile {
   const row = object(source);
@@ -93,7 +102,7 @@ export function readAbhaProfile(source: unknown): AbhaProfile {
     firstName: text(row.firstName, row.name),
     middleName: text(row.middleName),
     lastName: text(row.lastName),
-    dateOfBirth: text(row.dob, row.dateOfBirth, row.yearOfBirth),
+    dateOfBirth: text(row.dob, row.dateOfBirth, dateFromParts(row), row.yearOfBirth),
     gender: text(row.gender),
     mobile: text(row.mobile),
     email: text(row.email),
@@ -103,6 +112,8 @@ export function readAbhaProfile(source: unknown): AbhaProfile {
     pinCode: text(row.pinCode, row.pincode),
     photo: text(row.photo, row.profilePhoto),
     abhaStatus: text(row.abhaStatus, row.status),
+    mobileVerified: typeof row.mobileVerified === 'boolean' ? row.mobileVerified : null,
+    kycVerified: typeof row.kycVerified === 'boolean' ? row.kycVerified : null,
   };
 }
 

@@ -1,7 +1,7 @@
 # ABDM integration plan — HealthGuard
 
 > **Status:** decisions 1 and 2 agreed. Configuration, the ABDM client, patient registration and the one-ABHA-per-patient rule are built and tested. The sandbox answers from the owner's Mac: a gateway session and the ABHA certificate were observed on 2026-11-19. No ABHA journey is built yet.
-> **Updated:** 2026-11-19 · **Steps done:** 6 of 17 (35%)
+> **Updated:** 2026-11-19 · **Steps done:** 7 of 17 (41%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
 
@@ -57,10 +57,10 @@ Decisions 1 and 2 are agreed. The rest can be answered when their step is reache
 | 2 | Survey the codebase and write this plan | Every row of section 2 names a path or "none, add at" | done | This file, 2026-11-18 |
 | 3 | Owner agrees the plan and answers decisions 1 and 2 | Written agreement in the session | done | Decision 1 agreed 2026-11-18; decision 2 agreed 2026-11-19 |
 | 4 | Configuration and credentials | `ABDM_ADAPTER=sandbox` validates at start-up; the owner has set `ABDM_CLIENT_ID` and `ABDM_CLIENT_SECRET` in the environment's settings | done | Settings in `apps/api/src/config/env.ts` and `.env.example`; both variables present in the cloud environment, 2026-11-18 |
-| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | pending | Smoke check run 2026-11-19 from the owner's Mac in India, on commit `8837150`: gateway session returned a token (request `3a99b022-3c04-4bb1-a96f-eb2cbc6df218`, HTTP 200) and the ABHA certificate was read (request `e4647b37-85dd-414c-8bfd-4bb8108efd6d`, HTTP 200). Still to observe: an encrypted value accepted by a call, which is the first OTP request in step 8 and needs the tester. The sandbox refuses the cloud session's network (403 from its CDN), so sandbox calls run from the Mac |
+| 5 | ABDM module: HTTP client, gateway session, certificate and encryption | A gateway session call returns a token from the sandbox; an encrypted value is accepted by one call | done | From the owner's Mac, 2026-11-19: gateway session token (request `3a99b022-3c04-4bb1-a96f-eb2cbc6df218`); ABHA certificate read (request `e4647b37-85dd-414c-8bfd-4bb8108efd6d`); an encrypted Aadhaar number accepted, `request/otp` returned a `txnId` (request `df3183fb-59f0-401b-8306-c07122519df1`). The sandbox refuses the cloud session's network, so sandbox calls run from the Mac |
 | 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | done | `POST /api/v1/patients` and `/doctor/register`; `apps/api/test/registration.int.test.ts` passes (10 tests); screen driven in a browser against a local clinic organization, 2026-11-19 |
 | 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | done | Migration `20261119090000_abha_number_unique`; `PatientRegistrationService.register` and `linkAbha`; same test file, 2026-11-19 |
-| 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | in progress | Design: each mandatory case mapped to a screen in the tracker, 2026-11-19. Scaffold: calls written in `apps/api/src/modules/abdm/abha-enrollment.client.ts` with unit tests; sandbox run script `pnpm --filter @healthguard/api abdm:scaffold-create` waits for the tester on the Mac. Integrate: not started |
+| 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | in progress | Design: cases mapped in the tracker. Scaffold, observed from the owner's Mac on 2026-11-19 (run log below): send OTP, enrol (`isNew` false), mobile OTP send and verify, suggestions, profile and card all answered 200 or 202. Open: a resend with the first `txnId` was refused with 400; address creation, a wrong OTP and a new account (`isNew` true) not yet observed. Integrate: not started |
 | 9 | Functionality 2: log in with ABHA number | Same | pending | |
 | 10 | Functionality 3: log in with ABHA address | Same | pending | |
 | 11 | Functionality 4: find a forgotten ABHA by mobile | Same | pending | |
@@ -126,4 +126,19 @@ In scope: 7 functionalities. 2 building, 5 not started. Mandatory cases: 32, 0 p
 
 ## 7. Run logs
 
-None yet. Each run writes `abdm-ft/m1-<YYYYMMDD-HHMM>.md` and is linked here.
+### Scaffold run, create ABHA by Aadhaar OTP, 2026-11-19
+
+Run by the owner as tester, from the Mac, with `pnpm --filter @healthguard/api abdm:scaffold-create` on commit `cea9832`. The script prints request ids and response shapes only. The Aadhaar used already held an ABHA.
+
+| Call | HTTP | Request id | Observed |
+|---|---|---|---|
+| `POST enrollment/request/otp` (Aadhaar) | 200 | `df3183fb-59f0-401b-8306-c07122519df1` | `txnId`, and `message` naming the masked mobile |
+| `POST enrollment/request/otp` (resend, first `txnId`, seconds after the send) | 400 | `2d4120b7-0adc-4892-8d7e-f3bc631005d1` | Refused. Body held only `txnId` and `timestamp`: no code, no message. Cause not known yet |
+| `POST enrollment/enrol/byAadhaar` | 200 | `6f5d884e-c26b-43a6-900f-1af8b9de1bd0` | `isNew` false, message "This account already exist", same `txnId`, `tokens`, `ABHAProfile` with `ABHANumber`, `preferredAddress`, `phrAddress`, `dob`, `photo`, `mobile`, `pinCode`; `communicationMobile` null |
+| `POST enrollment/request/otp` (mobile) | 200 | `f82b3ee9-18e7-4740-9390-e83bdab16fe6` | `txnId`, `message` |
+| `POST enrollment/auth/byAbdm` | 200 | `2ba141b5-ca40-4d04-af2d-203e2fc196c6` | `authResult` "success", `accounts` |
+| `GET enrollment/enrol/suggestion` | 200 | `32001c57-5eb9-45ae-b730-db4cdf3a680a` | `abhaAddressList` with 10 entries |
+| `GET profile/account` | 200 | `602eb8b6-9fd2-4d29-acbe-5bafb6bb66f4` | Different key names from enrolment: `preferredAbhaAddress`, `pincode`, `profilePhoto`, `status`; date of birth as `dayOfBirth`, `monthOfBirth`, `yearOfBirth`; `kycVerified`, `mobileVerified` |
+| `GET profile/account/abha-card` | 202 | `8add1ec4-b7f2-4087-9b5a-fc0f782e60de` | `image/png`, about 210 KB |
+
+Findings acted on: the profile reader now handles both sets of key names and builds the date of birth from its three parts. A card answers 202, not 200.
