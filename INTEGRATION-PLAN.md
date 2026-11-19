@@ -1,7 +1,7 @@
 # ABDM integration plan — HealthGuard
 
-> **Status:** decisions 1 and 2 agreed. The ABDM client is confirmed against the sandbox from the owner's Mac. Functionality 1 (create ABHA by Aadhaar OTP) is built and waits for the tester; functionalities 2 to 7 are not started.
-> **Updated:** 2026-11-19 · **Steps done:** 8 of 17 (47%)
+> **Status:** M1 is **not complete**: 1 of the 7 functionalities in scope is built, and none of the 32 mandatory cases is recorded as passed. Functionality 1 (create ABHA by Aadhaar OTP) is built and has run end to end through its screens against the sandbox; its cases still need to be judged and written into the workbook with the tester. Functionalities 2 to 7 are not started.
+> **Updated:** 2026-11-20 · **Steps done:** 8 of 17 (47%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
 
@@ -142,6 +142,21 @@ Run by the owner as tester, from the Mac, with `pnpm --filter @healthguard/api a
 | `GET profile/account/abha-card` | 202 | `8add1ec4-b7f2-4087-9b5a-fc0f782e60de` | `image/png`, about 210 KB |
 
 Findings acted on: the profile reader now handles both sets of key names and builds the date of birth from its three parts. A card answers 202, not 200.
+
+### First run through the screens, 2026-11-20
+
+Run by the owner as tester, on the Mac, on commit `55bfc95`: the API with `ABDM_ADAPTER=sandbox` and `DEMO_MODE=false` against a separate clinic database, the web app at `/doctor/abha/create`, signed in as the clinic's front desk.
+
+Observed in the clinic database afterwards, by count only:
+
+| What | Observed |
+|---|---|
+| Consent | One `CONSENT_GRANT` audit event for the journey, written before the OTP was sent, and one later event tying it to the patient |
+| Enrolment | One enrolment event, `isNew` false: the Aadhaar already held an ABHA, and the journey carried on from it |
+| Patient record | One patient created, not synthetic, with an ABHA number and an ABHA address linked |
+| Screen | The staff dashboard listed the new patient, with no demo banner |
+
+What this does and does not show: the journey works end to end against the sandbox for an Aadhaar that already holds an ABHA. It is **not** a test run in the skill's sense. The tester's observation of each case (invalid Aadhaar, wrong OTP, resend, a different mobile, the address rules, the card, a second visit) was not recorded, no workbook row was written, and every case in the tracker stays open.
 
 ### Resend test, 2026-11-19
 
