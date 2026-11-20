@@ -1,8 +1,10 @@
 import { constants, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { buildConfig } from '../../config/env.js';
-import { AbhaLoginClient, readLoginResult } from './abha-login.client.js';
-import { shape } from './abdm-scaffold.js';
+import { readAbhaProfile } from './abha-enrollment.client.js';
+import { AbhaLoginClient, formatAbhaNumber, readLoginResult } from './abha-login.client.js';
+import { refusal, shape } from './abdm-scaffold.js';
+import { readAbdmError } from './abdm-http.client.js';
 import { createAbdmGateway } from './abdm.module.js';
 
 const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
@@ -111,7 +113,7 @@ describe('login by ABHA number and by Aadhaar number', () => {
       otpSystem: 'abdm',
     });
     expect(calls[2]?.body).toMatchObject({ loginHint: 'aadhaar', otpSystem: 'aadhaar' });
-    expect(decrypt(calls[0]?.body?.loginId)).toBe('91000000000001');
+    expect(decrypt(calls[0]?.body?.loginId)).toBe('91-0000-0000-0001');
     expect(decrypt(calls[2]?.body?.loginId)).toBe('000000000000');
     expect(JSON.stringify(calls)).not.toContain('000000000000');
   });
@@ -270,5 +272,139 @@ describe('the run script’s printing', () => {
     expect(printed).toContain('AADHAAR_OTP');
     expect(printed).not.toContain('test.person');
     expect(printed).not.toContain('secret-jwt');
+  });
+});
+
+describe('what the sandbox returned on 2026-11-20', () => {
+  it('sends a 14-digit ABHA number in ABDM’s hyphenated form, and leaves anything else alone', () => {
+    expect(formatAbhaNumber('91000000000001')).toBe('91-0000-0000-0001');
+    expect(formatAbhaNumber(' 91 0000 0000 0001 ')).toBe('91-0000-0000-0001');
+    expect(formatAbhaNumber('91-0000-0000-0001')).toBe('91-0000-0000-0001');
+    expect(formatAbhaNumber('9100000001')).toBe('9100000001');
+    expect(formatAbhaNumber('test.person@sbx')).toBe('test.person@sbx');
+  });
+
+  it('encrypts the hyphenated form when logging in by ABHA number', async () => {
+    const { client, calls } = setup({
+      [REQUEST]: { body: { txnId: 'txn-1', message: 'OTP sent' } },
+    });
+    await client.requestOtp({
+      identifier: 'abha-number',
+      value: '91000000000001',
+      otpSystem: 'abdm',
+    });
+    expect(decrypt(calls[0]?.body?.loginId)).toBe('91-0000-0000-0001');
+  });
+
+  it('reads a validation refusal, which names a field and has no code or message', async () => {
+    expect(readAbdmError({ loginId: 'Invalid LoginId', timestamp: '2026-11-20 09:06:37' })).toEqual(
+      {
+        code: null,
+        message: 'Invalid LoginId',
+      },
+    );
+    expect(readAbdmError({ txnId: 'Invalid Transaction Id', timestamp: 'x' }).message).toBe(
+      'Invalid Transaction Id',
+    );
+    expect(readAbdmError({ code: 'ABDM-1114', message: 'User not found.' })).toEqual({
+      code: 'ABDM-1114',
+      message: 'User not found.',
+    });
+    expect(readAbdmError({ timestamp: 'x' }).message).toBeNull();
+
+    const { client } = setup({
+      [REQUEST]: {
+        status: 400,
+        body: { loginId: 'Invalid LoginId', timestamp: '2026-11-20 09:06:37' },
+      },
+    });
+    await expect(
+      client.requestOtp({ identifier: 'abha-number', value: 'x', otpSystem: 'abdm' }),
+    ).rejects.toMatchObject({ status: 400, code: null, abdmMessage: 'Invalid LoginId' });
+  });
+
+  it('reads an ABHA-address login, which lists `users` and nests its token', () => {
+    const result = readLoginResult({
+      txnId: 'txn',
+      message: 'OTP verified successfully',
+      authResult: 'success',
+      users: [
+        {
+          abhaAddress: 'test.person@sbx',
+          fullName: 'Test Person',
+          abhaNumber: '91-0000-0000-0001',
+          status: 'ACTIVE',
+          kycStatus: 'VERIFIED',
+          age: 46,
+        },
+      ],
+      tokens: {
+        token: 'user-token',
+        expiresIn: 1800,
+        refreshToken: 'refresh',
+        switchProfileEnabled: false,
+      },
+    });
+    expect(result).toMatchObject({
+      verified: true,
+      userToken: 'user-token',
+      refreshToken: 'refresh',
+    });
+    expect(result.accounts).toHaveLength(1);
+    expect(result.accounts[0]).toMatchObject({
+      abhaNumber: '91-0000-0000-0001',
+      preferredAbhaAddress: 'test.person@sbx',
+      firstName: 'Test Person',
+      abhaStatus: 'ACTIVE',
+      kycVerified: true,
+    });
+  });
+
+  it('reads an ABHA-address profile with its own key names', () => {
+    expect(
+      readAbhaProfile({
+        abhaAddress: 'test.person@sbx',
+        fullName: 'Test Middle Person',
+        firstName: 'Test',
+        middleName: 'Middle',
+        lastName: 'Person',
+        dayOfBirth: '9',
+        monthOfBirth: '3',
+        yearOfBirth: '1980',
+        dateOfBirth: '9-3-1980',
+        gender: 'M',
+        email: 'test@example.test',
+        mobile: '0000000001',
+        abhaNumber: '91-0000-0000-0001',
+        address: '1 Sample Street',
+        stateName: 'Telangana',
+        districtName: 'Hyderabad',
+        pinCode: '500001',
+        status: 'ACTIVE',
+        mobileVerified: 'true',
+        kycStatus: 'VERIFIED',
+      }),
+    ).toMatchObject({
+      abhaNumber: '91-0000-0000-0001',
+      preferredAbhaAddress: 'test.person@sbx',
+      firstName: 'Test',
+      lastName: 'Person',
+      dateOfBirth: '09-03-1980',
+      email: 'test@example.test',
+      pinCode: '500001',
+      mobileVerified: true,
+      kycVerified: true,
+    });
+    expect(readAbhaProfile({ kycStatus: 'PENDING' }).kycVerified).toBe(false);
+    expect(readAbhaProfile({ kycStatus: 'SOMETHING_NEW' }).kycVerified).toBeNull();
+    expect(readAbhaProfile({ kycVerified: false, kycStatus: 'VERIFIED' }).kycVerified).toBe(false);
+  });
+
+  it('shows a refusal’s own words in the run script, with digit runs masked', () => {
+    const printed = JSON.stringify(
+      refusal({ loginId: 'Invalid LoginId 91000000000001', timestamp: '2026-11-20 09:06:37' }),
+    );
+    expect(printed).toContain('Invalid LoginId');
+    expect(printed).not.toContain('91000000000001');
   });
 });

@@ -49,6 +49,23 @@ export function shape(value: unknown, key = ''): unknown {
   return typeof value === 'string' ? `string(${value.length})` : typeof value;
 }
 
+/**
+ * A refusal's own words matter more than its shape, so its text fields are
+ * shown, with every run of four or more digits masked in case it echoes an
+ * identifier back.
+ */
+export function refusal(value: unknown): unknown {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return shape(value);
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>).map(([name, item]) => [
+      name,
+      typeof item === 'string'
+        ? item.replace(/[0-9]{4,}/g, (run) => 'X'.repeat(run.length))
+        : shape(item, name),
+    ]),
+  );
+}
+
 let muted = false;
 const output = new Writable({
   write(chunk, _encoding, done) {
@@ -118,7 +135,7 @@ export function createObservedGateway(): AbdmGateway | null {
         .json()
         .catch(() => null);
       print(`response ${response.status} ${path}`);
-      print(JSON.stringify(shape(body), null, 2));
+      print(JSON.stringify(response.ok ? shape(body) : refusal(body), null, 2));
     } else {
       print(`response ${response.status} ${path} content-type ${type || '(none)'}`);
     }

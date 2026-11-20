@@ -38,6 +38,7 @@ const abdm = {
   noAbha: false,
   addressMethods: ['AADHAAR_OTP', 'MOBILE_OTP'],
   mobile: ABHA_MOBILE,
+  refuseNext: null as Record<string, string> | null,
 };
 
 const account = () => ({
@@ -92,6 +93,11 @@ const fakeFetch = ((url: string | URL, init?: RequestInit) => {
     return json({ abhaAddress: body?.abhaAddress, authMethods: abdm.addressMethods });
   }
   if (path.endsWith('/login/request/otp') || path.endsWith('/abha/request/otp')) {
+    if (abdm.refuseNext) {
+      const refusal = abdm.refuseNext;
+      abdm.refuseNext = null;
+      return json(refusal, 400);
+    }
     abdm.sends += 1;
     return json({
       txnId: `txn-${abdm.sends}`,
@@ -113,11 +119,35 @@ const fakeFetch = ((url: string | URL, init?: RequestInit) => {
         404,
       );
     }
+    // The shapes observed in the sandbox: an ABHA-address login lists `users`
+    // and nests its token; the other logins list `accounts` with a top-level token.
+    if (path.includes('/phr/')) {
+      return json({
+        txnId,
+        message: 'OTP verified successfully',
+        authResult: 'success',
+        users: [
+          {
+            abhaAddress: ABHA_ADDRESS,
+            fullName: 'Login Person',
+            abhaNumber: ABHA_NUMBER,
+            status: 'ACTIVE',
+            kycStatus: 'VERIFIED',
+            age: 51,
+          },
+        ],
+        tokens: {
+          token: 'user-token-for-address',
+          refreshToken: 'refresh-token',
+          switchProfileEnabled: false,
+        },
+      });
+    }
     return json({
       txnId,
       authResult: 'success',
       message: 'OTP verified successfully',
-      token: `user-token-for-${path.includes('/phr/') ? 'address' : 'abha'}`,
+      token: 'user-token-for-abha',
       refreshToken: 'refresh-token',
       accounts: [account()],
     });
@@ -144,8 +174,30 @@ const fakeFetch = ((url: string | URL, init?: RequestInit) => {
       message: 'Mobile Number linked successfully',
     });
   }
-  if (path.endsWith('/profile/abha-profile') || path.endsWith('/profile/account'))
-    return json(fullProfile());
+  if (path.endsWith('/profile/abha-profile')) {
+    return json({
+      abhaAddress: ABHA_ADDRESS,
+      fullName: 'Login Person',
+      firstName: 'Login',
+      lastName: 'Person',
+      dayOfBirth: '9',
+      monthOfBirth: '3',
+      yearOfBirth: '1975',
+      dateOfBirth: '9-3-1975',
+      gender: 'M',
+      email: 'login.person@example.test',
+      mobile: abdm.mobile,
+      abhaNumber: ABHA_NUMBER,
+      address: '7 Sample Lane',
+      stateName: 'Telangana',
+      districtName: 'Hyderabad',
+      pinCode: '500003',
+      status: 'ACTIVE',
+      mobileVerified: 'true',
+      kycStatus: 'VERIFIED',
+    });
+  }
+  if (path.endsWith('/profile/account')) return json(fullProfile());
   if (path.endsWith('/abha/phr-card') || path.endsWith('/account/abha-card')) return png();
   return Promise.reject(new Error(`fake ABDM has no answer for ${path}`));
 }) as typeof fetch;
@@ -449,6 +501,18 @@ describe('login with an ABHA number', () => {
   });
 });
 
+describe('a refusal with no code', () => {
+  it('reaches the desk in ABDM’s own words', async () => {
+    abdm.refuseNext = { loginId: 'Invalid LoginId', timestamp: '2026-11-20 09:06:37' };
+    const refused = await post(desk, LOGINS, {
+      identifier: 'ABHA_NUMBER',
+      value: 'not-an-abha-number',
+      method: 'MOBILE_OTP',
+    }).expect(422);
+    expect(refused.body).toMatchObject({ code: 'ABDM_REFUSED', detail: 'Invalid LoginId' });
+  });
+});
+
 describe('the mobile update offer', () => {
   it('is offered when the desk’s mobile differs, and is done only when ABDM says so', async () => {
     abdm.mobile = ABHA_MOBILE;
@@ -524,7 +588,13 @@ describe('login with an ABHA address', () => {
       loginHint: 'abha-address',
     });
     const profile = await desk.agent.get(`${JOURNEYS}/${journeyId}/profile`).expect(200);
-    expect(profile.body.data.abhaNumber).toBe(ABHA_NUMBER);
+    expect(profile.body.data).toMatchObject({
+      abhaNumber: ABHA_NUMBER,
+      preferredAbhaAddress: ABHA_ADDRESS,
+      name: 'Login Person',
+      dateOfBirth: '09-03-1975',
+      kycVerified: true,
+    });
     expect(lastCall('/profile/abha-profile')?.headers['X-token']).toBe(
       'Bearer user-token-for-address',
     );
@@ -537,6 +607,21 @@ describe('login with an ABHA address', () => {
       { otp: RIGHT_OTP },
     ).expect(200);
     expect(view.body.data.mobileUpdate).toBe('NOT_AVAILABLE');
+    await db.patientProfile.deleteMany({ where: { organizationId: CLINIC } });
+    const saved = await post(desk, `${JOURNEYS}/${journeyId}/save`, { action: 'CREATE' }).expect(
+      200,
+    );
+    const row = await db.patientProfile.findUniqueOrThrow({
+      where: { id: saved.body.data.patient.id as string },
+    });
+    expect(row).toMatchObject({
+      abhaNumber: '91000000000077',
+      abhaAddress: ABHA_ADDRESS,
+      sex: 'MALE',
+    });
+    expect(row.dateOfBirth.toISOString().slice(0, 10)).toBe('1975-03-09');
+    await db.patientProfile.deleteMany({ where: { organizationId: CLINIC } });
+
     // No published call updates the mobile with an ABHA-address login's token.
     const refused = await post(desk, `${LOGINS}/${journeyId}/mobile-update`, {
       mobile: '0000000088',

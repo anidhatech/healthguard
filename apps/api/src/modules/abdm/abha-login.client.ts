@@ -55,13 +55,28 @@ function challenge(body: unknown, requestId: string, path: string): OtpChallenge
   return { txnId, message: text(row.message) };
 }
 
+/**
+ * ABDM writes an ABHA number as `XX-XXXX-XXXX-XXXX`. Fourteen bare digits are
+ * put in that form before they are sent; anything else goes as it was typed,
+ * so a value ABDM would accept is never altered.
+ */
+export function formatAbhaNumber(value: string): string {
+  const typed = value.trim();
+  const digits = typed.replace(/[\s-]+/g, '');
+  return /^[0-9]{14}$/.test(digits)
+    ? `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}-${digits.slice(10)}`
+    : typed;
+}
+
 /** Reads a verify answer whether its token sits at the top level or under `tokens`. */
 export function readLoginResult(body: unknown): LoginResult {
   const row = object(body);
   const tokens = object(row.tokens);
   const outcome = text(row.authResult);
   const userToken = text(row.token, tokens.token);
-  const accounts = Array.isArray(row.accounts) ? row.accounts.map(readAbhaProfile) : [];
+  // An ABHA-number or Aadhaar login lists `accounts`; an ABHA-address login lists `users`.
+  const listed = Array.isArray(row.accounts) ? row.accounts : row.users;
+  const accounts = Array.isArray(listed) ? listed.map(readAbhaProfile) : [];
   return {
     txnId: text(row.txnId),
     // With no `authResult`, a token is what shows the login went through.
@@ -96,7 +111,9 @@ export class AbhaLoginClient {
       body: {
         scope: ['abha-login', verifyScope(input.otpSystem)],
         loginHint: input.identifier,
-        loginId: await this.gateway.crypto.encrypt(input.value),
+        loginId: await this.gateway.crypto.encrypt(
+          input.identifier === 'abha-number' ? formatAbhaNumber(input.value) : input.value,
+        ),
         otpSystem: input.otpSystem,
       },
     });

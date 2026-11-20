@@ -1,6 +1,6 @@
 # ABDM integration plan — HealthGuard
 
-> **Status:** M1 is **not complete**. Functionality 1 (create ABHA by Aadhaar OTP) is built and has run end to end against the sandbox. Functionalities 2, 3 and 5 (the three logins) are built but have not been observed against the sandbox. Functionalities 4 and 7 are not started. None of the 32 mandatory cases is recorded as passed.
+> **Status:** M1 is **not complete**. Functionality 1 (create ABHA by Aadhaar OTP) has run end to end against the sandbox. Of the three logins, the ABHA-address and Aadhaar-number calls answered in the sandbox; the ABHA-number login was refused and its fix is untested. None has been run through its screen against the sandbox. Functionalities 4 and 7 are not started. None of the 32 mandatory cases is recorded as passed.
 > **Updated:** 2026-11-20 · **Steps done:** 8 of 17 (47%)
 > **Skill:** `.claude/skills/abdm-m1` (catalogue version 2026.09.16) · **Run folder:** `abdm-ft/`
 > Never write a secret here: no token, client secret, OTP, password, Aadhaar number or patient identifier.
@@ -62,10 +62,10 @@ Decisions 1 and 2 are agreed. The rest can be answered when their step is reache
 | 6 | Patient registration route and counter screen (no ABDM yet) | A coordinator registers a non-synthetic patient; integration test passes | done | `POST /api/v1/patients` and `/doctor/register`; `apps/api/test/registration.int.test.ts` passes (10 tests); screen driven in a browser against a local clinic organization, 2026-11-19 |
 | 7 | One ABHA number per patient: unique rule and duplicate check | Migration adds a unique rule on `abhaNumber` per organization; a second registration with the same number is refused; integration test passes | done | Migration `20261119090000_abha_number_unique`; `PatientRegistrationService.register` and `linkAbha`; same test file, 2026-11-19 |
 | 8 | Functionality 1: create ABHA by Aadhaar OTP | Tracker row reaches "built and waiting for the tester" | done | Built 2026-11-19: API under `/api/v1/abha/enrolments` (`abha-enrolment.service.ts`, `abha.controller.ts`), screens at `/doctor/abha/create`. Evidence: sandbox scaffold run (log below); 14 integration tests against a fake ABDM with the observed shapes (`apps/api/test/abha-enrolment.int.test.ts`); the whole journey driven in a browser against a local stand-in for ABDM. Not yet seen against the sandbox through the screens: that is the tester session (step 15). Resend settled 2026-11-19 by a second sandbox run (log below): a resend is a fresh send with a new `txnId` |
-| 9 | Functionality 2: log in with ABHA number | Tracker row reaches "built and waiting for the tester" | in progress | Built 2026-11-20, not yet observed against the sandbox: calls in `abha-login.client.ts`, API under `/api/v1/abha/logins` (`abha-login.service.ts`), screen at `/doctor/abha/verify`. Evidence so far: unit tests, integration tests against a fake ABDM (`apps/api/test/abha-login.int.test.ts`), and the journey driven in a browser against a local stand-in. The sandbox run (`abdm:scaffold-login`) is waiting for the tester; ABDM's real response shapes for these calls are still unknown |
-| 10 | Functionality 3: log in with ABHA address | Same | in progress | Same as step 9. The method names ABDM lists for an address are not yet known; the screen maps any name containing AADHAAR and OTP, or MOBILE and OTP |
+| 9 | Functionality 2: log in with ABHA number | Tracker row reaches "built and waiting for the tester" | in progress | Built 2026-11-20 (API `/api/v1/abha/logins`, screen `/doctor/abha/verify`). Sandbox, 2026-11-20: the OTP request was refused with a `loginId` validation reason, on both OTP routes (run log below). The number is now sent hyphenated; not yet re-run, so this login has not worked against the sandbox |
+| 10 | Functionality 3: log in with ABHA address | Same | in progress | Built 2026-11-20. Sandbox, 2026-11-20: search, Aadhaar OTP, verify, profile and PHR card all answered (run log below); the response shapes differed from the guide and the code was corrected to them. Not yet run through the screen |
 | 11 | Functionality 4: find a forgotten ABHA by mobile | Same | pending | |
-| 12 | Functionality 5: log in with Aadhaar OTP | Same | in progress | Same as step 9. "No ABHA" relies on ABDM answering with code `ABDM-1114`, as its specification says; not yet observed |
+| 12 | Functionality 5: log in with Aadhaar OTP | Same | in progress | Built 2026-11-20. Sandbox, 2026-11-20: OTP request and verify answered, with the account returned (run log below). "No ABHA" (code `ABDM-1114`) and a wrong OTP not yet observed. Not yet run through the screen |
 | 13 | Functionality 6: link one ABHA to one patient record, on the screens from steps 8–12 | Same | pending | |
 | 14 | Functionality 7: scan and share (callback receiver, counter QR) | Same; needs decision 6 | pending | |
 | 15 | Tester session: run the mandatory cases with the tester present | Every mandatory case is PASS or CONDITIONAL PASS in the workbook | pending | |
@@ -143,6 +143,31 @@ Run by the owner as tester, from the Mac, with `pnpm --filter @healthguard/api a
 | `GET profile/account/abha-card` | 202 | `8add1ec4-b7f2-4087-9b5a-fc0f782e60de` | `image/png`, about 210 KB |
 
 Findings acted on: the profile reader now handles both sets of key names and builds the date of birth from its three parts. A card answers 202, not 200.
+
+### Scaffold run, the three logins, 2026-11-20
+
+Run by the owner as tester, from the Mac, with `abdm:scaffold-login` on commit `31c793e`.
+
+| Call | HTTP | Request id | Observed |
+|---|---|---|---|
+| `POST profile/login/request/otp` (ABHA number, Aadhaar OTP) | 400 | `c6f3379f-f634-442c-97cb-3b8cca19d88b` | Refused. Body: a `loginId` field holding an 18-character reason, and `timestamp`. No code, no `message` |
+| Same call (ABHA number, ABHA-linked mobile OTP) | 400 | `ac9fcebb-a771-4dbb-a0b2-61594bd8e072` | Refused the same way |
+| `POST phr/web/login/abha/search` | 200 | `6d7864a3-56f8-4a15-a851-9d5ba1fa188e` | `authMethods` `MOBILE_OTP` and `AADHAAR_OTP`; also `healthIdNumber`, `abhaAddress`, `blockedAuthMethods`, `status`, `fullName`, `mobile` |
+| `POST phr/web/login/abha/request/otp` (Aadhaar OTP) | 200 | `c351b9af-b08d-46e1-bd55-83c34d419f0c` | `txnId`, `message` naming the masked mobile |
+| `POST phr/web/login/abha/verify` | 200 | `4c092b6e-bf0e-46bb-9499-a20d9cfec7f0` | `authResult` "success"; accounts under **`users`** (`abhaAddress`, `fullName`, `abhaNumber`, `status`, `kycStatus`, `age`); token under **`tokens.token`** |
+| `GET phr/web/login/profile/abha-profile` | 200 | `d6392d5c-7244-404f-8653-a55eec82bb00` | `abhaAddress`, `fullName`, name parts, `dayOfBirth`, `monthOfBirth`, `yearOfBirth`, `dateOfBirth` (9 characters, so not zero-padded), `email`, `mobile`, `abhaNumber`, `address`, `stateName`, `districtName`, `pinCode`, `kycStatus`, `mobileVerified` as the text "true" |
+| `GET phr/web/login/profile/abha/phr-card` | 202 | `c51d4120-d8fc-472e-953e-1c4ae9ee58dd` | `image/png`, about 204 KB |
+| `POST profile/login/request/otp` (Aadhaar number) | 200 | `e1539304-2932-4ebc-97e3-6e73db4b9560` | `txnId`, `message` |
+| `POST profile/login/verify` (Aadhaar number) | 200 | `1323b9ef-f2e9-4da4-a2e8-2f422d573220` | `authResult` "success", top-level `token`, `accounts` with `ABHANumber`, `preferredAbhaAddress`, `name`, `status`, `profilePhoto`, `mobileVerified` |
+
+Findings acted on:
+
+- **A validation refusal has its own shape:** `{ "<field>": "<reason>", "timestamp": ... }`, with no code and no `message`. The client now passes the reason on as ABDM wrote it. This also explains the bare 400 on the earlier resend, whose body held a 22-character `txnId` reason.
+- **ABHA number format.** The refusal named `loginId`. The run script asked for "14 digits", so the number was most likely sent without hyphens. The client now sends fourteen bare digits as `XX-XXXX-XXXX-XXXX`. **This is a hypothesis until the ABHA-number login is run again.**
+- **ABHA-address login.** Its accounts are under `users` and its token under `tokens`, not `accounts` and `token` as the skill's guide shows for the other logins. Before the fix, the service would have refused a verified ABHA-address login as "no account".
+- **ABHA-address profile.** It uses `abhaAddress`, `fullName` and `kycStatus`, and sends `mobileVerified` as text; the reader now handles them.
+
+Not yet observed: an ABHA-number login succeeding, a wrong OTP on a login, "no ABHA" for an Aadhaar, and the mobile update.
 
 ### First run through the screens, 2026-11-20
 

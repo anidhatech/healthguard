@@ -62,7 +62,7 @@ async function main(): Promise<number> {
     ['B', 'abdm', 'ABHA number + ABHA-linked mobile OTP'],
   ] as [string, OtpSystem, string][]) {
     if (!(await yes(`\nPart ${part}: run ${label}?`))) continue;
-    const number = await ask('ABHA number, 14 digits (hidden as you type): ', true);
+    const number = await ask('ABHA number, with or without hyphens (hidden as you type): ', true);
     const sent = await step(`${part}1. Send OTP`, () =>
       login.requestOtp({ identifier: 'abha-number', value: number, otpSystem }),
     );
