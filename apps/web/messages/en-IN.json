@@ -269,7 +269,8 @@
     "todayDoses": "Today's doses",
     "appointments": "Appointments",
     "registerPatient": "Register a patient",
-    "createAbha": "Create ABHA with Aadhaar OTP"
+    "createAbha": "Create ABHA with Aadhaar OTP",
+    "verifyAbha": "Verify an existing ABHA"
   },
   "admin": {
     "title": "Organization",
@@ -509,7 +510,8 @@
     "notAllowedTitle": "Your role cannot register patients",
     "notAllowedBody": "Registration is done by the front desk or the care team.",
     "abhaTitle": "ABHA",
-    "createAbha": "Create ABHA with Aadhaar OTP"
+    "createAbha": "Create ABHA with Aadhaar OTP",
+    "verifyAbha": "Verify an existing ABHA"
   },
   "abha": {
     "title": "Create ABHA",
@@ -604,6 +606,46 @@
     "demoTitle": "ABHA is not available here",
     "demoBody": "This is a demo organization. It holds synthetic patients only, so real ABHA journeys cannot run in it.",
     "notAllowedTitle": "Your role cannot create an ABHA",
-    "notAllowedBody": "ABHA creation is done by the front desk or the care team."
+    "notAllowedBody": "ABHA creation is done by the front desk or the care team.",
+    "verifyTitle": "Verify ABHA",
+    "identifyTitle": "Find the patient's ABHA",
+    "identifySubtitle": "For someone who already has an ABHA. Their details then fill the registration form.",
+    "identifierLabel": "Look up by",
+    "identifiers": {
+      "ABHA_NUMBER": "ABHA number",
+      "ABHA_ADDRESS": "ABHA address",
+      "AADHAAR": "Aadhaar number"
+    },
+    "identifierHints": {
+      "ABHA_NUMBER": "14 digits, as on the ABHA card.",
+      "ABHA_ADDRESS": "For example name@sbx. The login methods come from ABDM for this address.",
+      "AADHAAR": "12 digits. Shown masked once entered. It is not stored."
+    },
+    "findMethods": "Find login methods",
+    "noMethods": "ABDM lists no OTP method for this ABHA address that can be used here.",
+    "methodLabel": "Send the OTP to",
+    "methods": {
+      "AADHAAR_OTP": "The Aadhaar-linked mobile",
+      "MOBILE_OTP": "The mobile linked to the ABHA"
+    },
+    "deskMobile": "Mobile number in your records (optional)",
+    "deskMobileHint": "10 digits. If it differs from the one on the ABHA, you are asked whether to update the ABHA.",
+    "loginOtpTitle": "Enter the OTP",
+    "noAbhaTitle": "No ABHA found",
+    "noAbhaFallback": "No ABHA user registered with this Aadhaar Number",
+    "noAbhaOffer": "You can create an ABHA for this person now. You will not be asked for the Aadhaar number again.",
+    "createAbhaInstead": "Create ABHA",
+    "verifiedTitle": "ABHA verified",
+    "severalAccounts": "ABDM returned {count} accounts. The first is shown.",
+    "mobileDiffers": "The mobile in your records differs from the one on the ABHA",
+    "mobileUpdateQuestion": "Update the mobile number on the ABHA profile to the one in your records?",
+    "yes": "Yes",
+    "no": "No",
+    "mobileNotUpdated": "The ABHA profile was not changed.",
+    "mobileUpdated": "The mobile number on the ABHA profile was updated.",
+    "mobileUpdateUnavailable": "It cannot be updated from an ABHA address login. The ABHA profile was not changed.",
+    "formTitle": "Details from the ABHA",
+    "formNote": "Name, date of birth and gender come from the ABHA and cannot be changed here. HealthGuard keeps the mobile number; it does not store the address or email.",
+    "handoffNote": "No ABHA was found for this Aadhaar number, so you are creating one. The details you already entered are carried over."
   }
 }

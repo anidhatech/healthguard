@@ -86,9 +86,14 @@ export default function RegisterPatientPage() {
               title={t('abhaTitle')}
               subtitle={t('abhaNote')}
               action={
-                <Button asChild variant="secondary">
-                  <Link href="/doctor/abha/create">{t('createAbha')}</Link>
-                </Button>
+                <span className="flex flex-wrap gap-2">
+                  <Button asChild variant="secondary">
+                    <Link href="/doctor/abha/verify">{t('verifyAbha')}</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href="/doctor/abha/create">{t('createAbha')}</Link>
+                  </Button>
+                </span>
               }
             />
           </Card>
