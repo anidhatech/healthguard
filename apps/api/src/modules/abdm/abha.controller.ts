@@ -1,18 +1,26 @@
 import { Body, Controller, Get, HttpCode, Module, Param, Post, Query, Res } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
+  AbhaAddressSearchSchema,
   AbhaJourneyParamsSchema,
   AbhaMatchQuerySchema,
   CreateAbhaAddressSchema,
   ResendAadhaarOtpSchema,
+  ResendAbhaLoginSchema,
   SaveAbhaEnrolmentSchema,
   StartAbhaEnrolmentSchema,
+  StartAbhaLoginSchema,
+  UpdateAbhaMobileSchema,
   VerifyAadhaarOtpSchema,
+  VerifyAbhaLoginSchema,
   VerifyMobileOtpSchema,
+  type AbhaAddressMethods,
   type AbhaAddressResult,
+  type AbhaAddressSearch,
   type AbhaAddressSuggestions,
   type AbhaEnrolmentView,
   type AbhaJourneyParams,
+  type AbhaLoginView,
   type AbhaMatchQuery,
   type AbhaMatches,
   type AbhaMobileVerification,
@@ -21,9 +29,13 @@ import {
   type CreateAbhaAddress,
   type PatientRegistrationResult,
   type ResendAadhaarOtp,
+  type ResendAbhaLogin,
   type SaveAbhaEnrolment,
   type StartAbhaEnrolment,
+  type StartAbhaLogin,
+  type UpdateAbhaMobile,
   type VerifyAadhaarOtp,
+  type VerifyAbhaLogin,
   type VerifyMobileOtp,
 } from '@healthguard/shared';
 import type { Response } from 'express';
@@ -37,6 +49,8 @@ import { RawResponse, Roles } from '../../common/decorators.js';
 import { zod } from '../../common/zod.pipe.js';
 import { PatientsModule } from '../patients/patients.module.js';
 import { AbhaEnrolmentService } from './abha-enrolment.service.js';
+import { AbhaJourneyStore } from './abha-journey.store.js';
+import { AbhaLoginService } from './abha-login.service.js';
 
 /**
  * Create ABHA by Aadhaar OTP, for the front desk and care team of a clinic
@@ -177,9 +191,88 @@ export class AbhaController {
   }
 }
 
+/**
+ * The three logins for someone who may already hold an ABHA. After a login is
+ * verified, the profile, the card, the returning-patient check and saving use
+ * the journey routes under `abha/enrolments`, which serve logins as well.
+ */
+@ApiTags('abha')
+@Roles('FRONT_DESK', 'CARE_TEAM')
+@Controller({ path: 'abha/logins', version: '1' })
+export class AbhaLoginController {
+  constructor(private readonly logins: AbhaLoginService) {}
+
+  @Post('address-methods')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'The login methods an ABHA address offers' })
+  addressMethods(
+    @CurrentActor() actor: ActorContext,
+    @Body(zod(AbhaAddressSearchSchema)) body: AbhaAddressSearch,
+  ): Promise<AbhaAddressMethods> {
+    return this.logins.addressMethods(actor, body.abhaAddress);
+  }
+
+  @Post()
+  @HttpCode(201)
+  @ApiOperation({ summary: 'Send the OTP for a login by ABHA number, ABHA address or Aadhaar' })
+  start(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Body(zod(StartAbhaLoginSchema)) body: StartAbhaLogin,
+  ): Promise<AbhaOtpChallenge> {
+    return this.logins.start(actor, meta, body);
+  }
+
+  @Post(':journeyId/resend')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Resend the login OTP (after 60 seconds, twice at most)' })
+  resend(
+    @CurrentActor() actor: ActorContext,
+    @Param(zod(AbhaJourneyParamsSchema)) params: AbhaJourneyParams,
+    @Body(zod(ResendAbhaLoginSchema)) body: ResendAbhaLogin,
+  ): Promise<AbhaOtpChallenge> {
+    return this.logins.resend(actor, params.journeyId, body.value);
+  }
+
+  @Post(':journeyId/verify')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Verify the login OTP and fetch the ABHA account' })
+  verify(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Param(zod(AbhaJourneyParamsSchema)) params: AbhaJourneyParams,
+    @Body(zod(VerifyAbhaLoginSchema)) body: VerifyAbhaLogin,
+  ): Promise<AbhaLoginView> {
+    return this.logins.verify(actor, meta, params.journeyId, body.otp);
+  }
+
+  @Post(':journeyId/mobile-update')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Send an OTP to put the desk’s mobile on the ABHA profile' })
+  mobileUpdate(
+    @CurrentActor() actor: ActorContext,
+    @Param(zod(AbhaJourneyParamsSchema)) params: AbhaJourneyParams,
+    @Body(zod(UpdateAbhaMobileSchema)) body: UpdateAbhaMobile,
+  ): Promise<AbhaOtpChallenge> {
+    return this.logins.requestMobileUpdate(actor, params.journeyId, body.mobile);
+  }
+
+  @Post(':journeyId/mobile-update/verify')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'Verify the mobile update OTP' })
+  verifyMobileUpdate(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Param(zod(AbhaJourneyParamsSchema)) params: AbhaJourneyParams,
+    @Body(zod(VerifyMobileOtpSchema)) body: VerifyMobileOtp,
+  ): Promise<AbhaMobileVerification> {
+    return this.logins.verifyMobileUpdate(actor, meta, params.journeyId, body.otp);
+  }
+}
+
 @Module({
   imports: [PatientsModule],
-  controllers: [AbhaController],
-  providers: [AbhaEnrolmentService],
+  controllers: [AbhaController, AbhaLoginController],
+  providers: [AbhaJourneyStore, AbhaEnrolmentService, AbhaLoginService],
 })
 export class AbhaModule {}
