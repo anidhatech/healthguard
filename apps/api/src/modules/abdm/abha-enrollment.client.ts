@@ -31,6 +31,8 @@ export interface AbhaProfile {
   districtName: string | null;
   stateName: string | null;
   pinCode: string | null;
+  /** The town or city, where the profile names one. */
+  city: string | null;
   /** Base64 image, when ABDM sends one. */
   photo: string | null;
   abhaStatus: string | null;
@@ -110,6 +112,7 @@ export function readAbhaProfile(source: unknown): AbhaProfile {
     districtName: text(row.districtName),
     stateName: text(row.stateName),
     pinCode: text(row.pinCode, row.pincode),
+    city: text(row.townName, row.town, row.villageName),
     photo: text(row.photo, row.profilePhoto),
     abhaStatus: text(row.abhaStatus, row.status),
     mobileVerified: typeof row.mobileVerified === 'boolean' ? row.mobileVerified : null,

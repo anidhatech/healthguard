@@ -45,6 +45,17 @@ export function AbhaSaveStep({
   const [mrn, setMrn] = useState('');
   const [locale, setLocale] = useState<SupportedLocale>('en-IN');
   const [mobile, setMobile] = useState(form?.mobile ?? '');
+  // Filled from the ABHA and editable: what the desk confirms here is what is saved.
+  const [contact, setContact] = useState({
+    email: profile?.email ?? '',
+    addressLine: profile?.address ?? '',
+    city: profile?.city ?? '',
+    district: profile?.districtName ?? '',
+    state: profile?.stateName ?? '',
+    pinCode: profile?.pinCode ?? '',
+  });
+  const setField = (key: keyof typeof contact) => (value: string) =>
+    setContact((current) => ({ ...current, [key]: value }));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -58,6 +69,13 @@ export function AbhaSaveStep({
               ...body,
               preferredLocale: locale,
               ...(form && /^[0-9]{10}$/.test(mobile) ? { phone: mobile } : {}),
+              ...(form
+                ? {
+                    contact: Object.fromEntries(
+                      Object.entries(contact).map(([key, value]) => [key, value.trim()]),
+                    ),
+                  }
+                : {}),
             }
           : body;
       onSaved(
@@ -154,6 +172,52 @@ export function AbhaSaveStep({
                   value={mobile}
                   onChange={(event) =>
                     setMobile(event.target.value.replace(/\D+/g, '').slice(0, 10))
+                  }
+                  className={ABHA_FIELD}
+                />
+              </label>
+              <label className="grid gap-1">
+                <span className="font-medium">{t('email')}</span>
+                <input
+                  type="email"
+                  autoComplete="off"
+                  maxLength={254}
+                  value={contact.email}
+                  onChange={(event) => setField('email')(event.target.value)}
+                  className={ABHA_FIELD}
+                />
+              </label>
+              <label className="grid gap-1 sm:col-span-2">
+                <span className="font-medium">{t('address')}</span>
+                <input
+                  autoComplete="off"
+                  maxLength={500}
+                  value={contact.addressLine}
+                  onChange={(event) => setField('addressLine')(event.target.value)}
+                  className={ABHA_FIELD}
+                />
+              </label>
+              {(['city', 'district', 'state'] as const).map((key) => (
+                <label key={key} className="grid gap-1">
+                  <span className="font-medium">{t(key)}</span>
+                  <input
+                    autoComplete="off"
+                    maxLength={100}
+                    value={contact[key]}
+                    onChange={(event) => setField(key)(event.target.value)}
+                    className={ABHA_FIELD}
+                  />
+                </label>
+              ))}
+              <label className="grid gap-1">
+                <span className="font-medium">{t('pinCode')}</span>
+                <input
+                  inputMode="numeric"
+                  autoComplete="off"
+                  maxLength={6}
+                  value={contact.pinCode}
+                  onChange={(event) =>
+                    setField('pinCode')(event.target.value.replace(/\D+/g, '').slice(0, 6))
                   }
                   className={ABHA_FIELD}
                 />

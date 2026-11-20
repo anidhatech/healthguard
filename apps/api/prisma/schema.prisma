@@ -702,6 +702,12 @@ model PatientProfile {
   dateOfBirth        DateTime      @db.Date
   sex                Sex
   phone              String?
+  email              String?
+  addressLine        String?
+  city               String?
+  district           String?
+  state              String?
+  pinCode            String?
   preferredLocale    String        @default("en-IN")
   timezone           String        @default("Asia/Kolkata")
   dailyRoutine       Json

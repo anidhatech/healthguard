@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SUPPORTED_LOCALES } from '../locales.js';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
+import { PatientContactSchema } from './patients.js';
 
 /** The fixed texts ABDM's test cases quote. They are shown exactly as written. */
 export const ABHA_TEXT = {
@@ -77,6 +78,11 @@ export const SaveAbhaEnrolmentSchema = z.discriminatedUnion('action', [
     preferredLocale: z.enum(SUPPORTED_LOCALES).optional(),
     /** The mobile to keep on the record, when the desk changed the one from the ABHA. */
     phone: MobileSchema.optional(),
+    /**
+     * Contact details as the desk confirmed or changed them. A field left out
+     * keeps what the ABHA profile holds; an empty one is saved as empty.
+     */
+    contact: PatientContactSchema.optional(),
   }),
 ]);
 export type SaveAbhaEnrolment = z.infer<typeof SaveAbhaEnrolmentSchema>;
@@ -104,6 +110,7 @@ export const AbhaProfileViewSchema = z.object({
   districtName: z.string().nullable(),
   stateName: z.string().nullable(),
   pinCode: z.string().nullable(),
+  city: z.string().nullable(),
   /** Base64 image, when ABDM sent one. */
   photo: z.string().nullable(),
   abhaStatus: z.string().nullable(),

@@ -152,6 +152,45 @@ describe('patient registration', () => {
     expect(JSON.stringify(audit?.metadata)).not.toContain('0000000001');
   });
 
+  it('keeps the contact details given at the desk and shows them on the profile', async () => {
+    const response = await desk.agent
+      .post('/api/v1/patients')
+      .set('x-csrf-token', desk.csrf)
+      .send({
+        givenName: 'Contact',
+        dateOfBirth: '1990-02-02',
+        sex: 'OTHER',
+        email: 'contact.person@example.test',
+        addressLine: '12 Sample Road',
+        city: 'Hyderabad',
+        district: 'Hyderabad',
+        state: 'Telangana',
+        pinCode: '500001',
+      })
+      .expect(201);
+    const id = response.body.data.patient.id as string;
+    const row = await db.patientProfile.findUniqueOrThrow({ where: { id } });
+    expect(row).toMatchObject({
+      email: 'contact.person@example.test',
+      addressLine: '12 Sample Road',
+      city: 'Hyderabad',
+      district: 'Hyderabad',
+      state: 'Telangana',
+      pinCode: '500001',
+    });
+    const profile = await desk.agent.get(`/api/v1/patients/${id}`).expect(200);
+    expect(profile.body.data).toMatchObject({
+      email: 'contact.person@example.test',
+      address: '12 Sample Road, Hyderabad, Hyderabad, Telangana, 500001',
+    });
+    await db.patientProfile.delete({ where: { id } });
+
+    const post = (body: object) =>
+      desk.agent.post('/api/v1/patients').set('x-csrf-token', desk.csrf).send(body);
+    await post({ ...person, email: 'not-an-email' }).expect(400);
+    await post({ ...person, pinCode: '12' }).expect(400);
+  });
+
   it('gives the next patient the next record number', async () => {
     const response = await desk.agent
       .post('/api/v1/patients')

@@ -60,6 +60,12 @@ const fullProfile = () => ({
   gender: 'M',
   status: 'ACTIVE',
   kycVerified: true,
+  email: 'login.person@example.test',
+  address: '7 Sample Lane',
+  townName: 'Secunderabad',
+  districtName: 'Hyderabad',
+  stateName: 'Telangana',
+  pincode: '500003',
 });
 
 const fakeFetch = ((url: string | URL, init?: RequestInit) => {
@@ -356,6 +362,63 @@ describe('login with an ABHA number', () => {
       200,
     );
     expect(saved.body.data.status).toBe('CREATED');
+  });
+
+  it('saves the ABHA’s contact details, and what the desk changed instead where it did', async () => {
+    await db.patientProfile.deleteMany({ where: { organizationId: CLINIC } });
+    const fromAbha = await login({
+      identifier: 'ABHA_NUMBER',
+      value: ABHA_NUMBER,
+      method: 'AADHAAR_OTP',
+    });
+    const first = await post(desk, `${JOURNEYS}/${fromAbha}/save`, { action: 'CREATE' }).expect(
+      200,
+    );
+    expect(
+      await db.patientProfile.findUniqueOrThrow({
+        where: { id: first.body.data.patient.id as string },
+      }),
+    ).toMatchObject({
+      email: 'login.person@example.test',
+      addressLine: '7 Sample Lane',
+      city: 'Secunderabad',
+      district: 'Hyderabad',
+      state: 'Telangana',
+      pinCode: '500003',
+    });
+
+    await db.patientProfile.deleteMany({ where: { organizationId: CLINIC } });
+    const edited = await login({
+      identifier: 'ABHA_NUMBER',
+      value: ABHA_NUMBER,
+      method: 'AADHAAR_OTP',
+    });
+    const view = await desk.agent.get(`${JOURNEYS}/${edited}/profile`).expect(200);
+    expect(view.body.data).toMatchObject({
+      city: 'Secunderabad',
+      email: 'login.person@example.test',
+    });
+    const second = await post(desk, `${JOURNEYS}/${edited}/save`, {
+      action: 'CREATE',
+      contact: { email: '', addressLine: '9 New Street', city: 'Warangal', pinCode: '506002' },
+    }).expect(200);
+    expect(
+      await db.patientProfile.findUniqueOrThrow({
+        where: { id: second.body.data.patient.id as string },
+      }),
+    ).toMatchObject({
+      // Cleared by the desk, changed by the desk, and left as the ABHA had them.
+      email: null,
+      addressLine: '9 New Street',
+      city: 'Warangal',
+      pinCode: '506002',
+      district: 'Hyderabad',
+      state: 'Telangana',
+    });
+    await post(desk, `${JOURNEYS}/${edited}/save`, {
+      action: 'CREATE',
+      contact: { email: 'nope' },
+    }).expect(400);
   });
 
   it('resends as a fresh send after 60 seconds, twice at most', async () => {

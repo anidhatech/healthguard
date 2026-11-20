@@ -12,13 +12,15 @@
  *   DESK_NAME      default "Front Desk"
  *   DESK_PASSWORD  default: a random one, printed once
  *
- * Running it again for the same email sets a new password.
+ * It also loads the default access rules and consent purposes, which every
+ * organization needs. Running it again for the same email sets a new password.
  */
 import { randomBytes } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { hash } from '@node-rs/argon2';
 import { createPrismaClient } from '../src/infrastructure/prisma/create-client.js';
+import { seedAccessDefaults } from '../src/modules/demo/seed/run.js';
 
 const rootEnv = fileURLToPath(new URL('../../../.env', import.meta.url));
 if (existsSync(rootEnv)) process.loadEnvFile(rootEnv);
@@ -52,6 +54,8 @@ async function main(): Promise<void> {
         'This database holds demo organizations. Use a separate database for real records.',
       );
     }
+    // Without the default access rules, staff could not open any patient record.
+    await seedAccessDefaults(db);
     const organization = await db.organization.upsert({
       where: { slug },
       update: {},

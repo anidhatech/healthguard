@@ -224,7 +224,9 @@
     "abha": "ABHA (Ayushman Bharat Health Account)",
     "abhaLink": "Link ABHA",
     "shareTitle": "Your records as a file",
-    "shareHint": "Download your records in the FHIR R4 standard (marked as synthetic demo data)."
+    "shareHint": "Download your records in the FHIR R4 standard (marked as synthetic demo data).",
+    "email": "Email",
+    "address": "Address"
   },
   "doctor": {
     "title": "Clinic",
@@ -511,7 +513,13 @@
     "notAllowedBody": "Registration is done by the front desk or the care team.",
     "abhaTitle": "ABHA",
     "createAbha": "Create ABHA with Aadhaar OTP",
-    "verifyAbha": "Verify an existing ABHA"
+    "verifyAbha": "Verify an existing ABHA",
+    "email": "Email (optional)",
+    "address": "Address (optional)",
+    "city": "City or town",
+    "district": "District",
+    "state": "State",
+    "pinCode": "PIN code"
   },
   "abha": {
     "title": "Create ABHA",
@@ -645,7 +653,12 @@
     "mobileUpdated": "The mobile number on the ABHA profile was updated.",
     "mobileUpdateUnavailable": "It cannot be updated from an ABHA address login. The ABHA profile was not changed.",
     "formTitle": "Details from the ABHA",
-    "formNote": "Name, date of birth and gender come from the ABHA and cannot be changed here. HealthGuard keeps the mobile number; it does not store the address or email.",
-    "handoffNote": "No ABHA was found for this Aadhaar number, so you are creating one. The details you already entered are carried over."
+    "formNote": "Name, date of birth and gender come from the ABHA and cannot be changed here. The other details can be corrected before saving.",
+    "handoffNote": "No ABHA was found for this Aadhaar number, so you are creating one. The details you already entered are carried over.",
+    "email": "Email",
+    "city": "City or town",
+    "district": "District",
+    "state": "State",
+    "pinCode": "PIN code"
   }
 }

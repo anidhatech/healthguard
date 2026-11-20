@@ -37,8 +37,18 @@ async function seedReferenceData(db: SeedDb): Promise<void> {
       ...test,
     })),
   });
+  await seedAccessDefaults(db);
+}
+
+/**
+ * The consent purposes and the default role → category access rules
+ * (Security §4.2). They are the product's defaults, not demo data: a clinic
+ * organization needs them too, or its staff can open nothing. Safe to run again.
+ */
+export async function seedAccessDefaults(db: SeedDb | DbClient): Promise<void> {
   await db.consentPurpose.createMany({
     data: CONSENT_PURPOSES.map((purpose) => ({ id: purposeId(purpose.code), ...purpose })),
+    skipDuplicates: true,
   });
   await db.accessPolicy.createMany({
     data: DEFAULT_ACCESS_POLICY.flatMap((rule, ruleIndex) =>
@@ -52,6 +62,7 @@ async function seedReferenceData(db: SeedDb): Promise<void> {
         description: rule.description,
       })),
     ),
+    skipDuplicates: true,
   });
 }
 

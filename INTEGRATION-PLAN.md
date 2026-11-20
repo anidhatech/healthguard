@@ -48,6 +48,7 @@ Decisions 1 and 2 are agreed. The rest can be answered when their step is reache
 4. **Deployment questions.** The record holds the patient's mobile at check-in: **yes** (owner, 2026-11-19), so the communication mobile is prefilled. Still open, each "yes" adds an optional route: Is there a fingerprint or iris reader at the desk? Do patients arrive with the ABHA app? Do you create ABHAs from a driving licence?
 5. **ABHA card.** HealthGuard shows and downloads the ABHA card itself (case CRT_ABHA_114): **yes** (owner, 2026-11-19). The owner is the tester for OTP journeys.
 6. **Public callback URL** and two counter QR codes, registered with the ABDM bridge, for scan and share.
+7. **Address and email on the patient record.** The login cases expect the address, email, state, district and city from the ABHA to be editable and saved. **Agreed by the owner, 2026-11-20:** the patient record gained those fields (migration `20261120090000_patient_contact_details`), filled from the ABHA and editable before saving. Name, date of birth and gender stay read only.
 
 ## 4. Steps
 
