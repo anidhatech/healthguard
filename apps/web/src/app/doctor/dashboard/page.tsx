@@ -129,6 +129,12 @@ export default function DoctorDashboard() {
                 {t('registerPatient')}
               </Link>
               <Link
+                href="/doctor/abha/verify"
+                className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-brand-700 hover:bg-brand-50"
+              >
+                {t('verifyAbha')}
+              </Link>
+              <Link
                 href="/doctor/abha/create"
                 className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-brand-700 hover:bg-brand-50"
               >

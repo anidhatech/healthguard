@@ -309,7 +309,7 @@ describe('consent and the Aadhaar OTP', () => {
     expect(JSON.stringify(consent?.metadata)).toContain('"termsVersion":"1.4"');
     // Neither the audit trail nor the journey state ever holds the Aadhaar number.
     expect(JSON.stringify(consent)).not.toContain(AADHAAR);
-    const stored = await app.get(RedisService).client.get(`abha:enrol:${journeyId}`);
+    const stored = await app.get(RedisService).client.get(`abha:journey:${journeyId}`);
     expect(stored).not.toContain(AADHAAR);
   });
 

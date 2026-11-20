@@ -1,156 +1,52 @@
 'use client';
 
 import {
-  ABHA_DECLARATION_INTRO,
-  ABHA_DECLARATIONS,
-  ABHA_OTP_RULES,
-  ABHA_TERMS_AND_CONDITIONS,
   ABHA_TEXT,
-  API_BASE_PATH,
-  LOCALE_LABELS,
-  SUPPORTED_LOCALES,
   abhaAddressRules,
-  abhaBeneficiaryConfirmation,
-  abhaWorkerConfirmation,
   maskAadhaar,
   type AbhaAddressResult,
   type AbhaAddressSuggestions,
-  type AbhaDeclarationKey,
   type AbhaEnrolmentView,
-  type AbhaMatches,
   type AbhaMobileVerification,
   type AbhaOtpChallenge,
   type AbhaProfileView,
   type PatientRegistrationResult,
-  type SupportedLocale,
 } from '@healthguard/shared';
 import { Check, X } from 'lucide-react';
 import { useTranslations } from 'next-intl';
-import Link from 'next/link';
-import { useEffect, useState, type ReactNode } from 'react';
+import { useState } from 'react';
+import { ABHA_CONSENT_GIVEN, AbhaConsentForm } from '@/components/abha/consent';
+import { OtpInput, Resend } from '@/components/abha/otp';
+import { AbhaProfilePanel } from '@/components/abha/profile';
+import { AbhaSaveStep, AbhaSaved } from '@/components/abha/save';
 import { PageHeader } from '@/components/layout/page-header';
 import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ApiError, api } from '@/lib/api';
+import { ABHA_FIELD, ABHA_JOURNEYS, problemText, takeAbhaHandoff } from '@/lib/abha';
+import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
 
 type Step = 'details' | 'consent' | 'otp' | 'mobile' | 'address' | 'profile' | 'save' | 'done';
 const STEPS: Step[] = ['details', 'consent', 'otp', 'mobile', 'address', 'profile', 'save'];
-const FIELD = 'min-h-11 rounded-lg border border-line px-3 text-sm';
-const BASE = '/abha/enrolments';
-
-/** What ABDM or the API said, shown as it came. */
-function problemText(error: unknown): string {
-  if (error instanceof ApiError) {
-    return error.problem.errors?.[0]?.message ?? error.message;
-  }
-  return error instanceof Error ? error.message : String(error);
-}
-
-/** Seconds left until `until`, ticking once a second. */
-function useCountdown(until: string | null): number {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (!until) return;
-    const timer = setInterval(() => setNow(Date.now()), 500);
-    return () => clearInterval(timer);
-  }, [until]);
-  return until ? Math.max(Math.ceil((Date.parse(until) - now) / 1000), 0) : 0;
-}
-
-function OtpInput({
-  value,
-  onChange,
-  id,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-  id: string;
-}) {
-  return (
-    <input
-      id={id}
-      inputMode="numeric"
-      autoComplete="one-time-code"
-      maxLength={ABHA_OTP_RULES.otpLength}
-      value={value}
-      onChange={(event) => onChange(event.target.value.replace(/\D+/g, '').slice(0, 6))}
-      className={`${FIELD} w-40 font-mono tracking-widest`}
-    />
-  );
-}
-
-/** Resend with a visible counter: disabled for 60 seconds, two resends at most. */
-function Resend({
-  challenge,
-  busy,
-  onResend,
-  limitReached,
-}: {
-  challenge: AbhaOtpChallenge;
-  busy: boolean;
-  onResend: () => void;
-  limitReached: boolean;
-}) {
-  const t = useTranslations('abha');
-  const seconds = useCountdown(challenge.resendAvailableAt);
-  return (
-    <div className="grid gap-1 text-sm">
-      <div className="flex flex-wrap items-center gap-3">
-        <Button
-          type="button"
-          variant="secondary"
-          size="sm"
-          disabled={busy || seconds > 0}
-          onClick={onResend}
-        >
-          {t('resend')}
-        </Button>
-        <span aria-live="polite" className="text-muted">
-          {seconds > 0 ? t('resendIn', { seconds }) : t('resendReady')} ·{' '}
-          {t('resendsLeft', { count: challenge.resendsLeft })}
-        </span>
-      </div>
-      {limitReached ? <p className="text-danger">{ABHA_TEXT.resendLimit}</p> : null}
-    </div>
-  );
-}
-
-function Row({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <div className="grid grid-cols-3 gap-2 py-1.5 text-sm">
-      <dt className="text-muted">{label}</dt>
-      <dd className="col-span-2 font-medium break-words">{children ?? '—'}</dd>
-    </div>
-  );
-}
 
 export default function CreateAbhaPage() {
   const t = useTranslations('abha');
   const { data: session } = useSession();
-  const [step, setStep] = useState<Step>('details');
+  // What the Verify ABHA screen already holds, when it found no ABHA for the Aadhaar.
+  const [handoff] = useState(takeAbhaHandoff);
+  const [step, setStep] = useState<Step>(handoff ? 'consent' : 'details');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   // Check-in details the desk already holds. The Aadhaar number stays in this
   // page's memory only, for the OTP and its resends; it is never stored.
-  const [name, setName] = useState('');
-  const [mobile, setMobile] = useState('');
-  const [aadhaar, setAadhaar] = useState('');
+  const [name, setName] = useState(handoff?.name ?? '');
+  const [mobile, setMobile] = useState(handoff?.mobile ?? '');
+  const [aadhaar, setAadhaar] = useState(handoff?.aadhaar ?? '');
   const [aadhaarFocused, setAadhaarFocused] = useState(false);
   const [aadhaarError, setAadhaarError] = useState(false);
-
-  const [termsAgreed, setTermsAgreed] = useState(false);
-  const [declared, setDeclared] = useState<Record<AbhaDeclarationKey, boolean>>({
-    aadhaarSharing: false,
-    otherDocument: false,
-    recordsLinking: false,
-    recordsSharing: false,
-    anonymizedUse: false,
-  });
-  const [workerConfirmed, setWorkerConfirmed] = useState(false);
-  const [beneficiaryConfirmed, setBeneficiaryConfirmed] = useState(false);
+  const [consentComplete, setConsentComplete] = useState(false);
 
   const [challenge, setChallenge] = useState<AbhaOtpChallenge | null>(null);
   const [otp, setOtp] = useState('');
@@ -167,26 +63,13 @@ export default function CreateAbhaPage() {
   const [addressExists, setAddressExists] = useState(false);
 
   const [profile, setProfile] = useState<AbhaProfileView | null>(null);
-  const [matches, setMatches] = useState<AbhaMatches | null>(null);
-  const [mrn, setMrn] = useState('');
-  const [locale, setLocale] = useState<SupportedLocale>('en-IN');
   const [saved, setSaved] = useState<PatientRegistrationResult | null>(null);
 
   const journeyId = challenge?.journeyId ?? null;
-  const workerName = session?.user.displayName ?? '';
   const mayUse =
     session?.roles.some((role) => ['FRONT_DESK', 'NURSE', 'CARE_COORDINATOR'].includes(role)) ??
     false;
   const isDemo = session?.activeOrganization?.isDemo ?? false;
-  const consentComplete =
-    termsAgreed &&
-    declared.aadhaarSharing &&
-    !declared.otherDocument &&
-    declared.recordsLinking &&
-    declared.recordsSharing &&
-    declared.anonymizedUse &&
-    workerConfirmed &&
-    beneficiaryConfirmed;
 
   /** Runs one call, showing ABDM's or the API's own words when it is refused. */
   async function run<T>(call: () => Promise<T>): Promise<T | null> {
@@ -218,22 +101,9 @@ export default function CreateAbhaPage() {
 
   async function sendOtp() {
     const sent = await run(() =>
-      api<AbhaOtpChallenge>(BASE, {
+      api<AbhaOtpChallenge>(ABHA_JOURNEYS, {
         method: 'POST',
-        json: {
-          aadhaarNumber: aadhaar,
-          beneficiaryName: name.trim(),
-          consent: {
-            termsAgreed: true,
-            aadhaarSharing: true,
-            otherDocument: false,
-            recordsLinking: true,
-            recordsSharing: true,
-            anonymizedUse: true,
-            workerConfirmed: true,
-            beneficiaryConfirmed: true,
-          },
-        },
+        json: { aadhaarNumber: aadhaar, beneficiaryName: name.trim(), consent: ABHA_CONSENT_GIVEN },
       }),
     );
     if (sent) {
@@ -250,7 +120,7 @@ export default function CreateAbhaPage() {
       return;
     }
     const sent = await run(() =>
-      api<AbhaOtpChallenge>(`${BASE}/${challenge.journeyId}/resend`, {
+      api<AbhaOtpChallenge>(`${ABHA_JOURNEYS}/${challenge.journeyId}/resend`, {
         method: 'POST',
         json: { aadhaarNumber: aadhaar },
       }),
@@ -261,7 +131,7 @@ export default function CreateAbhaPage() {
   async function verifyOtp() {
     if (!journeyId) return;
     const result = await run(() =>
-      api<AbhaEnrolmentView>(`${BASE}/${journeyId}/verify`, {
+      api<AbhaEnrolmentView>(`${ABHA_JOURNEYS}/${journeyId}/verify`, {
         method: 'POST',
         json: { otp, mobile },
       }),
@@ -288,7 +158,7 @@ export default function CreateAbhaPage() {
       return;
     }
     const sent = await run(() =>
-      api<AbhaOtpChallenge>(`${BASE}/${journeyId}/mobile-otp`, { method: 'POST' }),
+      api<AbhaOtpChallenge>(`${ABHA_JOURNEYS}/${journeyId}/mobile-otp`, { method: 'POST' }),
     );
     if (sent) setMobileChallenge(sent);
   }
@@ -296,7 +166,7 @@ export default function CreateAbhaPage() {
   async function verifyMobileOtp() {
     if (!journeyId) return;
     const result = await run(() =>
-      api<AbhaMobileVerification>(`${BASE}/${journeyId}/mobile-otp/verify`, {
+      api<AbhaMobileVerification>(`${ABHA_JOURNEYS}/${journeyId}/mobile-otp/verify`, {
         method: 'POST',
         json: { otp: mobileOtp },
       }),
@@ -313,7 +183,9 @@ export default function CreateAbhaPage() {
   async function openAddress(id: string) {
     go('address');
     setAddressExists(false);
-    const found = await run(() => api<AbhaAddressSuggestions>(`${BASE}/${id}/address-suggestions`));
+    const found = await run(() =>
+      api<AbhaAddressSuggestions>(`${ABHA_JOURNEYS}/${id}/address-suggestions`),
+    );
     if (found) setSuggestions(found);
   }
 
@@ -323,7 +195,7 @@ export default function CreateAbhaPage() {
     setBusy(true);
     setError(null);
     try {
-      await api<AbhaAddressResult>(`${BASE}/${journeyId}/address`, {
+      await api<AbhaAddressResult>(`${ABHA_JOURNEYS}/${journeyId}/address`, {
         method: 'POST',
         json: { abhaAddress: handle },
       });
@@ -340,30 +212,8 @@ export default function CreateAbhaPage() {
   async function openProfile() {
     if (!journeyId) return;
     go('profile');
-    const fresh = await run(() => api<AbhaProfileView>(`${BASE}/${journeyId}/profile`));
+    const fresh = await run(() => api<AbhaProfileView>(`${ABHA_JOURNEYS}/${journeyId}/profile`));
     if (fresh) setProfile(fresh);
-  }
-
-  async function openSave(search?: string) {
-    if (!journeyId) return;
-    go('save');
-    const query = search ? `?mrn=${encodeURIComponent(search)}` : '';
-    const found = await run(() => api<AbhaMatches>(`${BASE}/${journeyId}/matches${query}`));
-    if (found) setMatches(found);
-  }
-
-  async function save(body: { action: 'LINK'; patientId: string } | { action: 'CREATE' }) {
-    if (!journeyId) return;
-    const result = await run(() =>
-      api<PatientRegistrationResult>(`${BASE}/${journeyId}/save`, {
-        method: 'POST',
-        json: body.action === 'CREATE' ? { ...body, preferredLocale: locale } : body,
-      }),
-    );
-    if (result) {
-      setSaved(result);
-      go('done');
-    }
   }
 
   if (isDemo || !mayUse) {
@@ -379,7 +229,6 @@ export default function CreateAbhaPage() {
 
   const suffix = suggestions?.suffix ?? '@sbx';
   const rules = abhaAddressRules(custom, suffix);
-  const cardUrl = journeyId ? `${API_BASE_PATH}${BASE}/${journeyId}/card` : '';
 
   return (
     <div className="grid max-w-3xl gap-5">
@@ -417,7 +266,7 @@ export default function CreateAbhaPage() {
                   autoComplete="off"
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  className={FIELD}
+                  className={ABHA_FIELD}
                 />
               </label>
               <label className="grid gap-1 text-sm">
@@ -432,7 +281,7 @@ export default function CreateAbhaPage() {
                   onChange={(event) =>
                     setMobile(event.target.value.replace(/\D+/g, '').slice(0, 10))
                   }
-                  className={FIELD}
+                  className={ABHA_FIELD}
                 />
                 <span className="text-xs text-muted">{t('mobileHint')}</span>
               </label>
@@ -451,7 +300,7 @@ export default function CreateAbhaPage() {
                     setAadhaar(event.target.value.trim());
                     setAadhaarError(false);
                   }}
-                  className={`${FIELD} max-w-xs font-mono`}
+                  className={`${ABHA_FIELD} max-w-xs font-mono`}
                 />
                 {aadhaarError ? (
                   <span id="aadhaar-error" role="alert" className="text-sm text-danger">
@@ -475,54 +324,12 @@ export default function CreateAbhaPage() {
         <Card>
           <CardHeader title={t('consentTitle')} subtitle={t('consentSubtitle')} />
           <div className="grid gap-4 text-sm">
-            <section className="rounded-lg border border-line bg-surface p-3" lang="en">
-              <h3 className="mb-1 font-semibold">Terms and Conditions</h3>
-              <p>{ABHA_TERMS_AND_CONDITIONS}</p>
-              <label className="mt-3 flex items-start gap-2 font-medium">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={termsAgreed}
-                  onChange={(event) => setTermsAgreed(event.target.checked)}
-                />
-                I agree
-              </label>
-            </section>
-            <fieldset className="grid gap-3" lang="en">
-              <legend className="mb-1 font-semibold">{ABHA_DECLARATION_INTRO}</legend>
-              {ABHA_DECLARATIONS.map((item) => (
-                <label key={item.key} className="flex items-start gap-2">
-                  <input
-                    type="checkbox"
-                    className="mt-1"
-                    checked={declared[item.key]}
-                    onChange={(event) =>
-                      setDeclared((current) => ({ ...current, [item.key]: event.target.checked }))
-                    }
-                  />
-                  <span>{item.text}</span>
-                </label>
-              ))}
-              {declared.otherDocument ? <Alert tone="warn">{t('otherDocument')}</Alert> : null}
-              <label className="ml-6 flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={workerConfirmed}
-                  onChange={(event) => setWorkerConfirmed(event.target.checked)}
-                />
-                <span>{abhaWorkerConfirmation(workerName)}</span>
-              </label>
-              <label className="ml-6 flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  className="mt-1"
-                  checked={beneficiaryConfirmed}
-                  onChange={(event) => setBeneficiaryConfirmed(event.target.checked)}
-                />
-                <span>{abhaBeneficiaryConfirmation(name.trim())}</span>
-              </label>
-            </fieldset>
+            {handoff ? <Alert tone="info">{t('handoffNote')}</Alert> : null}
+            <AbhaConsentForm
+              workerName={session?.user.displayName ?? ''}
+              beneficiaryName={name.trim()}
+              onChange={setConsentComplete}
+            />
             {error ? <Alert tone="danger">{error}</Alert> : null}
             <div className="flex flex-wrap gap-2">
               <Button
@@ -569,7 +376,7 @@ export default function CreateAbhaPage() {
                 maxLength={10}
                 value={mobile}
                 onChange={(event) => setMobile(event.target.value.replace(/\D+/g, '').slice(0, 10))}
-                className={`${FIELD} w-48`}
+                className={`${ABHA_FIELD} w-48`}
               />
               <span className="text-xs text-muted">{t('communicationMobileHint')}</span>
             </label>
@@ -693,7 +500,7 @@ export default function CreateAbhaPage() {
                       setCustom(event.target.value.trim());
                       setChosen('');
                     }}
-                    className={`${FIELD} w-full font-mono`}
+                    className={`${ABHA_FIELD} w-full font-mono`}
                   />
                   <span className="font-mono text-muted">{suffix}</span>
                 </span>
@@ -772,62 +579,14 @@ export default function CreateAbhaPage() {
         </Card>
       ) : null}
 
-      {step === 'profile' && profile ? (
+      {step === 'profile' && profile && journeyId ? (
         <Card>
           <CardHeader title={t('profileTitle')} />
           <div className="grid gap-4 text-sm">
-            <div className="grid gap-4 sm:grid-cols-[auto_1fr]">
-              {profile.photo ? (
-                // eslint-disable-next-line @next/next/no-img-element -- a data URI from ABDM, not a remote image
-                <img
-                  src={`data:image/jpeg;base64,${profile.photo}`}
-                  alt={t('photoAlt')}
-                  className="h-32 w-28 rounded-lg border border-line object-cover"
-                />
-              ) : null}
-              <dl className="divide-y divide-line">
-                <Row label={t('abhaNumber')}>
-                  <span className="font-mono">{profile.abhaNumber}</span>
-                </Row>
-                <Row label={t('abhaAddress')}>
-                  <span className="font-mono">{profile.preferredAbhaAddress}</span>
-                </Row>
-                <Row label={t('name')}>{profile.name}</Row>
-                <Row label={t('dateOfBirth')}>{profile.dateOfBirth}</Row>
-                <Row label={t('gender')}>{profile.gender}</Row>
-                <Row label={t('mobile')}>{profile.mobile}</Row>
-                <Row label={t('address')}>
-                  {[profile.address, profile.districtName, profile.stateName, profile.pinCode]
-                    .filter(Boolean)
-                    .join(', ')}
-                </Row>
-              </dl>
-            </div>
-            <section className="grid gap-2">
-              <h3 className="font-semibold">{t('cardTitle')}</h3>
-              {profile.kycVerified === false ? (
-                <Alert tone="warn">{t('cardNotKyc')}</Alert>
-              ) : (
-                <>
-                  {/* eslint-disable-next-line @next/next/no-img-element -- the card exactly as ABDM returned it */}
-                  <img
-                    src={cardUrl}
-                    alt={t('cardAlt')}
-                    className="max-w-full rounded-lg border border-line"
-                  />
-                  <div>
-                    <Button asChild variant="secondary">
-                      <a href={`${cardUrl}?download=1`} download="abha-card.png">
-                        {t('downloadCard')}
-                      </a>
-                    </Button>
-                  </div>
-                </>
-              )}
-            </section>
+            <AbhaProfilePanel journeyId={journeyId} profile={profile} />
             {error ? <Alert tone="danger">{error}</Alert> : null}
             <div>
-              <Button type="button" disabled={busy} onClick={() => void openSave()}>
+              <Button type="button" disabled={busy} onClick={() => go('save')}>
                 {t('continueToSave')}
               </Button>
             </div>
@@ -835,110 +594,23 @@ export default function CreateAbhaPage() {
         </Card>
       ) : null}
 
-      {step === 'save' ? (
+      {step === 'save' && journeyId ? (
         <Card>
           <CardHeader title={t('saveTitle')} subtitle={t('saveSubtitle')} />
-          <div className="grid gap-4 text-sm">
-            {matches?.matches.length ? (
-              <ul className="grid gap-2">
-                {matches.matches.map((row) => (
-                  <li
-                    key={row.patientId}
-                    className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-line p-3"
-                  >
-                    <span>
-                      <span className="font-medium">{row.displayName}</span>{' '}
-                      <span className="font-mono text-xs text-muted">{row.mrn}</span>
-                      <span className="block text-muted">{t(`matchReasons.${row.reason}`)}</span>
-                    </span>
-                    <Button
-                      type="button"
-                      size="sm"
-                      disabled={busy}
-                      onClick={() => void save({ action: 'LINK', patientId: row.patientId })}
-                    >
-                      {row.reason === 'ABHA_NUMBER' ? t('useThisRecord') : t('linkToThisRecord')}
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            ) : matches ? (
-              <p>{t('noMatch')}</p>
-            ) : null}
-            <form
-              className="flex flex-wrap items-end gap-2"
-              onSubmit={(event) => {
-                event.preventDefault();
-                void openSave(mrn.trim());
-              }}
-            >
-              <label className="grid gap-1">
-                <span className="font-medium">{t('searchByRecordNumber')}</span>
-                <input
-                  value={mrn}
-                  maxLength={50}
-                  onChange={(event) => setMrn(event.target.value)}
-                  className={`${FIELD} w-56 font-mono`}
-                />
-              </label>
-              <Button type="submit" variant="secondary" disabled={busy || !mrn.trim()}>
-                {t('search')}
-              </Button>
-            </form>
-            {matches?.mayCreate ? (
-              <div className="grid gap-2 rounded-lg border border-line p-3">
-                <label className="grid gap-1">
-                  <span className="font-medium">{t('language')}</span>
-                  <select
-                    value={locale}
-                    onChange={(event) => setLocale(event.target.value as SupportedLocale)}
-                    className={`${FIELD} w-48`}
-                  >
-                    {SUPPORTED_LOCALES.map((value) => (
-                      <option key={value} value={value}>
-                        {LOCALE_LABELS[value].native}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <div>
-                  <Button
-                    type="button"
-                    disabled={busy}
-                    onClick={() => void save({ action: 'CREATE' })}
-                  >
-                    {t('createRecord')}
-                  </Button>
-                </div>
-              </div>
-            ) : matches ? (
-              <p className="text-muted">{t('createNotAllowed')}</p>
-            ) : null}
-            {error ? <Alert tone="danger">{error}</Alert> : null}
-          </div>
+          <AbhaSaveStep
+            journeyId={journeyId}
+            profile={profile}
+            onSaved={(result) => {
+              setSaved(result);
+              go('done');
+            }}
+          />
         </Card>
       ) : null}
 
       {step === 'done' && saved ? (
         <Card>
-          <Alert
-            tone="ok"
-            title={
-              saved.status === 'CREATED'
-                ? t('savedCreated', { name: saved.patient.displayName })
-                : t('savedLinked', { name: saved.patient.displayName })
-            }
-          >
-            {t('recordNumber', { mrn: saved.patient.mrn })}
-          </Alert>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button asChild>
-              <Link href={`/doctor/patient/${saved.patient.id}`}>{t('openRecord')}</Link>
-            </Button>
-            <Button asChild variant="secondary">
-              <Link href="/doctor/dashboard">{t('backToClinic')}</Link>
-            </Button>
-          </div>
+          <AbhaSaved saved={saved} />
         </Card>
       ) : null}
     </div>

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { SUPPORTED_LOCALES } from '../locales.js';
 import { IsoDateTimeSchema, UuidSchema } from './common.js';
+import { PatientContactSchema } from './patients.js';
 
 /** The fixed texts ABDM's test cases quote. They are shown exactly as written. */
 export const ABHA_TEXT = {
@@ -75,6 +76,13 @@ export const SaveAbhaEnrolmentSchema = z.discriminatedUnion('action', [
   z.strictObject({
     action: z.literal('CREATE'),
     preferredLocale: z.enum(SUPPORTED_LOCALES).optional(),
+    /** The mobile to keep on the record, when the desk changed the one from the ABHA. */
+    phone: MobileSchema.optional(),
+    /**
+     * Contact details as the desk confirmed or changed them. A field left out
+     * keeps what the ABHA profile holds; an empty one is saved as empty.
+     */
+    contact: PatientContactSchema.optional(),
   }),
 ]);
 export type SaveAbhaEnrolment = z.infer<typeof SaveAbhaEnrolmentSchema>;
@@ -102,6 +110,7 @@ export const AbhaProfileViewSchema = z.object({
   districtName: z.string().nullable(),
   stateName: z.string().nullable(),
   pinCode: z.string().nullable(),
+  city: z.string().nullable(),
   /** Base64 image, when ABDM sent one. */
   photo: z.string().nullable(),
   abhaStatus: z.string().nullable(),
@@ -183,4 +192,85 @@ export function abhaAddressRules(handle: string, suffix: string): AbhaAddressRul
 export function maskAadhaar(value: string): string {
   const digits = value.replace(/\D+/g, '');
   return digits.length === 12 ? `XXXX XXXX ${digits.slice(8)}` : 'X'.repeat(digits.length);
+}
+
+/** The two OTP routes a login can use. An ABHA address offers only those its search lists. */
+export const ABHA_LOGIN_METHODS = ['AADHAAR_OTP', 'MOBILE_OTP'] as const;
+export type AbhaLoginMethod = (typeof ABHA_LOGIN_METHODS)[number];
+
+const LoginMethodSchema = z.enum(ABHA_LOGIN_METHODS);
+/** Not checked more strictly than ABDM does: ABDM's answer is shown as it comes. */
+const AbhaIdentifierSchema = z.string().trim().min(3).max(64);
+
+export const AbhaAddressSearchSchema = z.strictObject({ abhaAddress: AbhaIdentifierSchema });
+export type AbhaAddressSearch = z.infer<typeof AbhaAddressSearchSchema>;
+
+export const AbhaAddressMethodsSchema = z.object({
+  /** The methods this address offers that HealthGuard has a screen for. Nothing else is shown. */
+  methods: z.array(LoginMethodSchema),
+  /** Everything ABDM listed, as it named them. */
+  offeredByAbdm: z.array(z.string()),
+});
+export type AbhaAddressMethods = z.infer<typeof AbhaAddressMethodsSchema>;
+
+export const StartAbhaLoginSchema = z.discriminatedUnion('identifier', [
+  z.strictObject({
+    identifier: z.literal('ABHA_NUMBER'),
+    value: AbhaIdentifierSchema,
+    method: LoginMethodSchema,
+    /** The mobile the desk holds for the patient, to compare with the one on the ABHA. */
+    deskMobile: MobileSchema.optional(),
+  }),
+  z.strictObject({
+    identifier: z.literal('ABHA_ADDRESS'),
+    value: AbhaIdentifierSchema,
+    method: LoginMethodSchema,
+    deskMobile: MobileSchema.optional(),
+  }),
+  z.strictObject({
+    identifier: z.literal('AADHAAR'),
+    value: AadhaarNumberSchema,
+    beneficiaryName: z.string().trim().min(1).max(200),
+    consent: AbhaConsentSchema,
+    deskMobile: MobileSchema.optional(),
+  }),
+]);
+export type StartAbhaLogin = z.infer<typeof StartAbhaLoginSchema>;
+
+/** A resend needs the identifier again: the server never keeps an Aadhaar number. */
+export const ResendAbhaLoginSchema = z.strictObject({ value: AbhaIdentifierSchema });
+export type ResendAbhaLogin = z.infer<typeof ResendAbhaLoginSchema>;
+
+export const VerifyAbhaLoginSchema = z.strictObject({ otp: OtpSchema });
+export type VerifyAbhaLogin = z.infer<typeof VerifyAbhaLoginSchema>;
+
+export const UpdateAbhaMobileSchema = z.strictObject({ mobile: MobileSchema });
+export type UpdateAbhaMobile = z.infer<typeof UpdateAbhaMobileSchema>;
+
+export const AbhaLoginViewSchema = z.object({
+  journeyId: UuidSchema,
+  /** `NO_ABHA`: the Aadhaar holds no ABHA, and the desk is offered creation. */
+  outcome: z.enum(['VERIFIED', 'NO_ABHA']),
+  message: z.string().nullable(),
+  profile: AbhaProfileViewSchema.nullable(),
+  /** How many accounts the login returned; the first is the one shown. */
+  accounts: z.number().int(),
+  /**
+   * `OFFER`: the desk's mobile differs from the ABHA's, so ask Yes or No.
+   * `NOT_AVAILABLE`: it differs, but this kind of login cannot update it.
+   */
+  mobileUpdate: z.enum(['NOT_NEEDED', 'OFFER', 'NOT_AVAILABLE']),
+});
+export type AbhaLoginView = z.infer<typeof AbhaLoginViewSchema>;
+
+/** Maps the method names ABDM lists for an ABHA address onto the routes there is a screen for. */
+export function abhaLoginMethodsFrom(authMethods: readonly string[]): AbhaLoginMethod[] {
+  const methods: AbhaLoginMethod[] = [];
+  for (const name of authMethods) {
+    const key = name.toUpperCase().replace(/[^A-Z]/g, '');
+    if (!key.includes('OTP')) continue;
+    if (key.includes('AADHAAR') && !methods.includes('AADHAAR_OTP')) methods.push('AADHAAR_OTP');
+    if (key.includes('MOBILE') && !methods.includes('MOBILE_OTP')) methods.push('MOBILE_OTP');
+  }
+  return methods;
 }

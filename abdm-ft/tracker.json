@@ -28,6 +28,33 @@
     "CRT_ABHA_115": "open",
     "CRT_ABHA_116": "open"
    }
+  },
+  "login-abha-number": {
+   "state": "building",
+   "date": "2026-11-20",
+   "snapshot": {
+    "VRFY_ABHA_101": "open",
+    "VRFY_ABHA_201": "open"
+   }
+  },
+  "login-abha-address": {
+   "state": "building",
+   "date": "2026-11-20",
+   "snapshot": {
+    "VRFY_ABHA_102": "open",
+    "VRFY_ABHA_202": "open"
+   }
+  },
+  "login-aadhaar-otp": {
+   "state": "building",
+   "date": "2026-11-20",
+   "snapshot": {
+    "VRFY_ABHA_401": "open",
+    "VRFY_ABHA_402": "open",
+    "VRFY_ABHA_403": "open",
+    "VRFY_ABHA_404": "open",
+    "VRFY_ABHA_405": "open"
+   }
   }
  },
  "screens": {
@@ -43,6 +70,15 @@
   "CRT_ABHA_112": "/doctor/abha/create step 5 ABHA address: [masked], own address with rules in green or red, 'ABHA address already exists.' with two choices",
   "CRT_ABHA_113": "/doctor/abha/create step 6 ABHA and card: ABHA number, address and profile details",
   "CRT_ABHA_114": "/doctor/abha/create step 6 ABHA and card: card shown as ABDM returned it, Download ABHA card",
-  "CRT_ABHA_116": "/doctor/abha/create step 7 Save: matches by ABHA number, by mobile, name, gender and year of birth, or by record number; link, or create only when none matches"
+  "CRT_ABHA_116": "/doctor/abha/create step 7 Save: matches by ABHA number, by mobile, name, gender and year of birth, or by record number; link, or create only when none matches",
+  "VRFY_ABHA_101": "/doctor/abha/verify: ABHA number, OTP to the Aadhaar-linked mobile; profile and card; mobile update Yes or No; details form with name, date of birth and gender read only; save",
+  "VRFY_ABHA_201": "/doctor/abha/verify: ABHA number, OTP to the mobile linked to the ABHA; same screens as VRFY_ABHA_101",
+  "VRFY_ABHA_102": "/doctor/abha/verify: ABHA address, Find login methods lists what ABDM offers for that address, Aadhaar OTP; profile, PHR card, details form, save",
+  "VRFY_ABHA_202": "/doctor/abha/verify: ABHA address, mobile OTP when ABDM lists it; same screens as VRFY_ABHA_102",
+  "VRFY_ABHA_401": "/doctor/abha/verify: Aadhaar number, 12 digits only, masked, 'Aadhaar Number is not valid' with no call; consent screen",
+  "VRFY_ABHA_402": "/doctor/abha/verify OTP step: a wrong OTP shows ABDM's message and stays on the step",
+  "VRFY_ABHA_403": "/doctor/abha/verify: No ABHA found, with ABDM's message and Create ABHA, which opens /doctor/abha/create at consent without asking for the Aadhaar again",
+  "VRFY_ABHA_404": "/doctor/abha/verify: ABHA verified, profile, card download, then save or link to the patient record",
+  "VRFY_ABHA_405": "/doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message"
  }
 }

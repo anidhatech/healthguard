@@ -171,3 +171,20 @@ describe('ABHA helpers', () => {
     expect(consent.abhaBeneficiaryConfirmation('C D')).toContain('I, C D, have been explained');
   });
 });
+
+describe('ABHA login methods', () => {
+  it('offers only the OTP routes an ABHA address lists, however ABDM spells them', async () => {
+    const { abhaLoginMethodsFrom } = await import('./schemas/abha.js');
+    expect(abhaLoginMethodsFrom(['AADHAAR_OTP', 'MOBILE_OTP', 'PASSWORD'])).toEqual([
+      'AADHAAR_OTP',
+      'MOBILE_OTP',
+    ]);
+    expect(abhaLoginMethodsFrom(['MOBILE_OTP'])).toEqual(['MOBILE_OTP']);
+    expect(abhaLoginMethodsFrom(['mobile-otp', 'Aadhaar OTP', 'AADHAAR_OTP'])).toEqual([
+      'MOBILE_OTP',
+      'AADHAAR_OTP',
+    ]);
+    expect(abhaLoginMethodsFrom(['PASSWORD', 'AADHAAR_BIO', 'DEMOGRAPHICS'])).toEqual([]);
+    expect(abhaLoginMethodsFrom([])).toEqual([]);
+  });
+});

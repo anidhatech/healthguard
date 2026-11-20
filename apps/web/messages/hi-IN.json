@@ -224,7 +224,9 @@
     "abha": "ABHA (आयुष्मान भारत हेल्थ अकाउंट)",
     "abhaLink": "ABHA जोड़ें",
     "shareTitle": "आपके रिकॉर्ड फ़ाइल के रूप में",
-    "shareHint": "अपने रिकॉर्ड FHIR R4 मानक में डाउनलोड करें (सिंथेटिक डेमो डेटा के रूप में चिह्नित)।"
+    "shareHint": "अपने रिकॉर्ड FHIR R4 मानक में डाउनलोड करें (सिंथेटिक डेमो डेटा के रूप में चिह्नित)।",
+    "email": "ईमेल",
+    "address": "पता"
   },
   "doctor": {
     "title": "क्लिनिक",
@@ -269,7 +271,8 @@
     "todayDoses": "आज की खुराकें",
     "appointments": "अपॉइंटमेंट",
     "registerPatient": "मरीज़ का पंजीकरण",
-    "createAbha": "आधार OTP से ABHA बनाएँ"
+    "createAbha": "आधार OTP से ABHA बनाएँ",
+    "verifyAbha": "मौजूदा ABHA सत्यापित करें"
   },
   "admin": {
     "title": "संस्था",
@@ -509,7 +512,14 @@
     "notAllowedTitle": "आपकी भूमिका मरीज़ पंजीकृत नहीं कर सकती",
     "notAllowedBody": "पंजीकरण फ़्रंट डेस्क या देखभाल टीम करती है।",
     "abhaTitle": "ABHA",
-    "createAbha": "आधार OTP से ABHA बनाएँ"
+    "createAbha": "आधार OTP से ABHA बनाएँ",
+    "verifyAbha": "मौजूदा ABHA सत्यापित करें",
+    "email": "ईमेल (वैकल्पिक)",
+    "address": "पता (वैकल्पिक)",
+    "city": "शहर या कस्बा",
+    "district": "ज़िला",
+    "state": "राज्य",
+    "pinCode": "पिन कोड"
   },
   "abha": {
     "title": "ABHA बनाएँ",
@@ -604,6 +614,51 @@
     "demoTitle": "यहाँ ABHA उपलब्ध नहीं है",
     "demoBody": "यह एक डेमो संस्था है। इसमें केवल कृत्रिम मरीज़ हैं, इसलिए असली ABHA प्रक्रिया यहाँ नहीं चल सकती।",
     "notAllowedTitle": "आपकी भूमिका ABHA नहीं बना सकती",
-    "notAllowedBody": "ABHA फ़्रंट डेस्क या देखभाल टीम बनाती है।"
+    "notAllowedBody": "ABHA फ़्रंट डेस्क या देखभाल टीम बनाती है।",
+    "verifyTitle": "ABHA सत्यापित करें",
+    "identifyTitle": "मरीज़ का ABHA खोजें",
+    "identifySubtitle": "उनके लिए जिनके पास पहले से ABHA है। फिर उनके विवरण से पंजीकरण फ़ॉर्म भर जाता है।",
+    "identifierLabel": "किससे खोजें",
+    "identifiers": {
+      "ABHA_NUMBER": "ABHA नंबर",
+      "ABHA_ADDRESS": "ABHA पता",
+      "AADHAAR": "आधार नंबर"
+    },
+    "identifierHints": {
+      "ABHA_NUMBER": "14 अंक, जैसा ABHA कार्ड पर है।",
+      "ABHA_ADDRESS": "जैसे name@sbx। इस पते के लिए लॉगिन के तरीके ABDM से आते हैं।",
+      "AADHAAR": "12 अंक। दर्ज करने के बाद छिपाकर दिखाया जाता है। इसे सहेजा नहीं जाता।"
+    },
+    "findMethods": "लॉगिन के तरीके खोजें",
+    "noMethods": "ABDM ने इस ABHA पते के लिए ऐसा कोई OTP तरीका नहीं बताया जो यहाँ इस्तेमाल हो सके।",
+    "methodLabel": "OTP कहाँ भेजें",
+    "methods": {
+      "AADHAAR_OTP": "आधार से जुड़ा मोबाइल",
+      "MOBILE_OTP": "ABHA से जुड़ा मोबाइल"
+    },
+    "deskMobile": "आपके रिकॉर्ड में मोबाइल नंबर (वैकल्पिक)",
+    "deskMobileHint": "10 अंक। यदि यह ABHA वाले से अलग है, तो पूछा जाएगा कि ABHA अपडेट करना है या नहीं।",
+    "loginOtpTitle": "OTP दर्ज करें",
+    "noAbhaTitle": "कोई ABHA नहीं मिला",
+    "noAbhaFallback": "इस आधार नंबर से कोई ABHA पंजीकृत नहीं है",
+    "noAbhaOffer": "आप अभी इस व्यक्ति के लिए ABHA बना सकते हैं। आधार नंबर दोबारा नहीं माँगा जाएगा।",
+    "createAbhaInstead": "ABHA बनाएँ",
+    "verifiedTitle": "ABHA सत्यापित हुआ",
+    "severalAccounts": "ABDM ने {count} खाते लौटाए। पहला दिखाया गया है।",
+    "mobileDiffers": "आपके रिकॉर्ड का मोबाइल ABHA वाले से अलग है",
+    "mobileUpdateQuestion": "क्या ABHA प्रोफ़ाइल का मोबाइल नंबर आपके रिकॉर्ड वाले से बदल दें?",
+    "yes": "हाँ",
+    "no": "नहीं",
+    "mobileNotUpdated": "ABHA प्रोफ़ाइल में कोई बदलाव नहीं किया गया।",
+    "mobileUpdated": "ABHA प्रोफ़ाइल का मोबाइल नंबर अपडेट हो गया।",
+    "mobileUpdateUnavailable": "ABHA पते से लॉगिन करने पर इसे अपडेट नहीं किया जा सकता। ABHA प्रोफ़ाइल में कोई बदलाव नहीं किया गया।",
+    "formTitle": "ABHA से मिले विवरण",
+    "formNote": "नाम, जन्म तिथि और लिंग ABHA से आते हैं और यहाँ बदले नहीं जा सकते। बाकी विवरण सहेजने से पहले सुधारे जा सकते हैं।",
+    "handoffNote": "इस आधार नंबर के लिए कोई ABHA नहीं मिला, इसलिए आप नया बना रहे हैं। आपके भरे हुए विवरण आगे ले लिए गए हैं।",
+    "email": "ईमेल",
+    "city": "शहर या कस्बा",
+    "district": "ज़िला",
+    "state": "राज्य",
+    "pinCode": "पिन कोड"
   }
 }

@@ -2,7 +2,7 @@ import { constants, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { buildConfig } from '../../config/env.js';
 import { AbhaEnrollmentClient, readAbhaProfile } from './abha-enrollment.client.js';
-import { shape } from './abha-scaffold-create.js';
+import { shape } from './abdm-scaffold.js';
 import { createAbdmGateway } from './abdm.module.js';
 
 const { publicKey, privateKey } = generateKeyPairSync('rsa', { modulusLength: 2048 });
