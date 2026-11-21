@@ -85,6 +85,10 @@ async function main(): Promise<number> {
     const number = await ask('ABHA number, with or without hyphens (hidden as you type): ', true);
     typed = number;
     describeTyped(number);
+    if (number.replace(/[^0-9]/g, '').length !== 14) {
+      print('An ABHA number has 14 digits (an Aadhaar number has 12). Nothing was sent.');
+      continue;
+    }
     const sent = await step(`${part}1. Send OTP`, () =>
       login.requestOtp({ identifier: 'abha-number', value: number, otpSystem }),
     );
