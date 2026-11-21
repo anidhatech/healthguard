@@ -55,6 +55,20 @@
     "VRFY_ABHA_404": "open",
     "VRFY_ABHA_405": "open"
    }
+  },
+  "find-abha-mobile": {
+   "state": "building",
+   "date": "2026-11-21",
+   "snapshot": {
+    "VRFY_ABHA_301": "open",
+    "VRFY_ABHA_302": "open",
+    "VRFY_ABHA_303": "open",
+    "VRFY_ABHA_304": "open",
+    "VRFY_ABHA_305": "open",
+    "VRFY_ABHA_306": "open",
+    "VRFY_ABHA_307": "open",
+    "VRFY_ABHA_308": "open"
+   }
   }
  },
  "screens": {
@@ -79,6 +93,14 @@
   "VRFY_ABHA_402": "/doctor/abha/verify OTP step: a wrong OTP shows ABDM's message and stays on the step",
   "VRFY_ABHA_403": "/doctor/abha/verify: No ABHA found, with ABDM's message and Create ABHA, which opens /doctor/abha/create at consent without asking for the Aadhaar again",
   "VRFY_ABHA_404": "/doctor/abha/verify: ABHA verified, profile, card download, then save or link to the patient record",
-  "VRFY_ABHA_405": "/doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message"
+  "VRFY_ABHA_405": "/doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message",
+  "VRFY_ABHA_301": "/doctor/abha/verify, Look up by: Mobile number: ten digits only, else 'Please enter a valid mobile number.' and no search is sent (planned)",
+  "VRFY_ABHA_302": "/doctor/abha/verify, Look up by: Mobile number: Search lists every ABHA on the mobile with masked ABHA number and name, before any OTP (planned)",
+  "VRFY_ABHA_303": "/doctor/abha/verify, Look up by: Mobile number: ABDM-1114 shows 'ABHA details not found...' with a Create ABHA link and no OTP step (planned)",
+  "VRFY_ABHA_304": "/doctor/abha/verify, Look up by: Mobile number: Send OTP only after one account is chosen; the choice is kept to verification; resend rules as on the other logins (planned)",
+  "VRFY_ABHA_305": "/doctor/abha/verify, Look up by: Mobile number: OTP step, then the chosen profile only, with the shared profile and card view (planned)",
+  "VRFY_ABHA_306": "/doctor/abha/verify, Look up by: Mobile number: shared details form, name, date of birth and gender read only; saved through PatientRegistration (planned)",
+  "VRFY_ABHA_307": "/doctor/abha/verify, Look up by: Mobile number: a wrong OTP shows ABDM's message, opens no profile, and can be retried (planned)",
+  "VRFY_ABHA_308": "/doctor/abha/verify, Look up by: Mobile number: shared returning-patient step, 'This ABHA profile is already linked to HMIS Beneficiary ID.' with ABHA and record side by side, no second patient (planned)"
  }
 }

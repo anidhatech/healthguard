@@ -33,6 +33,23 @@ export interface AddressSearchResult {
   status: string | null;
 }
 
+/** One ABHA on a mobile, as the search lists it before any OTP: enough to tell the accounts apart. */
+export interface MobileSearchAccount {
+  /** ABDM's position of this account in the list. The OTP request names the account by it. */
+  index: number;
+  /** Masked by ABDM. */
+  abhaNumber: string | null;
+  name: string | null;
+  gender: string | null;
+}
+
+export interface MobileSearchResult {
+  /** Ties the OTP request to this search. */
+  txnId: string;
+  /** Read as plural: one mobile can hold several ABHAs. */
+  accounts: MobileSearchAccount[];
+}
+
 type Json = Record<string, unknown>;
 
 function object(value: unknown): Json {
@@ -90,6 +107,39 @@ export function readLoginResult(body: unknown): LoginResult {
 }
 
 /**
+ * Reads the search by mobile. ABDM answers with an array whose first entry
+ * holds the `txnId` and the accounts under `ABHA`; a bare object is read the
+ * same way, in case the answer comes unwrapped.
+ */
+export function readMobileSearch(body: unknown): {
+  txnId: string | null;
+  accounts: MobileSearchAccount[];
+} {
+  const row = object(Array.isArray(body) ? body[0] : body);
+  const listed = Array.isArray(row.ABHA) ? row.ABHA : [];
+  const accounts = listed.flatMap((item): MobileSearchAccount[] => {
+    const entry = object(item);
+    const index =
+      typeof entry.index === 'number'
+        ? entry.index
+        : typeof entry.index === 'string' && /^[0-9]+$/.test(entry.index)
+          ? Number(entry.index)
+          : null;
+    // Without ABDM's own index the account cannot be named in the OTP request.
+    if (index === null) return [];
+    return [
+      {
+        index,
+        abhaNumber: text(entry.ABHANumber, entry.abhaNumber),
+        name: text(entry.name),
+        gender: text(entry.gender),
+      },
+    ];
+  });
+  return { txnId: text(row.txnId), accounts };
+}
+
+/**
  * The calls of the three logins (ABHA number, ABHA address, Aadhaar number)
  * and of the mobile update a login can offer. Sensitive values are encrypted
  * here, just before they are sent, and are never logged or kept.
@@ -116,6 +166,45 @@ export class AbhaLoginClient {
           input.identifier === 'abha-number' ? formatAbhaNumber(input.value) : input.value,
         ),
         otpSystem: input.otpSystem,
+      },
+    });
+    return challenge(body, requestId, path);
+  }
+
+  /**
+   * Lists the ABHAs a mobile holds. No OTP is sent. "None on this mobile"
+   * comes back as ABDM's refusal `ABDM-1114`, which the caller turns into an outcome.
+   */
+  async searchByMobile(mobile: string): Promise<MobileSearchResult> {
+    const path = `${ACCOUNT}/abha/search`;
+    const { body, requestId } = await this.gateway.http.request({
+      host: 'abha',
+      method: 'POST',
+      path,
+      accessToken: await this.gateway.session.accessToken(),
+      body: { scope: ['search-abha'], mobile: await this.gateway.crypto.encrypt(mobile) },
+    });
+    const found = readMobileSearch(body);
+    if (!found.txnId) {
+      throw new AbdmApiError(200, null, 'The response carried no txnId', requestId, path);
+    }
+    return { txnId: found.txnId, accounts: found.accounts };
+  }
+
+  /** Sends the OTP for the one account chosen from a search by mobile. */
+  async requestIndexOtp(searchTxnId: string, index: number): Promise<OtpChallenge> {
+    const path = `${LOGIN}/request/otp`;
+    const { body, requestId } = await this.gateway.http.request({
+      host: 'abha',
+      method: 'POST',
+      path,
+      accessToken: await this.gateway.session.accessToken(),
+      body: {
+        scope: ['abha-login', 'search-abha', 'mobile-verify'],
+        loginHint: 'index',
+        loginId: await this.gateway.crypto.encrypt(String(index)),
+        otpSystem: 'abdm',
+        txnId: searchTxnId,
       },
     });
     return challenge(body, requestId, path);

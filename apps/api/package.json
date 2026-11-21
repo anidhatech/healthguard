@@ -20,6 +20,7 @@
     "abdm:smoke": "tsx src/modules/abdm/abdm-smoke.ts",
     "abdm:scaffold-create": "tsx src/modules/abdm/abha-scaffold-create.ts",
     "abdm:scaffold-login": "tsx src/modules/abdm/abha-scaffold-login.ts",
+    "abdm:scaffold-find": "tsx src/modules/abdm/abha-scaffold-find.ts",
     "build": "tsc -p tsconfig.build.json",
     "dev": "tsc-watch -p tsconfig.build.json --onSuccess \"node --enable-source-maps dist/main.js\"",
     "start": "node --enable-source-maps dist/main.js",

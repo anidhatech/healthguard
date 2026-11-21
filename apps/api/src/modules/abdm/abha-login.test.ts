@@ -2,7 +2,12 @@ import { constants, generateKeyPairSync, privateDecrypt } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { buildConfig } from '../../config/env.js';
 import { readAbhaProfile } from './abha-enrollment.client.js';
-import { AbhaLoginClient, formatAbhaNumber, readLoginResult } from './abha-login.client.js';
+import {
+  AbhaLoginClient,
+  formatAbhaNumber,
+  readLoginResult,
+  readMobileSearch,
+} from './abha-login.client.js';
 import { refusal, shape } from './abdm-scaffold.js';
 import { readAbdmError } from './abdm-http.client.js';
 import { createAbdmGateway } from './abdm.module.js';
@@ -407,5 +412,67 @@ describe('what the sandbox returned on 2026-11-20', () => {
     );
     expect(printed).toContain('Invalid LoginId');
     expect(printed).not.toContain('91000000000001');
+  });
+});
+
+describe('find an ABHA by mobile', () => {
+  const SEARCH = '/abha/api/v3/profile/account/abha/search';
+  const FOUND = [
+    {
+      txnId: 'search-txn',
+      ABHA: [
+        { index: 1, ABHANumber: 'xx-xxxx-xxxx-0001', name: 'Test Person', gender: 'F' },
+        { index: 2, ABHANumber: 'xx-xxxx-xxxx-0002', name: 'Other Person', gender: 'M' },
+      ],
+    },
+  ];
+
+  it('searches with the mobile encrypted and lists every account, sending no OTP', async () => {
+    const { client, calls } = setup({ [SEARCH]: { body: FOUND } });
+    const found = await client.searchByMobile('9000000001');
+    expect(calls).toHaveLength(1);
+    expect(calls[0]?.body?.scope).toEqual(['search-abha']);
+    expect(decrypt(calls[0]?.body?.mobile)).toBe('9000000001');
+    expect(found.txnId).toBe('search-txn');
+    expect(found.accounts.map((account) => account.index)).toEqual([1, 2]);
+    expect(found.accounts[1]).toMatchObject({
+      abhaNumber: 'xx-xxxx-xxxx-0002',
+      name: 'Other Person',
+    });
+  });
+
+  it('names the chosen account by its index and the search transaction', async () => {
+    const { client, calls } = setup({
+      [REQUEST]: { body: { txnId: 'otp-txn', message: 'OTP sent' } },
+    });
+    const sent = await client.requestIndexOtp('search-txn', 2);
+    expect(sent.txnId).toBe('otp-txn');
+    expect(calls[0]?.body).toMatchObject({
+      scope: ['abha-login', 'search-abha', 'mobile-verify'],
+      loginHint: 'index',
+      otpSystem: 'abdm',
+      txnId: 'search-txn',
+    });
+    expect(decrypt(calls[0]?.body?.loginId)).toBe('2');
+  });
+
+  it('reads an unwrapped answer, a text index, and drops an account with no index', () => {
+    const found = readMobileSearch({
+      txnId: 't',
+      ABHA: [{ index: '3', ABHANumber: 'xx-0003' }, { name: 'No index' }],
+    });
+    expect(found.txnId).toBe('t');
+    expect(found.accounts).toEqual([{ index: 3, abhaNumber: 'xx-0003', name: null, gender: null }]);
+    expect(readMobileSearch({ txnId: 't', message: 'ok' }).accounts).toEqual([]);
+  });
+
+  it('passes on "no ABHA on this mobile" as ABDM-1114', async () => {
+    const { client } = setup({
+      [SEARCH]: { status: 404, body: { error: { code: 'ABDM-1114', message: 'User not found.' } } },
+    });
+    await expect(client.searchByMobile('9000000002')).rejects.toMatchObject({
+      status: 404,
+      code: 'ABDM-1114',
+    });
   });
 });
