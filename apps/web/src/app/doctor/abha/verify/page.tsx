@@ -6,6 +6,7 @@ import {
   type AbhaAddressMethods,
   type AbhaLoginMethod,
   type AbhaLoginView,
+  type AbhaMobileSearchResult,
   type AbhaMobileVerification,
   type AbhaOtpChallenge,
   type AbhaProfileView,
@@ -26,14 +27,15 @@ import { ABHA_FIELD, ABHA_JOURNEYS, ABHA_LOGINS, problemText, setAbhaHandoff } f
 import { api } from '@/lib/api';
 import { useSession } from '@/lib/session';
 
-type Identifier = 'ABHA_NUMBER' | 'ABHA_ADDRESS' | 'AADHAAR';
+type Identifier = 'MOBILE' | 'ABHA_NUMBER' | 'ABHA_ADDRESS' | 'AADHAAR';
 type Step = 'identify' | 'consent' | 'otp' | 'noAbha' | 'profile' | 'save' | 'done';
-const IDENTIFIERS: Identifier[] = ['ABHA_NUMBER', 'ABHA_ADDRESS', 'AADHAAR'];
+// The mobile search comes first: it finds the ABHA without an Aadhaar OTP.
+const IDENTIFIERS: Identifier[] = ['MOBILE', 'ABHA_NUMBER', 'ABHA_ADDRESS', 'AADHAAR'];
 const BOTH_METHODS: AbhaLoginMethod[] = ['AADHAAR_OTP', 'MOBILE_OTP'];
 
 /**
- * Verify an ABHA someone already holds, by ABHA number, ABHA address or
- * Aadhaar number, then fill the registration form from it. The identifier is
+ * Verify an ABHA someone already holds, by mobile number, ABHA number, ABHA
+ * address or Aadhaar number, then fill the registration form from it. The identifier is
  * kept in this page's memory only until the OTP is verified.
  */
 export default function VerifyAbhaPage() {
@@ -44,10 +46,15 @@ export default function VerifyAbhaPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const [identifier, setIdentifier] = useState<Identifier>('ABHA_NUMBER');
+  const [identifier, setIdentifier] = useState<Identifier>('MOBILE');
   const [value, setValue] = useState('');
   const [valueFocused, setValueFocused] = useState(false);
   const [aadhaarError, setAadhaarError] = useState(false);
+  // The search by mobile: every ABHA on the mobile, and the one the person picked.
+  const [mobileError, setMobileError] = useState(false);
+  const [search, setSearch] = useState<AbhaMobileSearchResult | null>(null);
+  const [chosen, setChosen] = useState<number | null>(null);
+  const [foundMobile, setFoundMobile] = useState('');
   const [name, setName] = useState('');
   const [deskMobile, setDeskMobile] = useState('');
   const [method, setMethod] = useState<AbhaLoginMethod | null>(null);
@@ -107,7 +114,30 @@ export default function VerifyAbhaPage() {
     setMethod(null);
     setAddressMethods(null);
     setAadhaarError(false);
+    setMobileError(false);
+    setSearch(null);
+    setChosen(null);
     setError(null);
+  }
+
+  async function searchMobile() {
+    setSearch(null);
+    setChosen(null);
+    // Checked here, so an invalid number never reaches the search.
+    if (!/^[0-9]{10}$/.test(value)) {
+      setMobileError(true);
+      return;
+    }
+    const found = await run(() =>
+      api<AbhaMobileSearchResult>(`${ABHA_LOGINS}/mobile-search`, {
+        method: 'POST',
+        json: { mobile: value },
+      }),
+    );
+    if (found) {
+      setSearch(found);
+      // One account is still the person's to confirm: nothing is picked for them.
+    }
   }
 
   async function findMethods() {
@@ -124,6 +154,12 @@ export default function VerifyAbhaPage() {
   }
 
   function submitIdentify() {
+    if (identifier === 'MOBILE') {
+      // Send OTP exists only once an account is chosen; before that, Enter searches.
+      if (search?.outcome === 'FOUND' && chosen !== null) void sendOtp();
+      else void searchMobile();
+      return;
+    }
     if (identifier === 'AADHAAR') {
       if (!/^[0-9]{12}$/.test(value)) {
         setAadhaarError(true);
@@ -138,15 +174,17 @@ export default function VerifyAbhaPage() {
   async function sendOtp() {
     const desk = deskMobile ? { deskMobile } : {};
     const json =
-      identifier === 'AADHAAR'
-        ? {
-            identifier,
-            value,
-            beneficiaryName: name.trim(),
-            consent: ABHA_CONSENT_GIVEN,
-            ...desk,
-          }
-        : { identifier, value: value.trim(), method, ...desk };
+      identifier === 'MOBILE'
+        ? { identifier, searchId: search?.searchId, index: chosen }
+        : identifier === 'AADHAAR'
+          ? {
+              identifier,
+              value,
+              beneficiaryName: name.trim(),
+              consent: ABHA_CONSENT_GIVEN,
+              ...desk,
+            }
+          : { identifier, value: value.trim(), method, ...desk };
     const sent = await run(() => api<AbhaOtpChallenge>(ABHA_LOGINS, { method: 'POST', json }));
     if (sent) {
       setChallenge(sent);
@@ -165,7 +203,7 @@ export default function VerifyAbhaPage() {
     const sent = await run(() =>
       api<AbhaOtpChallenge>(`${ABHA_LOGINS}/${challenge.journeyId}/resend`, {
         method: 'POST',
-        json: { value: value.trim() },
+        json: identifier === 'MOBILE' ? {} : { value: value.trim() },
       }),
     );
     if (sent) setChallenge(sent);
@@ -187,6 +225,7 @@ export default function VerifyAbhaPage() {
       return;
     }
     // The identifier is no longer needed once the login is verified.
+    if (identifier === 'MOBILE') setFoundMobile(value);
     setValue('');
     setProfile(result.profile);
     go('profile');
@@ -194,7 +233,12 @@ export default function VerifyAbhaPage() {
 
   function createInstead() {
     // Creation carries on from what this screen holds: the Aadhaar is not asked for again.
-    setAbhaHandoff({ name: name.trim(), mobile: deskMobile, aadhaar: value });
+    // From a mobile search there is no Aadhaar yet: Create ABHA asks for it, with the mobile filled.
+    setAbhaHandoff(
+      identifier === 'MOBILE'
+        ? { name: '', mobile: value, aadhaar: '' }
+        : { name: name.trim(), mobile: deskMobile, aadhaar: value },
+    );
     setValue('');
     router.push('/doctor/abha/create');
   }
@@ -250,8 +294,10 @@ export default function VerifyAbhaPage() {
   }
 
   const isAadhaar = identifier === 'AADHAAR';
-  const canSend =
-    value.trim().length > 0 && mobileOk && (isAadhaar ? name.trim().length > 0 : method !== null);
+  const isMobile = identifier === 'MOBILE';
+  const canSend = isMobile
+    ? search?.outcome === 'FOUND' && chosen !== null
+    : value.trim().length > 0 && mobileOk && (isAadhaar ? name.trim().length > 0 : method !== null);
 
   return (
     <div className="grid max-w-3xl gap-5">
@@ -293,7 +339,7 @@ export default function VerifyAbhaPage() {
                 // An Aadhaar number is shown masked once the field is left.
                 autoComplete="off"
                 inputMode={identifier === 'ABHA_ADDRESS' ? 'text' : 'numeric'}
-                aria-invalid={aadhaarError}
+                aria-invalid={aadhaarError || mobileError}
                 value={
                   isAadhaar && !valueFocused && value.length === 12 ? maskAadhaar(value) : value
                 }
@@ -302,6 +348,12 @@ export default function VerifyAbhaPage() {
                 onChange={(event) => {
                   setValue(event.target.value.trim());
                   setAadhaarError(false);
+                  if (isMobile) {
+                    // A changed number is a new search: the old list no longer applies.
+                    setMobileError(false);
+                    setSearch(null);
+                    setChosen(null);
+                  }
                   if (identifier === 'ABHA_ADDRESS') {
                     setAddressMethods(null);
                     setMethod(null);
@@ -309,14 +361,67 @@ export default function VerifyAbhaPage() {
                 }}
                 className={`${ABHA_FIELD} max-w-sm font-mono`}
               />
-              {aadhaarError ? (
+              {aadhaarError || mobileError ? (
                 <span role="alert" className="text-danger">
-                  {ABHA_TEXT.aadhaarInvalid}
+                  {mobileError ? ABHA_TEXT.mobileInvalid : ABHA_TEXT.aadhaarInvalid}
                 </span>
               ) : (
                 <span className="text-xs text-muted">{t(`identifierHints.${identifier}`)}</span>
               )}
             </label>
+
+            {isMobile ? (
+              <div className="grid gap-3">
+                <div>
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={busy}
+                    onClick={() => void searchMobile()}
+                  >
+                    {t('searchMobile')}
+                  </Button>
+                </div>
+                {search?.outcome === 'NO_ABHA' ? (
+                  <div className="grid gap-3">
+                    <Alert tone="warn">{ABHA_TEXT.mobileNoAbha}</Alert>
+                    <p>{t('noAbhaMobileOffer')}</p>
+                    <div>
+                      <Button type="button" onClick={createInstead}>
+                        {t('createAbhaInstead')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : null}
+                {search?.outcome === 'FOUND' ? (
+                  <fieldset className="grid gap-2">
+                    <legend className="mb-1 font-medium">
+                      {t('accountsTitle', { count: search.accounts.length })}
+                    </legend>
+                    <p className="text-xs text-muted">{t('accountsHint')}</p>
+                    {search.accounts.map((account) => (
+                      <label
+                        key={account.index}
+                        className="flex min-h-11 items-center gap-3 rounded-lg border border-line px-3 py-2"
+                      >
+                        <input
+                          type="radio"
+                          name="abha-account"
+                          checked={chosen === account.index}
+                          onChange={() => setChosen(account.index)}
+                        />
+                        <span>
+                          <span className="block font-medium">{account.name ?? '—'}</span>
+                          <span className="block font-mono text-xs text-muted">
+                            {[account.abhaNumber, account.gender].filter(Boolean).join(' · ')}
+                          </span>
+                        </span>
+                      </label>
+                    ))}
+                  </fieldset>
+                ) : null}
+              </div>
+            ) : null}
 
             {identifier === 'ABHA_ADDRESS' ? (
               <div className="grid gap-2">
@@ -363,7 +468,7 @@ export default function VerifyAbhaPage() {
               </fieldset>
             ) : null}
 
-            <div className="grid items-start gap-4 sm:grid-cols-2">
+            <div className={isMobile ? 'hidden' : 'grid items-start gap-4 sm:grid-cols-2'}>
               {isAadhaar ? (
                 <label className="grid gap-1">
                   <span className="font-medium">{t('patientName')}</span>
@@ -398,11 +503,14 @@ export default function VerifyAbhaPage() {
                 {error}
               </Alert>
             ) : null}
-            <div>
-              <Button type="submit" disabled={busy || !canSend}>
-                {isAadhaar ? t('continue') : t('sendOtp')}
-              </Button>
-            </div>
+            {/* After a mobile search, Send OTP appears only once an account is chosen. */}
+            {!isMobile || canSend ? (
+              <div>
+                <Button type="submit" disabled={busy || !canSend}>
+                  {isAadhaar ? t('continue') : t('sendOtp')}
+                </Button>
+              </div>
+            ) : null}
           </form>
         </Card>
       ) : null}
@@ -588,7 +696,7 @@ export default function VerifyAbhaPage() {
           <AbhaSaveStep
             journeyId={journeyId}
             profile={profile}
-            form={{ mobile: deskMobile || (profile?.mobile ?? '') }}
+            form={{ mobile: deskMobile || foundMobile || (profile?.mobile ?? '') }}
             onSaved={(result) => {
               setSaved(result);
               go('done');

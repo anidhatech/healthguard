@@ -594,7 +594,7 @@
     "saveTitle": "Save to the patient record",
     "saveSubtitle": "HealthGuard checks for an existing record first, so one patient never gets two.",
     "matchReasons": {
-      "ABHA_NUMBER": "This ABHA number is already linked to this record.",
+      "ABHA_NUMBER": "This ABHA profile is already linked to HMIS Beneficiary ID.",
       "DEMOGRAPHICS": "Same mobile, name, gender and year of birth.",
       "RECORD_NUMBER": "Found by record number."
     },
@@ -620,11 +620,13 @@
     "identifySubtitle": "For someone who already has an ABHA. Their details then fill the registration form.",
     "identifierLabel": "Look up by",
     "identifiers": {
+      "MOBILE": "Mobile number",
       "ABHA_NUMBER": "ABHA number",
       "ABHA_ADDRESS": "ABHA address",
       "AADHAAR": "Aadhaar number"
     },
     "identifierHints": {
+      "MOBILE": "10 digits. Lists every ABHA on this mobile. No OTP is sent until one is chosen.",
       "ABHA_NUMBER": "14 digits, as on the ABHA card.",
       "ABHA_ADDRESS": "For example name@sbx. The login methods come from ABDM for this address.",
       "AADHAAR": "12 digits. Shown masked once entered. It is not stored."
@@ -659,6 +661,12 @@
     "city": "City or town",
     "district": "District",
     "state": "State",
-    "pinCode": "PIN code"
+    "pinCode": "PIN code",
+    "searchMobile": "Search",
+    "accountsTitle": "ABHA accounts on this mobile: {count}",
+    "accountsHint": "Choose the patient's account. The OTP is sent only to the one chosen.",
+    "noAbhaMobileOffer": "You can create an ABHA for this person now.",
+    "compareAbha": "From the ABHA",
+    "compareRecord": "In your record"
   }
 }

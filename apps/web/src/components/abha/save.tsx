@@ -1,6 +1,7 @@
 'use client';
 
 import {
+  ABHA_TEXT,
   LOCALE_LABELS,
   SUPPORTED_LOCALES,
   type AbhaMatches,
@@ -103,8 +104,46 @@ export function AbhaSaveStep({
               <span>
                 <span className="font-medium">{row.displayName}</span>{' '}
                 <span className="font-mono text-xs text-muted">{row.mrn}</span>
-                <span className="block text-muted">{t(`matchReasons.${row.reason}`)}</span>
+                <span className="block text-muted">
+                  {row.reason === 'ABHA_NUMBER'
+                    ? ABHA_TEXT.alreadyLinked
+                    : t(`matchReasons.${row.reason}`)}
+                </span>
               </span>
+              {row.reason === 'ABHA_NUMBER' ? (
+                // The ABHA's details beside the record's, so the desk can see they are one person.
+                <table className="order-last w-full text-left text-xs">
+                  <thead>
+                    <tr className="text-muted">
+                      <th className="py-1 pr-3 font-medium" />
+                      <th className="py-1 pr-3 font-medium">{t('compareAbha')}</th>
+                      <th className="py-1 font-medium">{t('compareRecord')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(
+                      [
+                        ['name', profile?.name, row.displayName],
+                        // Shown day first, as the ABHA's own date is.
+                        [
+                          'dateOfBirth',
+                          profile?.dateOfBirth,
+                          row.record.dateOfBirth?.split('-').reverse().join('-'),
+                        ],
+                        ['gender', profile?.gender, row.record.sex],
+                        ['mobile', profile?.mobile, row.record.phone],
+                        ['address', profile?.address, row.record.address],
+                      ] as const
+                    ).map(([key, fromAbha, fromRecord]) => (
+                      <tr key={key} className="border-t border-line align-top">
+                        <th className="py-1 pr-3 font-medium">{t(key)}</th>
+                        <td className="py-1 pr-3">{fromAbha ?? '—'}</td>
+                        <td className="py-1">{fromRecord ?? '—'}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              ) : null}
               <Button
                 type="button"
                 size="sm"

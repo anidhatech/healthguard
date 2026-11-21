@@ -620,11 +620,13 @@
     "identifySubtitle": "ఇప్పటికే ABHA ఉన్నవారి కోసం. తర్వాత వారి వివరాలతో నమోదు ఫారం నిండుతుంది.",
     "identifierLabel": "దేనితో వెతకాలి",
     "identifiers": {
+      "MOBILE": "మొబైల్ నంబర్",
       "ABHA_NUMBER": "ABHA నంబర్",
       "ABHA_ADDRESS": "ABHA చిరునామా",
       "AADHAAR": "ఆధార్ నంబర్"
     },
     "identifierHints": {
+      "MOBILE": "10 అంకెలు. ఈ మొబైల్‌పై ఉన్న ప్రతి ABHA చూపిస్తుంది. ఎంచుకునే వరకు OTP పంపబడదు.",
       "ABHA_NUMBER": "14 అంకెలు, ABHA కార్డుపై ఉన్నట్లు.",
       "ABHA_ADDRESS": "ఉదాహరణకు name@sbx. ఈ చిరునామాకు లాగిన్ పద్ధతులు ABDM నుండి వస్తాయి.",
       "AADHAAR": "12 అంకెలు. నమోదు చేసిన తర్వాత దాచి చూపిస్తారు. దీన్ని భద్రపరచరు."
@@ -659,6 +661,12 @@
     "city": "నగరం లేదా పట్టణం",
     "district": "జిల్లా",
     "state": "రాష్ట్రం",
-    "pinCode": "పిన్ కోడ్"
+    "pinCode": "పిన్ కోడ్",
+    "searchMobile": "వెతకండి",
+    "accountsTitle": "ఈ మొబైల్‌పై ABHA ఖాతాలు: {count}",
+    "accountsHint": "రోగి ఖాతాను ఎంచుకోండి. ఎంచుకున్న ఖాతాకే OTP పంపబడుతుంది.",
+    "noAbhaMobileOffer": "ఈ వ్యక్తికి ఇప్పుడే ABHA సృష్టించవచ్చు.",
+    "compareAbha": "ABHA నుండి",
+    "compareRecord": "మీ రికార్డులో"
   }
 }

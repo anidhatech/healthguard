@@ -620,11 +620,13 @@
     "identifySubtitle": "उनके लिए जिनके पास पहले से ABHA है। फिर उनके विवरण से पंजीकरण फ़ॉर्म भर जाता है।",
     "identifierLabel": "किससे खोजें",
     "identifiers": {
+      "MOBILE": "मोबाइल नंबर",
       "ABHA_NUMBER": "ABHA नंबर",
       "ABHA_ADDRESS": "ABHA पता",
       "AADHAAR": "आधार नंबर"
     },
     "identifierHints": {
+      "MOBILE": "10 अंक। इस मोबाइल पर मौजूद हर ABHA दिखाता है। चुनने से पहले कोई OTP नहीं भेजा जाता।",
       "ABHA_NUMBER": "14 अंक, जैसा ABHA कार्ड पर है।",
       "ABHA_ADDRESS": "जैसे name@sbx। इस पते के लिए लॉगिन के तरीके ABDM से आते हैं।",
       "AADHAAR": "12 अंक। दर्ज करने के बाद छिपाकर दिखाया जाता है। इसे सहेजा नहीं जाता।"
@@ -659,6 +661,12 @@
     "city": "शहर या कस्बा",
     "district": "ज़िला",
     "state": "राज्य",
-    "pinCode": "पिन कोड"
+    "pinCode": "पिन कोड",
+    "searchMobile": "खोजें",
+    "accountsTitle": "इस मोबाइल पर ABHA खाते: {count}",
+    "accountsHint": "मरीज़ का खाता चुनें। OTP केवल चुने गए खाते पर भेजा जाता है।",
+    "noAbhaMobileOffer": "आप इस व्यक्ति के लिए अभी ABHA बना सकते हैं।",
+    "compareAbha": "ABHA से",
+    "compareRecord": "आपके रिकॉर्ड में"
   }
 }

@@ -35,7 +35,7 @@ export default function CreateAbhaPage() {
   const { data: session } = useSession();
   // What the Verify ABHA screen already holds, when it found no ABHA for the Aadhaar.
   const [handoff] = useState(takeAbhaHandoff);
-  const [step, setStep] = useState<Step>(handoff ? 'consent' : 'details');
+  const [step, setStep] = useState<Step>(handoff?.aadhaar ? 'consent' : 'details');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

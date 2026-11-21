@@ -39,6 +39,8 @@ const abdm = {
   addressMethods: ['AADHAAR_OTP', 'MOBILE_OTP'],
   mobile: ABHA_MOBILE,
   refuseNext: null as Record<string, string> | null,
+  /** How many ABHAs the searched mobile holds; 0 answers "none" as ABDM does. */
+  mobileAccounts: 2,
 };
 
 const account = () => ({
@@ -89,6 +91,25 @@ const fakeFetch = ((url: string | URL, init?: RequestInit) => {
         headers: { 'content-type': 'image/png' },
       }),
     );
+  if (path.endsWith('/profile/account/abha/search')) {
+    if (abdm.mobileAccounts === 0) {
+      return json({ error: { code: 'ABDM-1114', message: 'User not found.' } }, 404);
+    }
+    // The shape observed in the sandbox on 2026-11-21.
+    return json([
+      {
+        txnId: 'search-txn',
+        ABHA: Array.from({ length: abdm.mobileAccounts }, (_, position) => ({
+          index: position + 1,
+          ABHANumber: `xx-xxxx-xxxx-00${position + 1}`,
+          name: position === 0 ? 'Login Person' : 'Other Person',
+          gender: 'M',
+          kycVerified: 'true',
+          authMethods: ['MOBILE_OTP', 'AADHAAR_OTP'],
+        })),
+      },
+    ]);
+  }
   if (path.endsWith('/abha/search')) {
     return json({ abhaAddress: body?.abhaAddress, authMethods: abdm.addressMethods });
   }
@@ -708,6 +729,137 @@ describe('login with an Aadhaar number', () => {
     }).expect(422);
     abdm.noAbha = false;
     expect(refused.body).toMatchObject({ code: 'ABDM_REFUSED', reason: 'ABDM-1114' });
+  });
+});
+
+describe('find an ABHA by mobile', () => {
+  const SEARCH = `${LOGINS}/mobile-search`;
+
+  it('refuses an invalid mobile with the required words and sends no search', async () => {
+    const before = abdm.calls.length;
+    for (const mobile of ['98765', '98765432101', '98765abcde', '98765-4321', '']) {
+      const refused = await post(desk, SEARCH, { mobile }).expect(400);
+      expect(JSON.stringify(refused.body)).toContain(ABHA_TEXT.mobileInvalid);
+    }
+    expect(abdm.calls.length).toBe(before);
+  });
+
+  it('lists every ABHA on the mobile, sends no OTP, and keeps the mobile out of the audit log', async () => {
+    abdm.mobileAccounts = 2;
+    const sends = abdm.sends;
+    const found = await post(desk, SEARCH, { mobile: '0000000077' }).expect(200);
+    expect(found.body.data.outcome).toBe('FOUND');
+    expect(found.body.data.accounts).toHaveLength(2);
+    expect(found.body.data.accounts[1]).toMatchObject({ index: 2, name: 'Other Person' });
+    expect(abdm.sends).toBe(sends);
+    const sent = lastCall('/profile/account/abha/search');
+    expect(sent?.body?.scope).toEqual(['search-abha']);
+    expect(String(sent?.body?.mobile)).not.toContain('0000000077');
+    const audit = await db.auditEvent.findFirst({
+      where: { resourceType: 'AbhaMobileSearch', resourceId: found.body.data.searchId },
+    });
+    expect(audit?.metadata).toEqual({ accounts: 2 });
+  });
+
+  it('answers "no ABHA on this mobile" as an outcome, with no search to send an OTP for', async () => {
+    abdm.mobileAccounts = 0;
+    const sends = abdm.sends;
+    const found = await post(desk, SEARCH, { mobile: '0000000001' }).expect(200);
+    expect(found.body.data).toEqual({ outcome: 'NO_ABHA', searchId: null, accounts: [] });
+    expect(abdm.sends).toBe(sends);
+    abdm.mobileAccounts = 2;
+  });
+
+  it('sends the OTP only for an account the search listed, by its index and the search transaction', async () => {
+    const found = await post(desk, SEARCH, { mobile: '0000000077' }).expect(200);
+    const searchId = found.body.data.searchId as string;
+    const sends = abdm.sends;
+    await post(desk, LOGINS, { identifier: 'MOBILE', searchId, index: 9 }).expect(409);
+    await post(desk, LOGINS, {
+      identifier: 'MOBILE',
+      searchId: '019f0000-0000-7000-8000-00000000dead',
+      index: 1,
+    }).expect(404);
+    expect(abdm.sends).toBe(sends);
+
+    const started = await post(desk, LOGINS, { identifier: 'MOBILE', searchId, index: 2 }).expect(
+      201,
+    );
+    expect(abdm.sends).toBe(sends + 1);
+    const request = lastCall('/login/request/otp');
+    expect(request?.body).toMatchObject({
+      scope: ['abha-login', 'search-abha', 'mobile-verify'],
+      loginHint: 'index',
+      otpSystem: 'abdm',
+      txnId: 'search-txn',
+    });
+    expect(started.body.data.message).toContain('******0077');
+  });
+
+  it('keeps the choice through a wrong OTP, then opens the chosen profile and saves one patient', async () => {
+    await db.patientProfile.deleteMany({ where: { organizationId: CLINIC } });
+    const found = await post(desk, SEARCH, { mobile: '0000000077' }).expect(200);
+    const started = await post(desk, LOGINS, {
+      identifier: 'MOBILE',
+      searchId: found.body.data.searchId,
+      index: 1,
+    }).expect(201);
+    const journeyId = started.body.data.journeyId as string;
+
+    abdm.wrongNext = true;
+    const wrong = await post(desk, `${LOGINS}/${journeyId}/verify`, { otp: '000000' }).expect(422);
+    expect(JSON.stringify(wrong.body)).toContain('Entered OTP is incorrect');
+    await desk.agent.get(`${JOURNEYS}/${journeyId}/profile`).expect(409);
+
+    const verified = await post(desk, `${LOGINS}/${journeyId}/verify`, { otp: RIGHT_OTP }).expect(
+      200,
+    );
+    expect(lastCall('/login/verify')?.body?.scope).toEqual(['abha-login', 'mobile-verify']);
+    expect(verified.body.data).toMatchObject({ outcome: 'VERIFIED', mobileUpdate: 'NOT_NEEDED' });
+    expect(verified.body.data.profile).toMatchObject({
+      abhaNumber: ABHA_NUMBER,
+      dateOfBirth: '09-03-1975',
+    });
+
+    const saved = await post(desk, `${JOURNEYS}/${journeyId}/save`, { action: 'CREATE' }).expect(
+      200,
+    );
+    expect(saved.body.data.status).toBe('CREATED');
+
+    // The same person found again is matched to that record: no second patient.
+    const again = await post(desk, SEARCH, { mobile: '0000000077' }).expect(200);
+    const second = await login({
+      identifier: 'MOBILE',
+      searchId: again.body.data.searchId,
+      index: 1,
+    });
+    const matches = await desk.agent.get(`${JOURNEYS}/${second}/matches`).expect(200);
+    expect(matches.body.data.mayCreate).toBe(false);
+    expect(matches.body.data.matches[0]).toMatchObject({ reason: 'ABHA_NUMBER' });
+    const repeat = await post(desk, `${JOURNEYS}/${second}/save`, { action: 'CREATE' });
+    expect(repeat.body.data?.status).not.toBe('CREATED');
+    expect(await db.patientProfile.count({ where: { organizationId: CLINIC } })).toBe(1);
+  });
+
+  it('resends to the chosen account without asking for anything again', async () => {
+    const found = await post(desk, SEARCH, { mobile: '0000000077' }).expect(200);
+    const started = await post(desk, LOGINS, {
+      identifier: 'MOBILE',
+      searchId: found.body.data.searchId,
+      index: 2,
+    }).expect(201);
+    const journeyId = started.body.data.journeyId as string;
+    await post(desk, `${LOGINS}/${journeyId}/resend`, {}).expect(409);
+    vi.useFakeTimers({ toFake: ['Date'] });
+    vi.setSystemTime(Date.now() + 61_000);
+    const sends = abdm.sends;
+    await post(desk, `${LOGINS}/${journeyId}/resend`, {}).expect(200);
+    vi.useRealTimers();
+    expect(abdm.sends).toBe(sends + 1);
+    expect(lastCall('/login/request/otp')?.body).toMatchObject({
+      loginHint: 'index',
+      txnId: 'search-txn',
+    });
   });
 });
 

@@ -11,6 +11,20 @@ import { ABDM_GATEWAY, type AbdmGateway } from './abdm.module.js';
 /** How long a journey may sit between steps before it has to start again. */
 const JOURNEY_TTL_SECONDS = 30 * 60;
 const KEY = (journeyId: string) => `abha:journey:${journeyId}`;
+const SEARCH_KEY = (searchId: string) => `abha:mobile-search:${searchId}`;
+
+/**
+ * One search by mobile, kept so the OTP can be requested for an account it
+ * listed and for no other. It holds ABDM's transaction and the listed
+ * indexes: never the mobile number, a name or an ABHA number.
+ */
+export interface MobileSearch {
+  id: string;
+  organizationId: string;
+  userId: string;
+  txnId: string;
+  indexes: number[];
+}
 
 export interface OtpState {
   txnId: string;
@@ -19,7 +33,7 @@ export interface OtpState {
 }
 
 /** How the person is being identified in a login journey. */
-export type LoginRoute = 'ABHA_NUMBER' | 'ABHA_ADDRESS' | 'AADHAAR';
+export type LoginRoute = 'ABHA_NUMBER' | 'ABHA_ADDRESS' | 'AADHAAR' | 'MOBILE';
 
 /**
  * One front-desk ABHA journey, creation or login, held in Redis for half an
@@ -35,6 +49,8 @@ export interface Journey {
   kind: 'CREATE' | LoginRoute;
   /** For a login: whether the OTP went to the Aadhaar-linked or the ABHA-linked mobile. */
   otpSystem: 'aadhaar' | 'abdm' | null;
+  /** After a search by mobile: the search transaction and the account chosen from it. */
+  search?: { txnId: string; index: number };
   /** The OTP that opens the journey. */
   otp: OtpState;
   /** A second OTP: the communication mobile on creation, or a mobile update after a login. */
@@ -87,6 +103,25 @@ export class AbhaJourneyStore {
       throw Problems.notFound('ABHA journey (it may have expired; start again)');
     }
     return journey;
+  }
+
+  async saveSearch(search: MobileSearch): Promise<void> {
+    await this.redis.client.set(
+      SEARCH_KEY(search.id),
+      JSON.stringify(search),
+      'EX',
+      JOURNEY_TTL_SECONDS,
+    );
+  }
+
+  async loadSearch(actor: ActorContext, searchId: string): Promise<MobileSearch> {
+    const organizationId = requireOrganization(actor);
+    const raw = await this.redis.client.get(SEARCH_KEY(searchId));
+    const search = raw ? (JSON.parse(raw) as MobileSearch) : null;
+    if (!search || search.organizationId !== organizationId || search.userId !== actor.userId) {
+      throw Problems.notFound('ABHA search (it may have expired; search again)');
+    }
+    return search;
   }
 
   /** A journey whose OTP has been verified, so it holds a profile. */

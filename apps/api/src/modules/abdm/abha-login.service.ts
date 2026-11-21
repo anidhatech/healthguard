@@ -4,6 +4,7 @@ import {
   abhaLoginMethodsFrom,
   type AbhaAddressMethods,
   type AbhaLoginView,
+  type AbhaMobileSearchResult,
   type AbhaMobileVerification,
   type AbhaOtpChallenge,
   type StartAbhaLogin,
@@ -26,8 +27,9 @@ import { AbdmApiError } from './abdm-http.client.js';
 const NO_ABHA = 'ABDM-1114';
 
 /**
- * The three logins the front desk can run for someone who may already hold an
- * ABHA: by ABHA number, by ABHA address, and by Aadhaar number. A login ends
+ * The logins the front desk can run for someone who may already hold an
+ * ABHA: by ABHA number, by ABHA address, by Aadhaar number, and by picking
+ * an account from a search by mobile. A login ends
  * in the same journey state as Create ABHA, so the profile, the card, the
  * returning-patient check and saving are the same routes for both.
  */
@@ -53,6 +55,51 @@ export class AbhaLoginService {
     };
   }
 
+  /**
+   * Lists every ABHA a mobile holds. No OTP is sent: the person picks their
+   * account first. "None on this mobile" is an outcome, so creation can be offered.
+   */
+  async searchMobile(
+    actor: ActorContext,
+    meta: RequestMeta,
+    mobile: string,
+  ): Promise<AbhaMobileSearchResult> {
+    const organizationId = await this.store.requireClinic(actor);
+    const client = this.client;
+    const searchId = randomUUID();
+    const found = await this.store.abdm(async () => {
+      try {
+        return await client.searchByMobile(mobile);
+      } catch (error) {
+        if (error instanceof AbdmApiError && error.is(NO_ABHA)) return null;
+        throw error;
+      }
+    });
+    const accounts = found?.accounts ?? [];
+    await this.audit.record({
+      actor,
+      meta,
+      organizationId,
+      action: 'READ',
+      resourceType: 'AbhaMobileSearch',
+      resourceId: searchId,
+      decision: 'ALLOW',
+      // A count only: never the mobile, a name or an ABHA number.
+      metadata: { accounts: accounts.length },
+    });
+    if (!found || accounts.length === 0) {
+      return { outcome: 'NO_ABHA', searchId: null, accounts: [] };
+    }
+    await this.store.saveSearch({
+      id: searchId,
+      organizationId,
+      userId: actor.userId,
+      txnId: found.txnId,
+      indexes: accounts.map((account) => account.index),
+    });
+    return { outcome: 'FOUND', searchId, accounts };
+  }
+
   /** Sends the OTP for a login. For an Aadhaar number, the consent is recorded first. */
   async start(
     actor: ActorContext,
@@ -61,6 +108,9 @@ export class AbhaLoginService {
   ): Promise<AbhaOtpChallenge> {
     const organizationId = await this.store.requireClinic(actor);
     const journeyId = randomUUID();
+    if (input.identifier === 'MOBILE') {
+      return this.startFromSearch(actor, organizationId, journeyId, input.searchId, input.index);
+    }
     const otpSystem: OtpSystem =
       input.identifier === 'AADHAAR' || input.method === 'AADHAAR_OTP' ? 'aadhaar' : 'abdm';
     if (input.identifier === 'AADHAAR') {
@@ -103,11 +153,55 @@ export class AbhaLoginService {
     return this.store.challenge(journey, journey.otp, sent.message);
   }
 
+  /** The OTP goes only to the account the person picked, and only if the search listed it. */
+  private async startFromSearch(
+    actor: ActorContext,
+    organizationId: string,
+    journeyId: string,
+    searchId: string,
+    index: number,
+  ): Promise<AbhaOtpChallenge> {
+    const search = await this.store.loadSearch(actor, searchId);
+    if (!search.indexes.includes(index)) {
+      throw Problems.conflict('Choose one of the ABHA accounts the search listed.');
+    }
+    const client = this.client;
+    const sent = await this.store.abdm(() => client.requestIndexOtp(search.txnId, index));
+    const journey: Journey = {
+      id: journeyId,
+      organizationId,
+      userId: actor.userId,
+      kind: 'MOBILE',
+      otpSystem: 'abdm',
+      search: { txnId: search.txnId, index },
+      otp: { txnId: sent.txnId, sentAt: Date.now(), resends: 0 },
+      mobile: null,
+      communicationMobile: null,
+      mobileVerified: false,
+      txnId: sent.txnId,
+      userToken: null,
+      isNew: null,
+      profile: null,
+      savedPatientId: null,
+    };
+    await this.store.save(journey);
+    return this.store.challenge(journey, journey.otp, sent.message);
+  }
+
   /** A resend is a fresh send; the OTP is then verified against the newest transaction. */
-  async resend(actor: ActorContext, journeyId: string, value: string): Promise<AbhaOtpChallenge> {
+  async resend(
+    actor: ActorContext,
+    journeyId: string,
+    value: string | undefined,
+  ): Promise<AbhaOtpChallenge> {
     const journey = await this.loginJourney(actor, journeyId);
     this.store.checkResend(journey.otp);
-    const sent = await this.send(journey.kind, value, journey.otpSystem ?? 'aadhaar');
+    const chosen = journey.search;
+    const client = this.client;
+    if (!chosen && !value) throw Problems.conflict('Enter the identifier again to resend.');
+    const sent = chosen
+      ? await this.store.abdm(() => client.requestIndexOtp(chosen.txnId, chosen.index))
+      : await this.send(journey.kind, value ?? '', journey.otpSystem ?? 'aadhaar');
     journey.otp = { txnId: sent.txnId, sentAt: Date.now(), resends: journey.otp.resends + 1 };
     journey.txnId = sent.txnId;
     await this.store.save(journey);

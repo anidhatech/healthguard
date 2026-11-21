@@ -418,6 +418,14 @@ export class AbhaEnrolmentService {
         givenName: string;
         familyName: string | null;
         abhaNumber: string | null;
+        dateOfBirth: Date;
+        sex: string;
+        phone: string | null;
+        addressLine: string | null;
+        city: string | null;
+        district: string | null;
+        state: string | null;
+        pinCode: string | null;
       },
       reason: AbhaPatientMatch['reason'],
     ) => {
@@ -428,6 +436,15 @@ export class AbhaEnrolmentService {
           displayName: patientDisplayName(row),
           reason,
           abhaLinked: Boolean(row.abhaNumber),
+          record: {
+            dateOfBirth: row.dateOfBirth.toISOString().slice(0, 10),
+            sex: row.sex,
+            phone: row.phone,
+            address:
+              [row.addressLine, row.city, row.district, row.state, row.pinCode]
+                .filter(Boolean)
+                .join(', ') || null,
+          },
         });
       }
     };

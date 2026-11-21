@@ -8,6 +8,10 @@ export const ABHA_TEXT = {
   aadhaarInvalid: 'Aadhaar Number is not valid',
   resendLimit: 'Maximum OTP resend attempts reached. Please try again after 30 mins',
   addressExists: 'ABHA address already exists.',
+  mobileInvalid: 'Please enter a valid mobile number.',
+  mobileNoAbha:
+    'ABHA details not found. We did not find any ABHA number linked to this mobile number. Please use an ABHA-linked mobile number.',
+  alreadyLinked: 'This ABHA profile is already linked to HMIS Beneficiary ID.',
 } as const;
 
 /** One rule for every OTP screen in M1. */
@@ -156,6 +160,14 @@ export const AbhaPatientMatchSchema = z.object({
   displayName: z.string(),
   reason: z.enum(ABHA_MATCH_REASONS),
   abhaLinked: z.boolean(),
+  /** What the facility's own record holds, to set beside the details from the ABHA. */
+  record: z.object({
+    /** `YYYY-MM-DD`. */
+    dateOfBirth: z.string().nullable(),
+    sex: z.string().nullable(),
+    phone: z.string().nullable(),
+    address: z.string().nullable(),
+  }),
 });
 export type AbhaPatientMatch = z.infer<typeof AbhaPatientMatchSchema>;
 
@@ -213,7 +225,39 @@ export const AbhaAddressMethodsSchema = z.object({
 });
 export type AbhaAddressMethods = z.infer<typeof AbhaAddressMethodsSchema>;
 
+/** The search by mobile: it lists the ABHAs on a mobile and sends no OTP. */
+export const AbhaMobileSearchSchema = z.strictObject({
+  mobile: z.string().regex(/^[0-9]{10}$/, ABHA_TEXT.mobileInvalid),
+});
+export type AbhaMobileSearch = z.infer<typeof AbhaMobileSearchSchema>;
+
+export const AbhaMobileAccountSchema = z.object({
+  /** ABDM's own number for this account in the list; the OTP request names the account by it. */
+  index: z.number().int(),
+  /** Masked by ABDM. */
+  abhaNumber: z.string().nullable(),
+  name: z.string().nullable(),
+  gender: z.string().nullable(),
+});
+export type AbhaMobileAccount = z.infer<typeof AbhaMobileAccountSchema>;
+
+export const AbhaMobileSearchResultSchema = z.object({
+  /** `NO_ABHA`: the mobile holds no ABHA. No OTP step follows, and creation is offered. */
+  outcome: z.enum(['FOUND', 'NO_ABHA']),
+  /** Names this search when the OTP is requested for one of its accounts. */
+  searchId: UuidSchema.nullable(),
+  /** Every account on the mobile, never only the first. */
+  accounts: z.array(AbhaMobileAccountSchema),
+});
+export type AbhaMobileSearchResult = z.infer<typeof AbhaMobileSearchResultSchema>;
+
 export const StartAbhaLoginSchema = z.discriminatedUnion('identifier', [
+  z.strictObject({
+    identifier: z.literal('MOBILE'),
+    searchId: UuidSchema,
+    /** The account the person picked from the search. */
+    index: z.number().int().min(0),
+  }),
   z.strictObject({
     identifier: z.literal('ABHA_NUMBER'),
     value: AbhaIdentifierSchema,
@@ -238,7 +282,10 @@ export const StartAbhaLoginSchema = z.discriminatedUnion('identifier', [
 export type StartAbhaLogin = z.infer<typeof StartAbhaLoginSchema>;
 
 /** A resend needs the identifier again: the server never keeps an Aadhaar number. */
-export const ResendAbhaLoginSchema = z.strictObject({ value: AbhaIdentifierSchema });
+export const ResendAbhaLoginSchema = z.strictObject({
+  /** Not needed after a search by mobile, which keeps the chosen account. */
+  value: AbhaIdentifierSchema.optional(),
+});
 export type ResendAbhaLogin = z.infer<typeof ResendAbhaLoginSchema>;
 
 export const VerifyAbhaLoginSchema = z.strictObject({ otp: OtpSchema });

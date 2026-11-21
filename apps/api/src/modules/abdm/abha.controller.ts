@@ -2,6 +2,7 @@ import { Body, Controller, Get, HttpCode, Module, Param, Post, Query, Res } from
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import {
   AbhaAddressSearchSchema,
+  AbhaMobileSearchSchema,
   AbhaJourneyParamsSchema,
   AbhaMatchQuerySchema,
   CreateAbhaAddressSchema,
@@ -17,6 +18,8 @@ import {
   type AbhaAddressMethods,
   type AbhaAddressResult,
   type AbhaAddressSearch,
+  type AbhaMobileSearch,
+  type AbhaMobileSearchResult,
   type AbhaAddressSuggestions,
   type AbhaEnrolmentView,
   type AbhaJourneyParams,
@@ -212,9 +215,22 @@ export class AbhaLoginController {
     return this.logins.addressMethods(actor, body.abhaAddress);
   }
 
+  @Post('mobile-search')
+  @HttpCode(200)
+  @ApiOperation({ summary: 'List the ABHAs a mobile holds; no OTP is sent' })
+  mobileSearch(
+    @CurrentActor() actor: ActorContext,
+    @CurrentMeta() meta: RequestMeta,
+    @Body(zod(AbhaMobileSearchSchema)) body: AbhaMobileSearch,
+  ): Promise<AbhaMobileSearchResult> {
+    return this.logins.searchMobile(actor, meta, body.mobile);
+  }
+
   @Post()
   @HttpCode(201)
-  @ApiOperation({ summary: 'Send the OTP for a login by ABHA number, ABHA address or Aadhaar' })
+  @ApiOperation({
+    summary: 'Send the OTP for a login by ABHA number, ABHA address, Aadhaar or a searched mobile',
+  })
   start(
     @CurrentActor() actor: ActorContext,
     @CurrentMeta() meta: RequestMeta,
