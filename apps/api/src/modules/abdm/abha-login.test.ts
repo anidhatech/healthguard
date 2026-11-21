@@ -280,6 +280,7 @@ describe('what the sandbox returned on 2026-11-20', () => {
     expect(formatAbhaNumber('91000000000001')).toBe('91-0000-0000-0001');
     expect(formatAbhaNumber(' 91 0000 0000 0001 ')).toBe('91-0000-0000-0001');
     expect(formatAbhaNumber('91-0000-0000-0001')).toBe('91-0000-0000-0001');
+    expect(formatAbhaNumber('91\u20130000\u20130000\u20130001')).toBe('91-0000-0000-0001');
     expect(formatAbhaNumber('9100000001')).toBe('9100000001');
     expect(formatAbhaNumber('test.person@sbx')).toBe('test.person@sbx');
   });

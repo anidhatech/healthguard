@@ -62,7 +62,8 @@ function challenge(body: unknown, requestId: string, path: string): OtpChallenge
  */
 export function formatAbhaNumber(value: string): string {
   const typed = value.trim();
-  const digits = typed.replace(/[\s-]+/g, '');
+  // Any dash counts: a browser or a pasted card can supply an en dash for a hyphen.
+  const digits = typed.replace(/[\s\p{Pd}]+/gu, '');
   return /^[0-9]{14}$/.test(digits)
     ? `${digits.slice(0, 2)}-${digits.slice(2, 6)}-${digits.slice(6, 10)}-${digits.slice(10)}`
     : typed;
