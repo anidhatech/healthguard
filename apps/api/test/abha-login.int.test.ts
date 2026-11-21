@@ -863,6 +863,15 @@ describe('find an ABHA by mobile', () => {
   });
 });
 
+describe('a profile shared at a counter, while sharing is switched off', () => {
+  it('is not accepted at all', async () => {
+    await request(app.getHttpServer())
+      .post('/api/v3/hip/patient/share')
+      .send({ intent: 'PROFILE_SHARE' })
+      .expect(404);
+  });
+});
+
 describe('who may log a patient in', () => {
   it('is closed to demo organizations, doctors and patients', async () => {
     const before = abdm.calls.length;

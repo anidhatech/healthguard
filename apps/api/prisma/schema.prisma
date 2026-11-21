@@ -641,6 +641,7 @@ model Organization {
   accessPolicies AccessPolicy[]
   notifications  Notification[]
   provenance     SourceProvenance[]
+  counters       Counter[]
 }
 
 model OrganizationMember {
@@ -742,12 +743,67 @@ model PatientProfile {
   notifications     Notification[]
   aiInteractions    AIInteraction[]
   aiRecommendations AIRecommendation[]
+  queueEntries      QueueEntry[]
 
   @@unique([organizationId, id])
   @@unique([organizationId, mrn])
   @@unique([organizationId, abhaNumber])
   @@unique([organizationId, abhaAddress])
   @@index([userId])
+}
+
+enum QueueEntryStatus {
+  ACTIVE
+  CLOSED
+}
+
+/// A registration or service counter with its own queue. Its `code` is the
+/// counter id printed in the counter's ABDM QR code, so it must stay stable.
+model Counter {
+  id             String   @id @default(uuid(7)) @db.Uuid
+  organizationId String   @db.Uuid
+  code           String   @db.VarChar(20)
+  name           String
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @db.Timestamptz(3)
+  updatedAt      DateTime @updatedAt @db.Timestamptz(3)
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Restrict)
+  entries      QueueEntry[]
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, code])
+}
+
+/// One patient waiting at one counter, with the token number they were given.
+/// A patient has at most one active entry per counter.
+model QueueEntry {
+  id                 String           @id @default(uuid(7)) @db.Uuid
+  organizationId     String           @db.Uuid
+  counterId          String           @db.Uuid
+  patientProfileId   String           @db.Uuid
+  /// The clinic's own calendar day; token numbers restart each day.
+  serviceDate        DateTime         @db.Date
+  tokenNumber        Int
+  status             QueueEntryStatus @default(ACTIVE)
+  /// How the patient arrived: `ABDM_SHARE` for a scanned counter QR code.
+  source             String           @default("ABDM_SHARE")
+  /// The REQUEST-ID of the latest ABDM share answered for this entry.
+  lastShareRequestId String?
+  /// `PENDING`, `SENT` or `FAILED`: whether ABDM accepted the reply carrying the token.
+  replyStatus        String           @default("PENDING")
+  tokenExpiresAt     DateTime         @db.Timestamptz(3)
+  createdAt          DateTime         @default(now()) @db.Timestamptz(3)
+  updatedAt          DateTime         @updatedAt @db.Timestamptz(3)
+  closedAt           DateTime?        @db.Timestamptz(3)
+
+  counter Counter        @relation(fields: [organizationId, counterId], references: [organizationId, id], onDelete: Restrict)
+  patient PatientProfile @relation(fields: [organizationId, patientProfileId], references: [organizationId, id], onDelete: Restrict)
+
+  @@unique([organizationId, id])
+  @@unique([organizationId, counterId, serviceDate, tokenNumber])
+  @@index([organizationId, counterId, status])
+  @@index([organizationId, patientProfileId])
 }
 
 // ===================================================================

@@ -272,7 +272,8 @@
     "appointments": "Appointments",
     "registerPatient": "Register a patient",
     "createAbha": "Create ABHA with Aadhaar OTP",
-    "verifyAbha": "Verify an existing ABHA"
+    "verifyAbha": "Verify an existing ABHA",
+    "counters": "Counters and queue"
   },
   "admin": {
     "title": "Organization",
@@ -668,5 +669,30 @@
     "noAbhaMobileOffer": "You can create an ABHA for this person now.",
     "compareAbha": "From the ABHA",
     "compareRecord": "In your record"
+  },
+  "counters": {
+    "title": "Counters and queue",
+    "waiting": "Waiting: {count}",
+    "qrAlt": "QR code for counter {code}",
+    "qrHint": "The patient scans this in their ABHA app and agrees to share.",
+    "noFacilityQr": "A QR code appears once the clinic has a facility ID.",
+    "token": "Token {number}",
+    "replyFailed": "ABDM did not accept the token reply, so the patient’s app may not show it.",
+    "markSeen": "Mark as seen",
+    "nobodyWaiting": "Nobody is waiting at this counter.",
+    "noFacilityTitle": "This clinic has no facility ID yet",
+    "noFacilityBody": "Counter QR codes need the clinic’s facility ID from the Health Facility Registry. Ask your administrator to add it.",
+    "sharingOffTitle": "Sharing at the counter is switched off",
+    "sharingOffBody": "This system is not accepting profiles shared from a QR code yet. Counters can be set up now.",
+    "addTitle": "Add a counter",
+    "addSubtitle": "Each counter has its own QR code and its own queue.",
+    "code": "Counter ID",
+    "name": "Name",
+    "add": "Add counter",
+    "codeHint": "1 to 20 letters or digits, for example OPD1. Keep it the same once the QR code is printed.",
+    "demoTitle": "Not available in the demo",
+    "demoBody": "Counters hold real patients, so they are not available in a demo organization.",
+    "notAllowedTitle": "Not available for your role",
+    "notAllowedBody": "Counters are managed by front-desk and care-team staff."
   }
 }

@@ -25,6 +25,8 @@ export const TENANT_MODELS = new Set([
   'AIInteraction',
   'AIRecommendation',
   'SourceProvenance',
+  'Counter',
+  'QueueEntry',
 ]);
 
 const WHERE_OPERATIONS = new Set([

@@ -11,6 +11,8 @@
  *   DESK_EMAIL     default "desk@clinic.local"
  *   DESK_NAME      default "Front Desk"
  *   DESK_PASSWORD  default: a random one, printed once
+ *   FACILITY_ID    the clinic's id in the Health Facility Registry (its ABDM
+ *                  HIP id). Counter QR codes need it. Left as it is when not given.
  *
  * It also loads the default access rules and consent purposes, which every
  * organization needs. Running it again for the same email sets a new password.
@@ -56,10 +58,14 @@ async function main(): Promise<void> {
     }
     // Without the default access rules, staff could not open any patient record.
     await seedAccessDefaults(db);
+    const facilityId = process.env.FACILITY_ID?.trim() || undefined;
+    if (facilityId && !/^[A-Za-z0-9._-]{3,50}$/.test(facilityId)) {
+      throw new Error('FACILITY_ID does not look like a facility id.');
+    }
     const organization = await db.organization.upsert({
       where: { slug },
-      update: {},
-      create: { slug, name, type: 'CLINIC', isDemo: false },
+      update: facilityId ? { hfrId: facilityId } : {},
+      create: { slug, name, type: 'CLINIC', isDemo: false, hfrId: facilityId ?? null },
     });
     if (organization.isDemo) throw new Error(`"${slug}" is a demo organization.`);
     const passwordHash = await hash(password);
@@ -80,6 +86,7 @@ async function main(): Promise<void> {
       },
     });
     print(`Clinic: ${organization.name} (${organization.slug})`);
+    print(`Facility id: ${organization.hfrId ?? 'not set (set FACILITY_ID to add it)'}`);
     print(`Front-desk sign-in: ${email}`);
     print(
       generated

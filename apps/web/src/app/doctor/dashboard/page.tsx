@@ -140,6 +140,12 @@ export default function DoctorDashboard() {
               >
                 {t('createAbha')}
               </Link>
+              <Link
+                href="/doctor/counters"
+                className="inline-flex min-h-10 items-center rounded-md border border-line px-3 text-sm text-brand-700 hover:bg-brand-50"
+              >
+                {t('counters')}
+              </Link>
             </span>
           ) : null}
           <label className="relative">
