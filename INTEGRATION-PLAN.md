@@ -184,9 +184,31 @@ Findings:
 
 - **The ABHA-address fix is confirmed** in the sandbox: one account read, where the first run read none. The refusal reason is now shown as ABDM wrote it.
 - **The ABHA-number login is still refused**, so the hyphen hypothesis alone did not settle it. ABDM returns the ABHA number as 17 characters, which fits `XX-XXXX-XXXX-XXXX`. What was typed at the hidden prompt cannot be seen, so a typing slip is not ruled out: a value that is not fourteen digits goes out as typed.
-- The run script now says how many characters and digits were typed, and has a part E that sends the OTP for the ABHA number ABDM itself returned, with and without hyphens. That run decides between a typing slip and a format the sandbox refuses.
+- The run script now says how many characters and digits were typed, and has a part E that sends the OTP for the ABHA number ABDM itself returned, with and without hyphens.
 
-Not yet observed: an ABHA-number login succeeding, a wrong OTP on a login, "no ABHA" for an Aadhaar, and the mobile update.
+A third run the same day, on `e0057e1`, settled it: the script reported **12 digits typed** at the ABHA number prompt (request `32da1f21-a615-445b-9d34-fa8d622d866d`, refused). The refusals were a typing slip, not a format the sandbox rejects. The script now stops before sending a number that is not 14 digits.
+
+### Scaffold run, ABHA-number login, 2026-11-21
+
+Run by the owner as tester, from the Mac, on commit `e0057e1`, with a 14-digit number sent as `XX-XXXX-XXXX-XXXX`.
+
+| Call | HTTP | Request id | Observed |
+|---|---|---|---|
+| `POST profile/login/request/otp` (ABHA number, Aadhaar OTP) | 200 | `d6a03215-727d-47b7-82a5-b12a8780e144` | `txnId`, `message` naming the masked Aadhaar-registered mobile |
+| `POST profile/login/verify` | 200 | `dd6c9149-0abb-4d07-b4fe-209562376c1a` | `authResult` "success", top-level `token`, one entry in `accounts` (`ABHANumber`, `preferredAbhaAddress`, `name`, `status`, `profilePhoto`, `mobileVerified` false) |
+| `GET profile/account` | 200 | `54c57340-7bfe-4a23-b083-f9aae74c9858` | Full profile; `mobile` present, `mobileVerified` true |
+| `GET profile/account/abha-card` | 202 | `ace96df6-f1bb-40f2-bc97-5d1e648196dd` | `image/png`, about 211 KB |
+| `POST profile/login/request/otp` (ABHA number, ABHA-linked mobile OTP) | 200 | `792ce7b8-dac9-416d-b8f6-82b48d642f32` | `txnId`, `message` naming the masked mobile |
+| `POST profile/login/verify` | 200 | `3a1c3cce-6087-48c2-aa05-788d26869ccb` | Same shape as the Aadhaar OTP route |
+| `GET profile/account` | 200 | `5689ae7a-3637-4746-9e05-f27f51499879` | As above |
+| `GET profile/account/abha-card` | 202 | `e2452ff3-3989-4500-a8bd-83288331ec22` | As above |
+
+Findings:
+
+- **The ABHA-number login works in the sandbox by both OTP routes** with the hyphenated number. Whether bare digits would also be accepted was not tested and does not matter: the client always sends the hyphenated form.
+- The account in the verify answer says `mobileVerified` false while the profile says true, with a mobile. The mobile-update offer must be decided from the profile, as the service already does.
+
+All three logins have now answered correctly at the call level. Not yet observed: any login through the screens, a wrong OTP on a login, "no ABHA" for an Aadhaar, and the mobile update.
 
 ### First run through the screens, 2026-11-20
 
