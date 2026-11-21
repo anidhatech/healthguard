@@ -69,6 +69,14 @@
     "VRFY_ABHA_307": "open",
     "VRFY_ABHA_308": "open"
    }
+  },
+  "scan-and-share": {
+   "state": "building",
+   "date": "2026-11-21",
+   "snapshot": {
+    "SHARE_PATIENT_PROFILE_701": "open",
+    "SHARE_PATIENT_PROFILE_702": "open"
+   }
   }
  },
  "screens": {
@@ -101,6 +109,8 @@
   "VRFY_ABHA_305": "/doctor/abha/verify, Look up by: Mobile number: OTP step, then the chosen profile only, with the shared profile and card view",
   "VRFY_ABHA_306": "/doctor/abha/verify, Look up by: Mobile number: shared details form, name, date of birth and gender read only; saved through PatientRegistration",
   "VRFY_ABHA_307": "/doctor/abha/verify, Look up by: Mobile number: a wrong OTP shows ABDM's message, opens no profile, and can be retried",
-  "VRFY_ABHA_308": "/doctor/abha/verify, Look up by: Mobile number: save step shows 'This ABHA profile is already linked to HMIS Beneficiary ID.' with the ABHA's details beside the record's, and offers no new record"
+  "VRFY_ABHA_308": "/doctor/abha/verify, Look up by: Mobile number: save step shows 'This ABHA profile is already linked to HMIS Beneficiary ID.' with the ABHA's details beside the record's, and offers no new record",
+  "SHARE_PATIENT_PROFILE_701": "POST /api/v3/hip/patient/share: registers the patient from the shared profile with no desk input and replies on on-share with the counter's token (planned)",
+  "SHARE_PATIENT_PROFILE_702": "POST /api/v3/hip/patient/share: matches a returning patient, updates the ABHA address, one active queue entry per counter, a new entry for another counter; counter queue screen (planned)"
  }
 }

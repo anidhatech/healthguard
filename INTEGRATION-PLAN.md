@@ -101,7 +101,7 @@ One row per functionality, written by `abdm-ft/abdm_report.py tracker`. Never ed
 
 Entity type: private. Run: ui. Workbook: M1_ABHA_CREATION_VERIFICATION_SCAN_AND_SHARE.xlsx. Written 2026-11-21.
 
-In scope: 7 functionalities. 5 built and waiting for the tester, 1 building, 1 not started. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
+In scope: 7 functionalities. 5 built and waiting for the tester, 2 building. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
 
 | # | Functionality | Mandatory cases and results | Screen or route | State | Date | Build |
 |---|---|---|---|---|---|---|
@@ -111,7 +111,7 @@ In scope: 7 functionalities. 5 built and waiting for the tester, 1 building, 1 n
 | 4 | Find a forgotten ABHA by mobile (`find-abha-mobile`) | VRFY_ABHA_301 open, VRFY_ABHA_302 open, VRFY_ABHA_303 open, VRFY_ABHA_304 open, VRFY_ABHA_305 open, VRFY_ABHA_306 open, VRFY_ABHA_307 open, VRFY_ABHA_308 open | VRFY_ABHA_301: /doctor/abha/verify, Look up by: Mobile number: ten digits only, else 'Please enter a valid mobile number.' and no search is sent; VRFY_ABHA_302: /doctor/abha/verify, Look up by: Mobile number: Search lists every ABHA on the mobile with masked ABHA number, name and gender, before any OTP; VRFY_ABHA_303: /doctor/abha/verify, Look up by: Mobile number: 'ABHA details not found...' with a Create ABHA button that carries the mobile over, and no OTP step; VRFY_ABHA_304: /doctor/abha/verify, Look up by: Mobile number: Send OTP appears only after one account is chosen; the choice is kept to verification; resend rules as on the other logins; VRFY_ABHA_305: /doctor/abha/verify, Look up by: Mobile number: OTP step, then the chosen profile only, with the shared profile and card view; VRFY_ABHA_306: /doctor/abha/verify, Look up by: Mobile number: shared details form, name, date of birth and gender read only; saved through PatientRegistration; VRFY_ABHA_307: /doctor/abha/verify, Look up by: Mobile number: a wrong OTP shows ABDM's message, opens no profile, and can be retried; VRFY_ABHA_308: /doctor/abha/verify, Look up by: Mobile number: save step shows 'This ABHA profile is already linked to HMIS Beneficiary ID.' with the ABHA's details beside the record's, and offers no new record | built and waiting for the tester | 2026-11-21 |  |
 | 5 | Log in with Aadhaar OTP (`login-aadhaar-otp`) | VRFY_ABHA_401 open, VRFY_ABHA_402 open, VRFY_ABHA_403 open, VRFY_ABHA_404 open, VRFY_ABHA_405 open | VRFY_ABHA_401: /doctor/abha/verify: Aadhaar number, 12 digits only, masked, 'Aadhaar Number is not valid' with no call; consent screen; VRFY_ABHA_402: /doctor/abha/verify OTP step: a wrong OTP shows ABDM's message and stays on the step; VRFY_ABHA_403: /doctor/abha/verify: No ABHA found, with ABDM's message and Create ABHA, which opens /doctor/abha/create at consent without asking for the Aadhaar again; VRFY_ABHA_404: /doctor/abha/verify: ABHA verified, profile, card download, then save or link to the patient record; VRFY_ABHA_405: /doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message | built and waiting for the tester | 2026-11-21 |  |
 | 6 | Link one ABHA number to one patient record (`link-one-abha-per-patient`) | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER open | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER: Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record | building | 2026-11-19 |  |
-| 7 | Scan and share at a counter (`scan-and-share`) | SHARE_PATIENT_PROFILE_701 open, SHARE_PATIENT_PROFILE_702 open | SHARE_PATIENT_PROFILE_701: not mapped; SHARE_PATIENT_PROFILE_702: not mapped | not started |  |  |
+| 7 | Scan and share at a counter (`scan-and-share`) | SHARE_PATIENT_PROFILE_701 open, SHARE_PATIENT_PROFILE_702 open | SHARE_PATIENT_PROFILE_701: POST /api/v3/hip/patient/share: registers the patient from the shared profile with no desk input and replies on on-share with the counter's token (planned); SHARE_PATIENT_PROFILE_702: POST /api/v3/hip/patient/share: matches a returning patient, updates the ABHA address, one active queue entry per counter, a new entry for another counter; counter queue screen (planned) | building | 2026-11-21 |  |
 | 8 | Update the mobile on an ABHA (`update-mobile`) | none for a private entity |  | optional, not in scope |  |  |
 | 9 | Read an ABHA QR code (`read-abha-qr`) | none for a private entity |  | optional, not in scope |  |  |
 | 10 | Create ABHA by face authentication (`create-abha-face-auth`) | none for a private entity |  | optional, not in scope |  |  |
@@ -269,7 +269,18 @@ Run by the owner as tester, on the Mac, on commit `adbfa21`, the API with `ABDM_
 | A wrong OTP | ABDM's message "Please enter a valid OTP. Entered OTP is either expired or incorrect.", the OTP field cleared, the resend wait and "2 resends left" shown, no profile opened (screenshot seen) |
 | The right OTP | Reported as working |
 
-What this does and does not show: the "no ABHA on this mobile" outcome is now observed from the sandbox through the screen, though not which answer ABDM gave for it (the `ABDM-1114` refusal or an empty list; the code treats both alike). Not reported: an invalid mobile being refused before the search, the save step with its "already linked" comparison, a resend, and a mobile with several ABHAs. This is not a test run in the skill's sense: no case was recorded.
+| A six-digit number, then Search | "Please enter a valid mobile number." under the field, and no list or OTP step (screenshot seen) |
+| Continue to the save step, for an ABHA already linked | The existing record with its record number and "This ABHA profile is already linked to HMIS Beneficiary ID." (text pasted by the tester; the comparison table was not in what was pasted) |
+
+What this does and does not show: the "no ABHA on this mobile" outcome is now observed from the sandbox through the screen, though not which answer ABDM gave for it (the `ABDM-1114` refusal or an empty list; the code treats both alike). Not reported: the ABHA-beside-record comparison, a resend, and a mobile with several ABHAs. This is not a test run in the skill's sense: no case was recorded.
+
+### Scan and share: decision and what is needed, 2026-11-21
+
+The owner chose a tunnel from the Mac for the public callback while this is built, with a hosted address to follow before the tester session.
+
+The skill's guide gives the inbound call, the reply on on-share and the counter QR format. It does **not** say how the bridge URL is registered or how ABDM identifies itself on the inbound call, so both are to be observed before the receiving side is built: `abdm:scaffold-share` shows a counter QR code, prints the header names and body shape of what arrives, answers 200, and replies on on-share with a token number. It registers nobody. Its bridge URL step (`PATCH /api/hiecm/gateway/v3/bridge/url`) is from memory of ABDM's documentation, not from the guide: the sandbox's answer decides whether it is right.
+
+Needed from the owner for that run: a facility id (HIP id) registered in the sandbox HFR and linked to this client id, a tunnel to the script's port, and the ABDM sandbox PHR app signed in with an ABHA.
 
 ### Resend test, 2026-11-19
 
