@@ -30,24 +30,24 @@
    }
   },
   "login-abha-number": {
-   "state": "building",
-   "date": "2026-11-20",
+   "state": "built and waiting for the tester",
+   "date": "2026-11-21",
    "snapshot": {
     "VRFY_ABHA_101": "open",
     "VRFY_ABHA_201": "open"
    }
   },
   "login-abha-address": {
-   "state": "building",
-   "date": "2026-11-20",
+   "state": "built and waiting for the tester",
+   "date": "2026-11-21",
    "snapshot": {
     "VRFY_ABHA_102": "open",
     "VRFY_ABHA_202": "open"
    }
   },
   "login-aadhaar-otp": {
-   "state": "building",
-   "date": "2026-11-20",
+   "state": "built and waiting for the tester",
+   "date": "2026-11-21",
    "snapshot": {
     "VRFY_ABHA_401": "open",
     "VRFY_ABHA_402": "open",
