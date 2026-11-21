@@ -258,6 +258,19 @@ Findings:
 
 Built on this the same day: `POST abha/logins/mobile-search`, the `MOBILE` login route, the "Mobile number" choice on `/doctor/abha/verify`, and, in the shared save step, the words "This ABHA profile is already linked to HMIS Beneficiary ID." with the ABHA's details beside the record's. The eight cases were driven through the screen in a browser against a local stand-in for ABDM, not the sandbox; that is a check of the build, not a test run.
 
+### Find an ABHA by mobile through the screens, 2026-11-21
+
+Run by the owner as tester, on the Mac, on commit `adbfa21`, the API with `ABDM_ADAPTER=sandbox` and `DEMO_MODE=false` against the clinic database, at `/doctor/abha/verify` with "Mobile number" chosen. Reported by the tester with two screenshots; no request ids were collected.
+
+| Step | Observed |
+|---|---|
+| A valid mobile that holds no ABHA | "ABHA details not found. We did not find any ABHA number linked to this mobile number. Please use an ABHA-linked mobile number.", "You can create an ABHA for this person now." and a Create ABHA button; no OTP step (screenshot seen) |
+| The tester's own mobile, account chosen, Send OTP | "OTP sent to mobile number ending with" and the masked number (screenshot seen) |
+| A wrong OTP | ABDM's message "Please enter a valid OTP. Entered OTP is either expired or incorrect.", the OTP field cleared, the resend wait and "2 resends left" shown, no profile opened (screenshot seen) |
+| The right OTP | Reported as working |
+
+What this does and does not show: the "no ABHA on this mobile" outcome is now observed from the sandbox through the screen, though not which answer ABDM gave for it (the `ABDM-1114` refusal or an empty list; the code treats both alike). Not reported: an invalid mobile being refused before the search, the save step with its "already linked" comparison, a resend, and a mobile with several ABHAs. This is not a test run in the skill's sense: no case was recorded.
+
 ### Resend test, 2026-11-19
 
 Run by the owner as tester, from the Mac, with `abdm:scaffold-create --resend-test` on commit `049a8a4`.
