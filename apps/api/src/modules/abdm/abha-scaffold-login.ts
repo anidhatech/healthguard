@@ -13,8 +13,24 @@
  * Each part can be skipped. Each part that runs sends one real OTP.
  */
 import { AbhaEnrollmentClient } from './abha-enrollment.client.js';
-import { AbhaLoginClient, type LoginResult, type OtpSystem } from './abha-login.client.js';
+import {
+  AbhaLoginClient,
+  formatAbhaNumber,
+  type LoginResult,
+  type OtpSystem,
+} from './abha-login.client.js';
 import { ask, closeTerminal, createObservedGateway, print, step, yes } from './abdm-scaffold.js';
+
+/** Says what was typed without showing it: how long, how many digits, and the form it goes out in. */
+function describeTyped(number: string): void {
+  const digits = number.replace(/[^0-9]/g, '').length;
+  const other = number.replace(/[0-9\s-]/g, '').length;
+  const wellFormed = /^[0-9]{2}-[0-9]{4}-[0-9]{4}-[0-9]{4}$/.test(formatAbhaNumber(number));
+  print(
+    `typed: ${number.length} characters, ${digits} digits, ${other} other than digits, spaces and hyphens`,
+  );
+  print(`goes out as XX-XXXX-XXXX-XXXX: ${wellFormed}`);
+}
 
 function summary(result: LoginResult): void {
   print(`verified: ${result.verified}`);
@@ -56,6 +72,10 @@ async function main(): Promise<number> {
     return 1;
   }
 
+  // The ABHA number as ABDM itself returns it, and as it was typed, for part E.
+  let returned: string | null | undefined;
+  let typed: string | undefined;
+
   // Part A and B: ABHA number, by Aadhaar OTP and by the ABHA-linked mobile OTP.
   for (const [part, otpSystem, label] of [
     ['A', 'aadhaar', 'ABHA number + Aadhaar OTP'],
@@ -63,6 +83,8 @@ async function main(): Promise<number> {
   ] as [string, OtpSystem, string][]) {
     if (!(await yes(`\nPart ${part}: run ${label}?`))) continue;
     const number = await ask('ABHA number, with or without hyphens (hidden as you type): ', true);
+    typed = number;
+    describeTyped(number);
     const sent = await step(`${part}1. Send OTP`, () =>
       login.requestOtp({ identifier: 'abha-number', value: number, otpSystem }),
     );
@@ -96,6 +118,7 @@ async function main(): Promise<number> {
           login.verifyAddressOtp({ txnId: sent.txnId, otp, otpSystem }),
         );
         if (result?.userToken) {
+          returned ??= result.accounts[0]?.abhaNumber;
           summary(result);
           const token = result.userToken;
           const profile = await step('C4. Read the ABHA-address profile', () =>
@@ -129,7 +152,31 @@ async function main(): Promise<number> {
         const result = await verify('D', (otp) =>
           login.verifyOtp({ txnId: sent.txnId, otp, otpSystem: 'aadhaar' }),
         );
-        if (result) summary(result);
+        if (result) {
+          returned ??= result.accounts[0]?.abhaNumber;
+          summary(result);
+        }
+      }
+    }
+  }
+
+  // Part E: the ABHA-number send again, with the number ABDM returned above
+  // rather than a typed one. It tells a typing slip from a format ABDM refuses.
+  if (returned) {
+    const known = returned;
+    const pattern = known.replace(/[0-9]/g, '9').replace(/[A-Za-z]/g, 'a');
+    print(`\nABDM returned an ABHA number of the pattern ${pattern}`);
+    if (typed) {
+      const same = typed.replace(/[^0-9]/g, '') === known.replace(/[^0-9]/g, '');
+      print(`the number typed in part A or B has the same digits: ${same}`);
+    }
+    if (await yes('Part E: send an Aadhaar OTP for that returned ABHA number? Do not verify it.')) {
+      await step('E1. Send OTP, number as ABDM returned it', () =>
+        login.requestOtp({ identifier: 'abha-number', value: known, otpSystem: 'aadhaar' }),
+      );
+      const bare = known.replace(/[^0-9]/g, '');
+      if (await yes('Part E: send once more with the hyphens taken out?')) {
+        await step('E2. Send OTP, digits only', () => login.requestOtpRaw(bare, 'aadhaar'));
       }
     }
   }

@@ -169,6 +169,25 @@ Findings acted on:
 
 Not yet observed: an ABHA-number login succeeding, a wrong OTP on a login, "no ABHA" for an Aadhaar, and the mobile update.
 
+### Scaffold run, the three logins again, 2026-11-21
+
+Run by the owner as tester, from the Mac, with `abdm:scaffold-login` on commit `96684b0`.
+
+| Call | HTTP | Request id | Observed |
+|---|---|---|---|
+| `POST profile/login/request/otp` (ABHA number, Aadhaar OTP) | 400 | `320cf713-cdc9-4de8-8dd0-6cdc41fb3716` | Refused: `loginId` "LoginId is invalid" |
+| Same call (ABHA number, ABHA-linked mobile OTP) | 400 | `ff5db551-dd51-4b3f-9c3f-f19142cb1523` | Refused the same way |
+| `POST phr/web/login/abha/verify` | 200 | `939e98d0-5024-4490-a424-4647490dd6e5` | The corrected reader found the one account under `users`, with its ABHA number and address |
+| `POST profile/login/verify` (Aadhaar number) | 200 | `640f5d09-c457-46e5-a558-632f980152a0` | As before: one account |
+
+Findings:
+
+- **The ABHA-address fix is confirmed** in the sandbox: one account read, where the first run read none. The refusal reason is now shown as ABDM wrote it.
+- **The ABHA-number login is still refused**, so the hyphen hypothesis alone did not settle it. ABDM returns the ABHA number as 17 characters, which fits `XX-XXXX-XXXX-XXXX`. What was typed at the hidden prompt cannot be seen, so a typing slip is not ruled out: a value that is not fourteen digits goes out as typed.
+- The run script now says how many characters and digits were typed, and has a part E that sends the OTP for the ABHA number ABDM itself returned, with and without hyphens. That run decides between a typing slip and a format the sandbox refuses.
+
+Not yet observed: an ABHA-number login succeeding, a wrong OTP on a login, "no ABHA" for an Aadhaar, and the mobile update.
+
 ### First run through the screens, 2026-11-20
 
 Run by the owner as tester, on the Mac, on commit `55bfc95`: the API with `ABDM_ADAPTER=sandbox` and `DEMO_MODE=false` against a separate clinic database, the web app at `/doctor/abha/create`, signed in as the clinic's front desk.

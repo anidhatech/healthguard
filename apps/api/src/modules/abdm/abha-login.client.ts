@@ -120,6 +120,24 @@ export class AbhaLoginClient {
     return challenge(body, requestId, path);
   }
 
+  /** For the sandbox run script only: sends an ABHA number exactly as given, unformatted. */
+  async requestOtpRaw(value: string, otpSystem: OtpSystem): Promise<OtpChallenge> {
+    const path = `${LOGIN}/request/otp`;
+    const { body, requestId } = await this.gateway.http.request({
+      host: 'abha',
+      method: 'POST',
+      path,
+      accessToken: await this.gateway.session.accessToken(),
+      body: {
+        scope: ['abha-login', verifyScope(otpSystem)],
+        loginHint: 'abha-number',
+        loginId: await this.gateway.crypto.encrypt(value),
+        otpSystem,
+      },
+    });
+    return challenge(body, requestId, path);
+  }
+
   async verifyOtp(input: {
     txnId: string;
     otp: string;
