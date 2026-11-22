@@ -3,72 +3,78 @@
  "module": "m1",
  "functionalities": {
   "link-one-abha-per-patient": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-22",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "open"
-   }
+    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "PASS"
+   },
+   "build": "00cd848"
   },
   "create-abha-aadhaar-otp": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-19",
+   "state": "tested",
+   "date": "2026-11-23",
    "snapshot": {
-    "CRT_ABHA_101": "open",
-    "CRT_ABHA_104": "open",
-    "CRT_ABHA_102": "open",
-    "CRT_ABHA_103": "open",
-    "CRT_ABHA_105": "open",
-    "CRT_ABHA_106": "open",
-    "CRT_ABHA_107": "open",
-    "CRT_ABHA_108": "open",
-    "CRT_ABHA_109": "open",
-    "CRT_ABHA_112": "open",
-    "CRT_ABHA_113": "open",
-    "CRT_ABHA_114": "open",
-    "CRT_ABHA_115": "open",
-    "CRT_ABHA_116": "open"
-   }
+    "CRT_ABHA_101": "PASS",
+    "CRT_ABHA_104": "PASS",
+    "CRT_ABHA_102": "PASS",
+    "CRT_ABHA_103": "NA",
+    "CRT_ABHA_105": "CONDITIONAL PASS",
+    "CRT_ABHA_106": "PASS",
+    "CRT_ABHA_107": "PASS",
+    "CRT_ABHA_108": "PASS",
+    "CRT_ABHA_109": "PASS",
+    "CRT_ABHA_112": "PASS",
+    "CRT_ABHA_113": "PASS",
+    "CRT_ABHA_114": "PASS",
+    "CRT_ABHA_115": "NA",
+    "CRT_ABHA_116": "needs tester"
+   },
+   "build": "00cd848"
   },
   "login-abha-number": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-21",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "VRFY_ABHA_101": "open",
-    "VRFY_ABHA_201": "open"
-   }
+    "VRFY_ABHA_101": "PASS",
+    "VRFY_ABHA_201": "PASS"
+   },
+   "build": "00cd848"
   },
   "login-abha-address": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-21",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "VRFY_ABHA_102": "open",
-    "VRFY_ABHA_202": "open"
-   }
+    "VRFY_ABHA_102": "CONDITIONAL PASS",
+    "VRFY_ABHA_202": "CONDITIONAL PASS"
+   },
+   "build": "00cd848"
   },
   "login-aadhaar-otp": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-21",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "VRFY_ABHA_401": "open",
-    "VRFY_ABHA_402": "open",
-    "VRFY_ABHA_403": "open",
-    "VRFY_ABHA_404": "open",
-    "VRFY_ABHA_405": "open"
-   }
+    "VRFY_ABHA_401": "PASS",
+    "VRFY_ABHA_402": "PASS",
+    "VRFY_ABHA_403": "CONDITIONAL PASS",
+    "VRFY_ABHA_404": "PASS",
+    "VRFY_ABHA_405": "PASS"
+   },
+   "build": "00cd848"
   },
   "find-abha-mobile": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-21",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "VRFY_ABHA_301": "open",
-    "VRFY_ABHA_302": "open",
-    "VRFY_ABHA_303": "open",
-    "VRFY_ABHA_304": "open",
-    "VRFY_ABHA_305": "open",
-    "VRFY_ABHA_306": "open",
-    "VRFY_ABHA_307": "open",
-    "VRFY_ABHA_308": "open"
-   }
+    "VRFY_ABHA_301": "PASS",
+    "VRFY_ABHA_302": "PASS",
+    "VRFY_ABHA_303": "PASS",
+    "VRFY_ABHA_304": "PASS",
+    "VRFY_ABHA_305": "PASS",
+    "VRFY_ABHA_306": "PASS",
+    "VRFY_ABHA_307": "PASS",
+    "VRFY_ABHA_308": "PASS"
+   },
+   "build": "00cd848"
   },
   "scan-and-share": {
    "state": "building",
