@@ -99,9 +99,9 @@ One row per functionality, written by `abdm-ft/abdm_report.py tracker`. Never ed
 
 <!-- abdm-tracker start: written by abdm_report.py tracker. Never edit it by hand -->
 
-Entity type: private. Run: ui. Workbook: M1_ABHA_CREATION_VERIFICATION_SCAN_AND_SHARE.xlsx. Written 2026-11-21.
+Entity type: private. Run: ui. Workbook: M1_ABHA_CREATION_VERIFICATION_SCAN_AND_SHARE.xlsx. Written 2026-11-22.
 
-In scope: 7 functionalities. 5 built and waiting for the tester, 2 building. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
+In scope: 7 functionalities. 6 built and waiting for the tester, 1 building. Mandatory cases: 32, 0 passed, 0 failing, 32 open.
 
 | # | Functionality | Mandatory cases and results | Screen or route | State | Date | Build |
 |---|---|---|---|---|---|---|
@@ -110,7 +110,7 @@ In scope: 7 functionalities. 5 built and waiting for the tester, 2 building. Man
 | 3 | Log in with ABHA address (`login-abha-address`) | VRFY_ABHA_102 open, VRFY_ABHA_202 open | VRFY_ABHA_102: /doctor/abha/verify: ABHA address, Find login methods lists what ABDM offers for that address, Aadhaar OTP; profile, PHR card, details form, save; VRFY_ABHA_202: /doctor/abha/verify: ABHA address, mobile OTP when ABDM lists it; same screens as VRFY_ABHA_102 | built and waiting for the tester | 2026-11-21 |  |
 | 4 | Find a forgotten ABHA by mobile (`find-abha-mobile`) | VRFY_ABHA_301 open, VRFY_ABHA_302 open, VRFY_ABHA_303 open, VRFY_ABHA_304 open, VRFY_ABHA_305 open, VRFY_ABHA_306 open, VRFY_ABHA_307 open, VRFY_ABHA_308 open | VRFY_ABHA_301: /doctor/abha/verify, Look up by: Mobile number: ten digits only, else 'Please enter a valid mobile number.' and no search is sent; VRFY_ABHA_302: /doctor/abha/verify, Look up by: Mobile number: Search lists every ABHA on the mobile with masked ABHA number, name and gender, before any OTP; VRFY_ABHA_303: /doctor/abha/verify, Look up by: Mobile number: 'ABHA details not found...' with a Create ABHA button that carries the mobile over, and no OTP step; VRFY_ABHA_304: /doctor/abha/verify, Look up by: Mobile number: Send OTP appears only after one account is chosen; the choice is kept to verification; resend rules as on the other logins; VRFY_ABHA_305: /doctor/abha/verify, Look up by: Mobile number: OTP step, then the chosen profile only, with the shared profile and card view; VRFY_ABHA_306: /doctor/abha/verify, Look up by: Mobile number: shared details form, name, date of birth and gender read only; saved through PatientRegistration; VRFY_ABHA_307: /doctor/abha/verify, Look up by: Mobile number: a wrong OTP shows ABDM's message, opens no profile, and can be retried; VRFY_ABHA_308: /doctor/abha/verify, Look up by: Mobile number: save step shows 'This ABHA profile is already linked to HMIS Beneficiary ID.' with the ABHA's details beside the record's, and offers no new record | built and waiting for the tester | 2026-11-21 |  |
 | 5 | Log in with Aadhaar OTP (`login-aadhaar-otp`) | VRFY_ABHA_401 open, VRFY_ABHA_402 open, VRFY_ABHA_403 open, VRFY_ABHA_404 open, VRFY_ABHA_405 open | VRFY_ABHA_401: /doctor/abha/verify: Aadhaar number, 12 digits only, masked, 'Aadhaar Number is not valid' with no call; consent screen; VRFY_ABHA_402: /doctor/abha/verify OTP step: a wrong OTP shows ABDM's message and stays on the step; VRFY_ABHA_403: /doctor/abha/verify: No ABHA found, with ABDM's message and Create ABHA, which opens /doctor/abha/create at consent without asking for the Aadhaar again; VRFY_ABHA_404: /doctor/abha/verify: ABHA verified, profile, card download, then save or link to the patient record; VRFY_ABHA_405: /doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message | built and waiting for the tester | 2026-11-21 |  |
-| 6 | Link one ABHA number to one patient record (`link-one-abha-per-patient`) | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER open | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER: Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record | building | 2026-11-19 |  |
+| 6 | Link one ABHA number to one patient record (`link-one-abha-per-patient`) | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER open | TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER: Register a patient (/doctor/register) and every ABHA journey, through PatientRegistrationService: an ABHA number already linked returns that patient and creates no new record | built and waiting for the tester | 2026-11-22 |  |
 | 7 | Scan and share at a counter (`scan-and-share`) | SHARE_PATIENT_PROFILE_701 open, SHARE_PATIENT_PROFILE_702 open | SHARE_PATIENT_PROFILE_701: POST /api/v3/hip/patient/share registers the patient from the shared profile with no desk input and replies on on-share with the counter's token; /doctor/counters shows the QR code and the queue; SHARE_PATIENT_PROFILE_702: POST /api/v3/hip/patient/share matches a returning patient, updates the ABHA address, keeps one active entry per counter and opens a new one for another counter; /doctor/counters shows both queues | building | 2026-11-21 |  |
 | 8 | Update the mobile on an ABHA (`update-mobile`) | none for a private entity |  | optional, not in scope |  |  |
 | 9 | Read an ABHA QR code (`read-abha-qr`) | none for a private entity |  | optional, not in scope |  |  |
@@ -300,6 +300,16 @@ Open, to settle from a real share:
 - A queue entry stands in for the visit; a care context in ABDM's sense belongs to Milestone 2.
 
 The integration tests drive every rule above against a stand-in for ABDM, and the counters screen was driven in a browser the same way. That is a check of the build, not a test run.
+
+### Owner's decision on scan and share, 2026-11-22
+
+The owner will obtain the facility id (HIP id) during Milestone 3, not now, and asked for the rest of Milestone 1 to proceed. Consequences, stated so nobody reads more into the tracker than is there:
+
+- Scan and share stays **built and unobserved**, with its inbound route off. `SHARE_PATIENT_PROFILE_701` and `702` are mandatory for a private entity and cannot be run without a facility id, a registered callback address and the PHR app. In the tester session they are to be recorded `needs-human`, naming the facility id as what was asked for and not available in this run. They are not `not-run`: they apply.
+- Milestone 1 therefore cannot be reported complete until those two cases are run. The other 30 mandatory cases can be.
+- Link one ABHA per patient is marked built: the lookup before creating a record, the unique ABHA number per clinic, and the "already linked" outcome are in every journey and covered by the integration tests. The tester saw the already-linked outcome from a mobile search on 2026-11-21.
+
+Next for Milestone 1: the tester session over the 30 runnable mandatory cases, recorded in NHA's workbook, and the draft report.
 
 ### Resend test, 2026-11-19
 

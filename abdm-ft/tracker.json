@@ -3,8 +3,8 @@
  "module": "m1",
  "functionalities": {
   "link-one-abha-per-patient": {
-   "state": "building",
-   "date": "2026-11-19",
+   "state": "built and waiting for the tester",
+   "date": "2026-11-22",
    "snapshot": {
     "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "open"
    }
