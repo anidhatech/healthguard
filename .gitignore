@@ -42,3 +42,14 @@ Thumbs.db
 
 # Local Redis snapshots
 dump.rdb
+
+# Written by the ABDM test tooling for the machine it runs on
+abdm-ft/env.json
+
+# ABDM test run: private Python folder and evidence that shows a person
+abdm-ft/.venv/
+abdm-ft/abdm-ft/
+abdm-ft/evidence/
+abdm-ft/draft-report-*
+abdm-ft/evidence-report/
+abdm-ft/evidence-report-small/

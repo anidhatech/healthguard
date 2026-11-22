@@ -64,6 +64,12 @@ export const EnvSchema = z
     ABDM_ABHA_URL: z.url().default('https://abhasbx.abdm.gov.in'),
     ABDM_CM_ID: z.string().min(1).default('sbx'),
     ABDM_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(30_000),
+    // Whether ABDM may post a profile shared at a counter. Off until switched on.
+    ABDM_SHARE_INBOUND: z.enum(['off', 'on']).default('off'),
+    // The patient app a counter QR code opens. The sandbox host is the default.
+    ABDM_PHR_URL: z.url().default('https://phrsbx.abdm.gov.in'),
+    // Sent as the token's `expiry`. The specification gives no unit; 3600 assumes seconds.
+    ABDM_SHARE_TOKEN_EXPIRY: z.coerce.number().int().min(60).max(86_400).default(3600),
   })
   .superRefine((env, ctx) => {
     if (env.NODE_ENV === 'production' && env.DEMO_MODE && !env.ALLOW_DEMO_IN_PRODUCTION) {

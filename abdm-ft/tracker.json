@@ -3,30 +3,85 @@
  "module": "m1",
  "functionalities": {
   "link-one-abha-per-patient": {
-   "state": "building",
-   "date": "2026-11-19",
+   "date": "2026-11-23",
+   "state": "tested",
    "snapshot": {
-    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "open"
-   }
+    "TAGGING_UNIQUEPATIENTID_UNIQUEABHANUMBER": "PASS"
+   },
+   "build": "00cd848"
   },
   "create-abha-aadhaar-otp": {
-   "state": "built and waiting for the tester",
-   "date": "2026-11-19",
+   "state": "tested",
+   "date": "2026-11-23",
    "snapshot": {
-    "CRT_ABHA_101": "open",
-    "CRT_ABHA_104": "open",
-    "CRT_ABHA_102": "open",
-    "CRT_ABHA_103": "open",
-    "CRT_ABHA_105": "open",
-    "CRT_ABHA_106": "open",
-    "CRT_ABHA_107": "open",
-    "CRT_ABHA_108": "open",
-    "CRT_ABHA_109": "open",
-    "CRT_ABHA_112": "open",
-    "CRT_ABHA_113": "open",
-    "CRT_ABHA_114": "open",
-    "CRT_ABHA_115": "open",
-    "CRT_ABHA_116": "open"
+    "CRT_ABHA_101": "PASS",
+    "CRT_ABHA_104": "PASS",
+    "CRT_ABHA_102": "PASS",
+    "CRT_ABHA_103": "NA",
+    "CRT_ABHA_105": "CONDITIONAL PASS",
+    "CRT_ABHA_106": "PASS",
+    "CRT_ABHA_107": "PASS",
+    "CRT_ABHA_108": "PASS",
+    "CRT_ABHA_109": "PASS",
+    "CRT_ABHA_112": "PASS",
+    "CRT_ABHA_113": "PASS",
+    "CRT_ABHA_114": "PASS",
+    "CRT_ABHA_115": "NA",
+    "CRT_ABHA_116": "needs tester"
+   },
+   "build": "00cd848"
+  },
+  "login-abha-number": {
+   "date": "2026-11-23",
+   "state": "tested",
+   "snapshot": {
+    "VRFY_ABHA_101": "PASS",
+    "VRFY_ABHA_201": "PASS"
+   },
+   "build": "00cd848"
+  },
+  "login-abha-address": {
+   "date": "2026-11-23",
+   "state": "tested",
+   "snapshot": {
+    "VRFY_ABHA_102": "CONDITIONAL PASS",
+    "VRFY_ABHA_202": "CONDITIONAL PASS"
+   },
+   "build": "00cd848"
+  },
+  "login-aadhaar-otp": {
+   "date": "2026-11-23",
+   "state": "tested",
+   "snapshot": {
+    "VRFY_ABHA_401": "PASS",
+    "VRFY_ABHA_402": "PASS",
+    "VRFY_ABHA_403": "CONDITIONAL PASS",
+    "VRFY_ABHA_404": "PASS",
+    "VRFY_ABHA_405": "PASS"
+   },
+   "build": "00cd848"
+  },
+  "find-abha-mobile": {
+   "date": "2026-11-23",
+   "state": "tested",
+   "snapshot": {
+    "VRFY_ABHA_301": "PASS",
+    "VRFY_ABHA_302": "PASS",
+    "VRFY_ABHA_303": "PASS",
+    "VRFY_ABHA_304": "PASS",
+    "VRFY_ABHA_305": "PASS",
+    "VRFY_ABHA_306": "PASS",
+    "VRFY_ABHA_307": "PASS",
+    "VRFY_ABHA_308": "PASS"
+   },
+   "build": "00cd848"
+  },
+  "scan-and-share": {
+   "state": "building",
+   "date": "2026-11-21",
+   "snapshot": {
+    "SHARE_PATIENT_PROFILE_701": "open",
+    "SHARE_PATIENT_PROFILE_702": "open"
    }
   }
  },
@@ -43,6 +98,25 @@
   "CRT_ABHA_112": "/doctor/abha/create step 5 ABHA address: [masked], own address with rules in green or red, 'ABHA address already exists.' with two choices",
   "CRT_ABHA_113": "/doctor/abha/create step 6 ABHA and card: ABHA number, address and profile details",
   "CRT_ABHA_114": "/doctor/abha/create step 6 ABHA and card: card shown as ABDM returned it, Download ABHA card",
-  "CRT_ABHA_116": "/doctor/abha/create step 7 Save: matches by ABHA number, by mobile, name, gender and year of birth, or by record number; link, or create only when none matches"
+  "CRT_ABHA_116": "/doctor/abha/create step 7 Save: matches by ABHA number, by mobile, name, gender and year of birth, or by record number; link, or create only when none matches",
+  "VRFY_ABHA_101": "/doctor/abha/verify: ABHA number, OTP to the Aadhaar-linked mobile; profile and card; mobile update Yes or No; details form with name, date of birth and gender read only; save",
+  "VRFY_ABHA_201": "/doctor/abha/verify: ABHA number, OTP to the mobile linked to the ABHA; same screens as VRFY_ABHA_101",
+  "VRFY_ABHA_102": "/doctor/abha/verify: ABHA address, Find login methods lists what ABDM offers for that address, Aadhaar OTP; profile, PHR card, details form, save",
+  "VRFY_ABHA_202": "/doctor/abha/verify: ABHA address, mobile OTP when ABDM lists it; same screens as VRFY_ABHA_102",
+  "VRFY_ABHA_401": "/doctor/abha/verify: Aadhaar number, 12 digits only, masked, 'Aadhaar Number is not valid' with no call; consent screen",
+  "VRFY_ABHA_402": "/doctor/abha/verify OTP step: a wrong OTP shows ABDM's message and stays on the step",
+  "VRFY_ABHA_403": "/doctor/abha/verify: No ABHA found, with ABDM's message and Create ABHA, which opens /doctor/abha/create at consent without asking for the Aadhaar again",
+  "VRFY_ABHA_404": "/doctor/abha/verify: ABHA verified, profile, card download, then save or link to the patient record",
+  "VRFY_ABHA_405": "/doctor/abha/verify OTP step: Resend OTP with a 60 second counter, two resends, then the limit message",
+  "VRFY_ABHA_301": "/doctor/abha/verify, Look up by: Mobile number: ten digits only, else 'Please enter a valid mobile number.' and no search is sent",
+  "VRFY_ABHA_302": "/doctor/abha/verify, Look up by: Mobile number: Search lists every ABHA on the mobile with masked ABHA number, name and gender, before any OTP",
+  "VRFY_ABHA_303": "/doctor/abha/verify, Look up by: Mobile number: 'ABHA details not found...' with a Create ABHA button that carries the mobile over, and no OTP step",
+  "VRFY_ABHA_304": "/doctor/abha/verify, Look up by: Mobile number: Send OTP appears only after one account is chosen; the choice is kept to verification; resend rules as on the other logins",
+  "VRFY_ABHA_305": "/doctor/abha/verify, Look up by: Mobile number: OTP step, then the chosen profile only, with the shared profile and card view",
+  "VRFY_ABHA_306": "/doctor/abha/verify, Look up by: Mobile number: shared details form, name, date of birth and gender read only; saved through PatientRegistration",
+  "VRFY_ABHA_307": "/doctor/abha/verify, Look up by: Mobile number: a wrong OTP shows ABDM's message, opens no profile, and can be retried",
+  "VRFY_ABHA_308": "/doctor/abha/verify, Look up by: Mobile number: save step shows 'This ABHA profile is already linked to HMIS Beneficiary ID.' with the ABHA's details beside the record's, and offers no new record",
+  "SHARE_PATIENT_PROFILE_701": "POST /api/v3/hip/patient/share registers the patient from the shared profile with no desk input and replies on on-share with the counter's token; /doctor/counters shows the QR code and the queue",
+  "SHARE_PATIENT_PROFILE_702": "POST /api/v3/hip/patient/share matches a returning patient, updates the ABHA address, keeps one active entry per counter and opens a new one for another counter; /doctor/counters shows both queues"
  }
 }

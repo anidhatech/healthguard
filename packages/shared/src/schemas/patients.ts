@@ -49,6 +49,9 @@ export const PatientProfileViewSchema = z.object({
   ageYears: z.number().int(),
   sex: SexSchema,
   phoneMasked: z.string().nullable(),
+  email: z.string().nullable(),
+  /** The address as one line, joined from its parts; `null` when none is recorded. */
+  address: z.string().nullable(),
   preferredLocale: z.enum(SUPPORTED_LOCALES),
   timezone: z.string(),
   dailyRoutine: z.record(z.string(), z.string()),
@@ -59,8 +62,27 @@ export const PatientProfileViewSchema = z.object({
 });
 export type PatientProfileView = z.infer<typeof PatientProfileViewSchema>;
 
+/**
+ * Contact details kept on the patient record. Each is optional; an empty value
+ * clears it. They may be typed at the desk or come from a verified ABHA profile.
+ */
+export const PatientContactSchema = z.strictObject({
+  email: z.union([z.email().max(254), z.literal('')]).optional(),
+  addressLine: z.string().trim().max(500).optional(),
+  city: z.string().trim().max(100).optional(),
+  district: z.string().trim().max(100).optional(),
+  state: z.string().trim().max(100).optional(),
+  pinCode: z
+    .string()
+    .trim()
+    .regex(/^([0-9]{6})?$/, 'Enter a 6-digit PIN code')
+    .optional(),
+});
+export type PatientContact = z.infer<typeof PatientContactSchema>;
+
 /** What the front desk enters to register a patient. ABHA details never come from this form. */
 export const RegisterPatientSchema = z.strictObject({
+  ...PatientContactSchema.shape,
   givenName: z.string().trim().min(1).max(100),
   familyName: z.string().trim().min(1).max(100).optional(),
   dateOfBirth: IsoDateSchema,

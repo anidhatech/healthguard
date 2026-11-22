@@ -91,7 +91,29 @@ export class PatientRegistrationService {
     input: RegisterPatient,
     abha?: VerifiedAbha,
   ): Promise<PatientRegistrationResult> {
-    const organizationId = requireOrganization(actor);
+    return this.registerIn(requireOrganization(actor), actor, meta, input, abha);
+  }
+
+  /**
+   * Registers a patient whose profile ABDM delivered after the patient agreed
+   * to share it at a counter. Nobody at the desk is involved, so the audit
+   * trail records the system as the actor.
+   */
+  async registerFromShare(
+    organizationId: string,
+    input: RegisterPatient,
+    abha?: VerifiedAbha,
+  ): Promise<PatientRegistrationResult> {
+    return this.registerIn(organizationId, null, undefined, input, abha);
+  }
+
+  private async registerIn(
+    organizationId: string,
+    actor: ActorContext | null,
+    meta: RequestMeta | undefined,
+    input: RegisterPatient,
+    abha?: VerifiedAbha,
+  ): Promise<PatientRegistrationResult> {
     const organization = await this.prisma.db.organization.findFirst({
       where: { id: organizationId, deletedAt: null },
     });
@@ -129,6 +151,12 @@ export class PatientRegistrationService {
             dateOfBirth: new Date(`${input.dateOfBirth}T00:00:00Z`),
             sex: input.sex,
             phone: input.phone ?? null,
+            email: input.email?.trim() || null,
+            addressLine: input.addressLine || null,
+            city: input.city || null,
+            district: input.district || null,
+            state: input.state || null,
+            pinCode: input.pinCode || null,
             preferredLocale: resolveLocale(input.preferredLocale),
             timezone: organization.timezone,
             dailyRoutine: DEFAULT_DAILY_ROUTINE,
@@ -227,8 +255,8 @@ export class PatientRegistrationService {
   }
 
   private async existing(
-    actor: ActorContext,
-    meta: RequestMeta,
+    actor: ActorContext | null,
+    meta: RequestMeta | undefined,
     organizationId: string,
     row: PatientRow,
   ): Promise<PatientRegistrationResult> {

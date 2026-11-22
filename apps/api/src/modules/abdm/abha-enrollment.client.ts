@@ -31,6 +31,8 @@ export interface AbhaProfile {
   districtName: string | null;
   stateName: string | null;
   pinCode: string | null;
+  /** The town or city, where the profile names one. */
+  city: string | null;
   /** Base64 image, when ABDM sends one. */
   photo: string | null;
   abhaStatus: string | null;
@@ -84,6 +86,24 @@ function strings(value: unknown): string[] {
     : [];
 }
 
+/** A yes or no that ABDM sends as a boolean on some calls and as the text "true" on others. */
+function flag(value: unknown): boolean | null {
+  if (typeof value === 'boolean') return value;
+  if (typeof value === 'string' && /^(true|false)$/i.test(value.trim())) {
+    return value.trim().toLowerCase() === 'true';
+  }
+  return null;
+}
+
+/** An ABHA-address profile says `kycStatus` in words where the ABHA profile has `kycVerified`. */
+function kycFromStatus(value: unknown): boolean | null {
+  if (typeof value !== 'string' || value.trim().length === 0) return null;
+  const status = value.trim().toUpperCase();
+  if (status === 'VERIFIED') return true;
+  if (status === 'PENDING' || status === 'NOT_VERIFIED' || status === 'UNVERIFIED') return false;
+  return null;
+}
+
 /** The profile call sends the date of birth as three parts; enrolment sends it whole as `dob`. */
 function dateFromParts(row: Json): string | null {
   const [day, month, year] = [text(row.dayOfBirth), text(row.monthOfBirth), text(row.yearOfBirth)];
@@ -94,15 +114,21 @@ function dateFromParts(row: Json): string | null {
 export function readAbhaProfile(source: unknown): AbhaProfile {
   const row = object(source);
   const addresses = strings(row.phrAddress).concat(strings(row.abhaAddresses));
-  const preferred = text(row.preferredAbhaAddress, row.preferredAddress, addresses[0]);
+  const preferred = text(
+    row.preferredAbhaAddress,
+    row.preferredAddress,
+    addresses[0],
+    row.abhaAddress,
+  );
   return {
     abhaNumber: text(row.ABHANumber, row.abhaNumber, row.healthIdNumber),
     abhaAddresses: addresses,
     preferredAbhaAddress: preferred,
-    firstName: text(row.firstName, row.name),
+    firstName: text(row.firstName, row.name, row.fullName),
     middleName: text(row.middleName),
     lastName: text(row.lastName),
-    dateOfBirth: text(row.dob, row.dateOfBirth, dateFromParts(row), row.yearOfBirth),
+    // The three parts come padded where `dateOfBirth` may not be, so they are preferred.
+    dateOfBirth: text(row.dob, dateFromParts(row), row.dateOfBirth, row.yearOfBirth),
     gender: text(row.gender),
     mobile: text(row.mobile),
     email: text(row.email),
@@ -110,10 +136,11 @@ export function readAbhaProfile(source: unknown): AbhaProfile {
     districtName: text(row.districtName),
     stateName: text(row.stateName),
     pinCode: text(row.pinCode, row.pincode),
+    city: text(row.townName, row.town, row.villageName),
     photo: text(row.photo, row.profilePhoto),
     abhaStatus: text(row.abhaStatus, row.status),
-    mobileVerified: typeof row.mobileVerified === 'boolean' ? row.mobileVerified : null,
-    kycVerified: typeof row.kycVerified === 'boolean' ? row.kycVerified : null,
+    mobileVerified: flag(row.mobileVerified),
+    kycVerified: flag(row.kycVerified) ?? kycFromStatus(row.kycStatus),
   };
 }
 

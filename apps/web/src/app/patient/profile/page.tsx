@@ -30,6 +30,10 @@ function Profile({ patientId }: { patientId: string }) {
               <dd className="font-mono">{profile.mrn}</dd>
               <dt className="text-muted">{t('phone')}</dt>
               <dd>{profile.phoneMasked ?? '—'}</dd>
+              <dt className="text-muted">{t('email')}</dt>
+              <dd className="break-words">{profile.email ?? '—'}</dd>
+              <dt className="text-muted">{t('address')}</dt>
+              <dd className="break-words">{profile.address ?? '—'}</dd>
               <dt className="text-muted">{t('clinician')}</dt>
               <dd>{profile.primaryClinician?.displayName ?? '—'}</dd>
             </dl>

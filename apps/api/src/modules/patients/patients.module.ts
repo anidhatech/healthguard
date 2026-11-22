@@ -240,6 +240,11 @@ export class PatientsController {
       ageYears: ageInYears(row.dateOfBirth, today),
       sex: row.sex,
       phoneMasked: maskPhone(row.phone),
+      email: row.email,
+      address:
+        [row.addressLine, row.city, row.district, row.state, row.pinCode]
+          .filter(Boolean)
+          .join(', ') || null,
       preferredLocale: resolveLocale(row.preferredLocale),
       timezone: row.timezone,
       dailyRoutine: (row.dailyRoutine ?? {}) as Record<string, string>,

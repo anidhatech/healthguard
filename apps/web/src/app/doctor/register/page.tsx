@@ -3,6 +3,7 @@
 import {
   LOCALE_LABELS,
   SUPPORTED_LOCALES,
+  type PatientContact,
   type PatientRegistrationResult,
   type RegisterPatient,
   type SupportedLocale,
@@ -32,6 +33,16 @@ export default function RegisterPatientPage() {
   const [sex, setSex] = useState<(typeof SEXES)[number]>('FEMALE');
   const [phone, setPhone] = useState('');
   const [locale, setLocale] = useState<SupportedLocale>('en-IN');
+  const [contact, setContact] = useState({
+    email: '',
+    addressLine: '',
+    city: '',
+    district: '',
+    state: '',
+    pinCode: '',
+  });
+  const setField = (key: keyof typeof contact) => (value: string) =>
+    setContact((current) => ({ ...current, [key]: value }));
   const today = new Date().toISOString().slice(0, 10);
 
   const register = useAction<RegisterPatient, PatientRegistrationResult>(
@@ -51,6 +62,7 @@ export default function RegisterPatientPage() {
     setSex('FEMALE');
     setPhone('');
     setLocale('en-IN');
+    setContact({ email: '', addressLine: '', city: '', district: '', state: '', pinCode: '' });
     register.reset();
   }
 
@@ -86,9 +98,14 @@ export default function RegisterPatientPage() {
               title={t('abhaTitle')}
               subtitle={t('abhaNote')}
               action={
-                <Button asChild variant="secondary">
-                  <Link href="/doctor/abha/create">{t('createAbha')}</Link>
-                </Button>
+                <span className="flex flex-wrap gap-2">
+                  <Button asChild variant="secondary">
+                    <Link href="/doctor/abha/verify">{t('verifyAbha')}</Link>
+                  </Button>
+                  <Button asChild variant="secondary">
+                    <Link href="/doctor/abha/create">{t('createAbha')}</Link>
+                  </Button>
+                </span>
               }
             />
           </Card>
@@ -104,6 +121,11 @@ export default function RegisterPatientPage() {
                   sex,
                   ...(phone.trim() ? { phone: phone.replace(/[\s-]+/g, '') } : {}),
                   preferredLocale: locale,
+                  ...(Object.fromEntries(
+                    Object.entries(contact)
+                      .map(([key, value]) => [key, value.trim()])
+                      .filter(([, value]) => value),
+                  ) as PatientContact),
                 });
               }}
             >
@@ -183,6 +205,53 @@ export default function RegisterPatientPage() {
                       </option>
                     ))}
                   </select>
+                </label>
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('email')}</span>
+                  <input
+                    type="email"
+                    autoComplete="off"
+                    maxLength={254}
+                    value={contact.email}
+                    onChange={(event) => setField('email')(event.target.value)}
+                    className={FIELD}
+                  />
+                </label>
+                <label className="grid gap-1 text-sm sm:col-span-2">
+                  <span className="font-medium">{t('address')}</span>
+                  <input
+                    autoComplete="off"
+                    maxLength={500}
+                    value={contact.addressLine}
+                    onChange={(event) => setField('addressLine')(event.target.value)}
+                    className={FIELD}
+                  />
+                </label>
+                {(['city', 'district', 'state'] as const).map((key) => (
+                  <label key={key} className="grid gap-1 text-sm">
+                    <span className="font-medium">{t(key)}</span>
+                    <input
+                      autoComplete="off"
+                      maxLength={100}
+                      value={contact[key]}
+                      onChange={(event) => setField(key)(event.target.value)}
+                      className={FIELD}
+                    />
+                  </label>
+                ))}
+                <label className="grid gap-1 text-sm">
+                  <span className="font-medium">{t('pinCode')}</span>
+                  <input
+                    inputMode="numeric"
+                    autoComplete="off"
+                    maxLength={6}
+                    pattern="[0-9]{6}"
+                    value={contact.pinCode}
+                    onChange={(event) =>
+                      setField('pinCode')(event.target.value.replace(/\D+/g, '').slice(0, 6))
+                    }
+                    className={FIELD}
+                  />
                 </label>
               </div>
               {register.error ? <ErrorState error={register.error} /> : null}

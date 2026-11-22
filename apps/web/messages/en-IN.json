@@ -49,7 +49,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "failed": "Sign-in failed. Check the email and password.",
-    "demoPasswordHint": "Demo accounts use the password set in DEMO_ACCOUNT_PASSWORD."
+    "demoPasswordHint": "Demo accounts use the password set in DEMO_ACCOUNT_PASSWORD.",
+    "subtitleReal": "Sign in with the account your clinic gave you."
   },
   "patient": {
     "hello": "Hello, {name}",
@@ -224,7 +225,9 @@
     "abha": "ABHA (Ayushman Bharat Health Account)",
     "abhaLink": "Link ABHA",
     "shareTitle": "Your records as a file",
-    "shareHint": "Download your records in the FHIR R4 standard (marked as synthetic demo data)."
+    "shareHint": "Download your records in the FHIR R4 standard (marked as synthetic demo data).",
+    "email": "Email",
+    "address": "Address"
   },
   "doctor": {
     "title": "Clinic",
@@ -269,7 +272,9 @@
     "todayDoses": "Today's doses",
     "appointments": "Appointments",
     "registerPatient": "Register a patient",
-    "createAbha": "Create ABHA with Aadhaar OTP"
+    "createAbha": "Create ABHA with Aadhaar OTP",
+    "verifyAbha": "Verify an existing ABHA",
+    "counters": "Counters and queue"
   },
   "admin": {
     "title": "Organization",
@@ -509,7 +514,14 @@
     "notAllowedTitle": "Your role cannot register patients",
     "notAllowedBody": "Registration is done by the front desk or the care team.",
     "abhaTitle": "ABHA",
-    "createAbha": "Create ABHA with Aadhaar OTP"
+    "createAbha": "Create ABHA with Aadhaar OTP",
+    "verifyAbha": "Verify an existing ABHA",
+    "email": "Email (optional)",
+    "address": "Address (optional)",
+    "city": "City or town",
+    "district": "District",
+    "state": "State",
+    "pinCode": "PIN code"
   },
   "abha": {
     "title": "Create ABHA",
@@ -559,7 +571,7 @@
     "ruleMet": "Met",
     "ruleNotMet": "Not met",
     "rules": {
-      "length": "8 to 18 characters, including {suffix}",
+      "length": "At least 8 characters before {suffix}, and at most 18 with it",
       "characters": "Letters and numbers only, with a dot or an underscore",
       "specials": "At most one dot and one underscore",
       "edges": "No dot or underscore at the start or the end"
@@ -584,7 +596,7 @@
     "saveTitle": "Save to the patient record",
     "saveSubtitle": "HealthGuard checks for an existing record first, so one patient never gets two.",
     "matchReasons": {
-      "ABHA_NUMBER": "This ABHA number is already linked to this record.",
+      "ABHA_NUMBER": "This ABHA profile is already linked to HMIS Beneficiary ID.",
       "DEMOGRAPHICS": "Same mobile, name, gender and year of birth.",
       "RECORD_NUMBER": "Found by record number."
     },
@@ -604,6 +616,84 @@
     "demoTitle": "ABHA is not available here",
     "demoBody": "This is a demo organization. It holds synthetic patients only, so real ABHA journeys cannot run in it.",
     "notAllowedTitle": "Your role cannot create an ABHA",
-    "notAllowedBody": "ABHA creation is done by the front desk or the care team."
+    "notAllowedBody": "ABHA creation is done by the front desk or the care team.",
+    "verifyTitle": "Verify ABHA",
+    "identifyTitle": "Find the patient's ABHA",
+    "identifySubtitle": "For someone who already has an ABHA. Their details then fill the registration form.",
+    "identifierLabel": "Look up by",
+    "identifiers": {
+      "MOBILE": "Mobile number",
+      "ABHA_NUMBER": "ABHA number",
+      "ABHA_ADDRESS": "ABHA address",
+      "AADHAAR": "Aadhaar number"
+    },
+    "identifierHints": {
+      "MOBILE": "10 digits. Lists every ABHA on this mobile. No OTP is sent until one is chosen.",
+      "ABHA_NUMBER": "14 digits, as on the ABHA card.",
+      "ABHA_ADDRESS": "For example name@sbx. The login methods come from ABDM for this address.",
+      "AADHAAR": "12 digits. Shown masked once entered. It is not stored."
+    },
+    "findMethods": "Find login methods",
+    "noMethods": "ABDM lists no OTP method for this ABHA address that can be used here.",
+    "methodLabel": "Send the OTP to",
+    "methods": {
+      "AADHAAR_OTP": "The Aadhaar-linked mobile",
+      "MOBILE_OTP": "The mobile linked to the ABHA"
+    },
+    "deskMobile": "Mobile number in your records (optional)",
+    "deskMobileHint": "10 digits. If it differs from the one on the ABHA, you are asked whether to update the ABHA.",
+    "loginOtpTitle": "Enter the OTP",
+    "noAbhaTitle": "No ABHA found",
+    "noAbhaFallback": "No ABHA user registered with this Aadhaar Number",
+    "noAbhaOffer": "You can create an ABHA for this person now. You will not be asked for the Aadhaar number again.",
+    "createAbhaInstead": "Create ABHA",
+    "verifiedTitle": "ABHA verified",
+    "severalAccounts": "ABDM returned {count} accounts. The first is shown.",
+    "mobileDiffers": "The mobile in your records differs from the one on the ABHA",
+    "mobileUpdateQuestion": "Update the mobile number on the ABHA profile to the one in your records?",
+    "yes": "Yes",
+    "no": "No",
+    "mobileNotUpdated": "The ABHA profile was not changed.",
+    "mobileUpdated": "The mobile number on the ABHA profile was updated.",
+    "mobileUpdateUnavailable": "It cannot be updated from an ABHA address login. The ABHA profile was not changed.",
+    "formTitle": "Details from the ABHA",
+    "formNote": "Name, date of birth and gender come from the ABHA and cannot be changed here. The other details can be corrected before saving.",
+    "handoffNote": "No ABHA was found for this Aadhaar number, so you are creating one. The details you already entered are carried over.",
+    "email": "Email",
+    "city": "City or town",
+    "district": "District",
+    "state": "State",
+    "pinCode": "PIN code",
+    "searchMobile": "Search",
+    "accountsTitle": "ABHA accounts on this mobile: {count}",
+    "accountsHint": "Choose the patient's account. The OTP is sent only to the one chosen.",
+    "noAbhaMobileOffer": "You can create an ABHA for this person now.",
+    "compareAbha": "From the ABHA",
+    "compareRecord": "In your record"
+  },
+  "counters": {
+    "title": "Counters and queue",
+    "waiting": "Waiting: {count}",
+    "qrAlt": "QR code for counter {code}",
+    "qrHint": "The patient scans this in their ABHA app and agrees to share.",
+    "noFacilityQr": "A QR code appears once the clinic has a facility ID.",
+    "token": "Token {number}",
+    "replyFailed": "ABDM did not accept the token reply, so the patient’s app may not show it.",
+    "markSeen": "Mark as seen",
+    "nobodyWaiting": "Nobody is waiting at this counter.",
+    "noFacilityTitle": "This clinic has no facility ID yet",
+    "noFacilityBody": "Counter QR codes need the clinic’s facility ID from the Health Facility Registry. Ask your administrator to add it.",
+    "sharingOffTitle": "Sharing at the counter is switched off",
+    "sharingOffBody": "This system is not accepting profiles shared from a QR code yet. Counters can be set up now.",
+    "addTitle": "Add a counter",
+    "addSubtitle": "Each counter has its own QR code and its own queue.",
+    "code": "Counter ID",
+    "name": "Name",
+    "add": "Add counter",
+    "codeHint": "1 to 20 letters or digits, for example OPD1. Keep it the same once the QR code is printed.",
+    "demoTitle": "Not available in the demo",
+    "demoBody": "Counters hold real patients, so they are not available in a demo organization.",
+    "notAllowedTitle": "Not available for your role",
+    "notAllowedBody": "Counters are managed by front-desk and care-team staff."
   }
 }

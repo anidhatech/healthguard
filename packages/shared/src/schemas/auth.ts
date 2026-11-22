@@ -71,6 +71,8 @@ export const SessionViewSchema = z.object({
 export type SessionView = z.infer<typeof SessionViewSchema>;
 
 export const DemoAccountsResponseSchema = z.object({
+  /** Whether this server holds synthetic demo data. False on a server with real records. */
+  demoMode: z.boolean(),
   enabled: z.boolean(),
   notice: z.string(),
   passwordLoginEnabled: z.boolean(),

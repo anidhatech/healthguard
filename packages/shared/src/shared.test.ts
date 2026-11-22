@@ -134,6 +134,11 @@ describe('ABHA helpers', () => {
     const { abhaAddressRules } = await import('./schemas/abha.js');
     const met = (handle: string) =>
       Object.fromEntries(abhaAddressRules(handle, '@sbx').map((rule) => [rule.key, rule.met]));
+    // Eight characters before the suffix at least; eighteen with it at most.
+    expect(met('abcdef')).toMatchObject({ length: false });
+    expect(met('abcdefgh')).toMatchObject({ length: true });
+    expect(met('abcdefghijklmn')).toMatchObject({ length: true });
+    expect(met('abcdefghijklmno')).toMatchObject({ length: false });
     expect(met('test.person')).toEqual({
       length: true,
       characters: true,
@@ -169,5 +174,22 @@ describe('ABHA helpers', () => {
     expect(consent.ABHA_TERMS_AND_CONDITIONS.startsWith('I, hereby declare')).toBe(true);
     expect(consent.abhaWorkerConfirmation('A B')).toContain('I, A B, confirm');
     expect(consent.abhaBeneficiaryConfirmation('C D')).toContain('I, C D, have been explained');
+  });
+});
+
+describe('ABHA login methods', () => {
+  it('offers only the OTP routes an ABHA address lists, however ABDM spells them', async () => {
+    const { abhaLoginMethodsFrom } = await import('./schemas/abha.js');
+    expect(abhaLoginMethodsFrom(['AADHAAR_OTP', 'MOBILE_OTP', 'PASSWORD'])).toEqual([
+      'AADHAAR_OTP',
+      'MOBILE_OTP',
+    ]);
+    expect(abhaLoginMethodsFrom(['MOBILE_OTP'])).toEqual(['MOBILE_OTP']);
+    expect(abhaLoginMethodsFrom(['mobile-otp', 'Aadhaar OTP', 'AADHAAR_OTP'])).toEqual([
+      'MOBILE_OTP',
+      'AADHAAR_OTP',
+    ]);
+    expect(abhaLoginMethodsFrom(['PASSWORD', 'AADHAAR_BIO', 'DEMOGRAPHICS'])).toEqual([]);
+    expect(abhaLoginMethodsFrom([])).toEqual([]);
   });
 });

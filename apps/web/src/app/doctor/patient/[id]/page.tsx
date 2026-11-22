@@ -220,6 +220,11 @@ export default function DoctorPatientPage() {
                 </span>
               }
             />
+            {patient.phoneMasked || patient.email || patient.address ? (
+              <p className="-mt-3 text-sm text-muted">
+                {[patient.phoneMasked, patient.email, patient.address].filter(Boolean).join(' · ')}
+              </p>
+            ) : null}
             {isDoctor ? <DraftsPanel patientId={id} /> : null}
             <ProgressCards patientId={id} />
             {isDoctor ? <DoctorBrief patientId={id} /> : null}

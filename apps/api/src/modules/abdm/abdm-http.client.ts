@@ -72,6 +72,21 @@ function field(source: unknown, key: string): unknown {
     : undefined;
 }
 
+/**
+ * A validation refusal names the field it objects to and says why, with no
+ * code and no `message`: `{ "loginId": "<why>", "timestamp": "<when>" }`
+ * (observed in the sandbox, 2026-11-19 and 2026-11-20). The reasons are passed
+ * on as they came.
+ */
+function validationMessage(source: unknown): string | null {
+  if (typeof source !== 'object' || source === null || Array.isArray(source)) return null;
+  const reasons = Object.entries(source as Record<string, unknown>)
+    .filter(([key, value]) => key !== 'timestamp' && key !== 'code' && typeof value === 'string')
+    .map(([, value]) => (value as string).trim())
+    .filter((value) => value.length > 0);
+  return reasons.length > 0 ? reasons.join(' ') : null;
+}
+
 /** A refusal often names its reason only in the body, under `error` or at the top level. */
 export function readAbdmError(body: unknown): { code: string | null; message: string | null } {
   const nested = field(body, 'error');
@@ -79,7 +94,8 @@ export function readAbdmError(body: unknown): { code: string | null; message: st
   const message = field(source, 'message');
   return {
     code: normalizeAbdmCode(field(source, 'code')),
-    message: typeof message === 'string' && message.length > 0 ? message : null,
+    message:
+      typeof message === 'string' && message.length > 0 ? message : validationMessage(source),
   };
 }
 
