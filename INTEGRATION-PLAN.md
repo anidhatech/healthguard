@@ -329,7 +329,7 @@ Findings to follow up:
 
 - A six-character ABHA address passed the on-screen rules and ABDM refused it as "Invalid ABHA Address". The rule the screen prints (8 to 18 characters including `@sbx`) may be looser than ABDM's.
 - Every Aadhaar used already held an ABHA, so a brand-new ABHA being created was not observed in this run.
-- The consent wording was not compared with NHA's approved consent-language page, which the agent cannot open.
+- Consent wording: on 2026-11-23 the owner supplied NHA's consent-language page as an image. The five declarations and the two confirmations on our screen match it word for word, except that ours leave out the word "government" in the third and fifth declarations, as ABDM's guide requires of a private entity. Our screen also shows the Terms and Conditions with "I agree" above them, which that page does not carry.
 - The sign-in page shows the demo banner and demo wording on a server that is not in demo mode.
 - Sandbox faults shown as they came: "Aadhaar Gateway is unavailable" on one verify, "UIDAI Error code : 569" on one resend, and a long wait ending in "OTP expired".
 - Test patient records in the clinic test database were deleted between cases, with the owner's agreement, so that each login could show the registration form.
