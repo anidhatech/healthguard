@@ -134,6 +134,11 @@ describe('ABHA helpers', () => {
     const { abhaAddressRules } = await import('./schemas/abha.js');
     const met = (handle: string) =>
       Object.fromEntries(abhaAddressRules(handle, '@sbx').map((rule) => [rule.key, rule.met]));
+    // Eight characters before the suffix at least; eighteen with it at most.
+    expect(met('abcdef')).toMatchObject({ length: false });
+    expect(met('abcdefgh')).toMatchObject({ length: true });
+    expect(met('abcdefghijklmn')).toMatchObject({ length: true });
+    expect(met('abcdefghijklmno')).toMatchObject({ length: false });
     expect(met('test.person')).toEqual({
       length: true,
       characters: true,

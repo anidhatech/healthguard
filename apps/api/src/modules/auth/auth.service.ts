@@ -48,6 +48,7 @@ export class AuthService {
 
   demoAccounts(): DemoAccountsResponse {
     return {
+      demoMode: this.config.demoMode,
       enabled: this.config.demoAuthEnabled,
       notice: DEMO_AUTH_NOTICE,
       passwordLoginEnabled: this.config.passwordLoginEnabled,

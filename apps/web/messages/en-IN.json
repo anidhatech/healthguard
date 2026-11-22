@@ -49,7 +49,8 @@
     "password": "Password",
     "signIn": "Sign in",
     "failed": "Sign-in failed. Check the email and password.",
-    "demoPasswordHint": "Demo accounts use the password set in DEMO_ACCOUNT_PASSWORD."
+    "demoPasswordHint": "Demo accounts use the password set in DEMO_ACCOUNT_PASSWORD.",
+    "subtitleReal": "Sign in with the account your clinic gave you."
   },
   "patient": {
     "hello": "Hello, {name}",
@@ -570,7 +571,7 @@
     "ruleMet": "Met",
     "ruleNotMet": "Not met",
     "rules": {
-      "length": "8 to 18 characters, including {suffix}",
+      "length": "At least 8 characters before {suffix}, and at most 18 with it",
       "characters": "Letters and numbers only, with a dot or an underscore",
       "specials": "At most one dot and one underscore",
       "edges": "No dot or underscore at the start or the end"

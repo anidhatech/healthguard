@@ -81,7 +81,9 @@ function LoginForm() {
           <h1 className="flex items-center gap-2 text-2xl font-semibold text-brand-700">
             <ShieldCheck aria-hidden className="size-7" /> {t('title')}
           </h1>
-          <p className="mt-1 text-sm text-muted">{t('subtitle')}</p>
+          <p className="mt-1 text-sm text-muted">
+            {accounts.data?.demoMode === false ? t('subtitleReal') : t('subtitle')}
+          </p>
         </div>
         <LanguageSwitcher />
       </div>
@@ -94,70 +96,74 @@ function LoginForm() {
         )
       ) : null}
 
-      <Card>
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="font-semibold">{t('quickSignIn')}</h2>
-          <Badge tone="warn">DEMO / DEVELOPMENT</Badge>
-        </div>
-        <Alert tone="warn" className="mb-4">
-          {DEMO_AUTH_NOTICE}
-        </Alert>
-        {accounts.isLoading ? <LoadingState /> : null}
-        {accounts.data && !accounts.data.enabled ? (
-          <Alert tone="info">Demo sign-in is turned off on this server.</Alert>
-        ) : null}
-        <ul className="grid gap-3 sm:grid-cols-3">
-          {primary.map((account) => (
-            <li key={account.key}>
-              <button
-                type="button"
-                disabled={busy !== null}
-                onClick={() => void quick(account.email)}
-                className="flex h-full w-full flex-col items-start gap-1 rounded-lg border border-line bg-white p-3 text-left hover:border-brand-600 hover:bg-brand-50 disabled:opacity-60"
-              >
-                <span className="flex items-center gap-1.5 text-sm font-semibold">
-                  <UserRound aria-hidden className="size-4 text-brand-700" /> {account.persona}
-                </span>
-                <span className="text-sm">{account.displayName}</span>
-                <span className="text-xs text-muted">{account.description}</span>
-                <span className="mt-1 font-mono text-[11px] text-muted">{account.email}</span>
-              </button>
-            </li>
-          ))}
-        </ul>
-        {others.length ? (
-          <details className="mt-4">
-            <summary className="cursor-pointer text-sm font-medium text-brand-700">
-              {t('more')}
-            </summary>
-            <ul className="mt-2 divide-y divide-line">
-              {others.map((account) => (
-                <li
-                  key={account.key}
-                  className="flex flex-wrap items-center justify-between gap-2 py-2"
+      {/* A server with real records has no demo accounts to offer. */}
+      {accounts.data?.demoMode === false && !accounts.data.enabled ? null : (
+        <Card>
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+            <h2 className="font-semibold">{t('quickSignIn')}</h2>
+            <Badge tone="warn">DEMO / DEVELOPMENT</Badge>
+          </div>
+          <Alert tone="warn" className="mb-4">
+            {DEMO_AUTH_NOTICE}
+          </Alert>
+          {accounts.isLoading ? <LoadingState /> : null}
+          {accounts.data && !accounts.data.enabled ? (
+            <Alert tone="info">Demo sign-in is turned off on this server.</Alert>
+          ) : null}
+          <ul className="grid gap-3 sm:grid-cols-3">
+            {primary.map((account) => (
+              <li key={account.key}>
+                <button
+                  type="button"
+                  disabled={busy !== null}
+                  onClick={() => void quick(account.email)}
+                  className="flex h-full w-full flex-col items-start gap-1 rounded-lg border border-line bg-white p-3 text-left hover:border-brand-600 hover:bg-brand-50 disabled:opacity-60"
                 >
-                  <div className="min-w-0 text-sm">
-                    <p className="font-medium">
-                      {account.displayName} <span className="text-muted">· {account.persona}</span>
-                    </p>
-                    <p className="text-xs text-muted">
-                      {account.description} ({account.organizationName})
-                    </p>
-                  </div>
-                  <Button
-                    size="sm"
-                    variant="secondary"
-                    disabled={busy !== null}
-                    onClick={() => void quick(account.email)}
+                  <span className="flex items-center gap-1.5 text-sm font-semibold">
+                    <UserRound aria-hidden className="size-4 text-brand-700" /> {account.persona}
+                  </span>
+                  <span className="text-sm">{account.displayName}</span>
+                  <span className="text-xs text-muted">{account.description}</span>
+                  <span className="mt-1 font-mono text-[11px] text-muted">{account.email}</span>
+                </button>
+              </li>
+            ))}
+          </ul>
+          {others.length ? (
+            <details className="mt-4">
+              <summary className="cursor-pointer text-sm font-medium text-brand-700">
+                {t('more')}
+              </summary>
+              <ul className="mt-2 divide-y divide-line">
+                {others.map((account) => (
+                  <li
+                    key={account.key}
+                    className="flex flex-wrap items-center justify-between gap-2 py-2"
                   >
-                    {t('signInAs', { name: account.displayName.split(' ').slice(-2).join(' ') })}
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          </details>
-        ) : null}
-      </Card>
+                    <div className="min-w-0 text-sm">
+                      <p className="font-medium">
+                        {account.displayName}{' '}
+                        <span className="text-muted">· {account.persona}</span>
+                      </p>
+                      <p className="text-xs text-muted">
+                        {account.description} ({account.organizationName})
+                      </p>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy !== null}
+                      onClick={() => void quick(account.email)}
+                    >
+                      {t('signInAs', { name: account.displayName.split(' ').slice(-2).join(' ') })}
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </Card>
+      )}
 
       {accounts.data?.passwordLoginEnabled ? (
         <Card>
@@ -192,7 +198,9 @@ function LoginForm() {
               {t('signIn')}
             </Button>
           </form>
-          <p className="mt-2 text-xs text-muted">{t('demoPasswordHint')}</p>
+          {accounts.data.demoMode ? (
+            <p className="mt-2 text-xs text-muted">{t('demoPasswordHint')}</p>
+          ) : null}
         </Card>
       ) : null}
 

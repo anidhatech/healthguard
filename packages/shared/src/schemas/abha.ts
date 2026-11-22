@@ -190,7 +190,9 @@ export interface AbhaAddressRule {
 export function abhaAddressRules(handle: string, suffix: string): AbhaAddressRule[] {
   const total = handle.length + suffix.length;
   return [
-    { key: 'length', met: total >= 8 && total <= 18 },
+    // The sandbox refused a six-character address on 2026-11-22: the minimum of
+    // 8 counts the part before the suffix, and the maximum of 18 counts both.
+    { key: 'length', met: handle.length >= 8 && total <= 18 },
     { key: 'characters', met: /^[A-Za-z0-9._]+$/.test(handle) },
     {
       key: 'specials',
