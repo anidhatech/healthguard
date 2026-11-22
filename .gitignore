@@ -42,3 +42,6 @@ Thumbs.db
 
 # Local Redis snapshots
 dump.rdb
+
+# Written by the ABDM test tooling for the machine it runs on
+abdm-ft/env.json
