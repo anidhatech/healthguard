@@ -336,6 +336,16 @@ Findings to follow up:
 
 The 68 optional or not-applicable cases are recorded `NA` with the reason.
 
+### What the sandbox portal asks for, read 2026-11-23
+
+Read by the agent in the tester's browser, signed in by the owner, at `sbxai.abdm.gov.in`, product `APP-2026-16812`. Nothing was filled in, saved or submitted.
+
+- **The M1 exit request** takes: start, end and tentative demo dates; a functional testing certificate (one PDF, up to 5 MB); functional testing reports (Excel workbooks, up to 3 files, 5 MB each); a WASA audit certificate with the audit agency, audit date and validity; a signed undertaking in the portal's format; and optional additional evidence (PDFs, up to 8 files, 5 MB each). Submitting locks the form. M2 and M3 stay locked until M1 is submitted.
+- **Not in hand:** the WASA audit certificate, the functional testing certificate and the undertaking. The workbook (0.1 MB) and a draft report with blurred screenshots (2 MB) fit the limits.
+- **The callback address** is saved on the portal's Credentials page, and saving it registers the bridge with the gateway. It must start with `https://`, carry no port, and use only lower-case letters, digits and hyphens after the host name. It is not set. The bridge-URL call in `abdm:scaffold-share` was a guess and is not needed.
+- **Facility registration is Milestone 4** (register facilities and professionals: onboarding a facility to the HFR and linking it to a bridge), with its own official guide at `docs.abdm.gov.in/skills/abdm-m4/`. The portal also lists a gateway and bridge-registry guide and a scan-and-register guide. None of the three is installed in this repository yet.
+- The portal states: "Use synthetic data only. Do not send real patient or production data to the sandbox." The Aadhaar OTP journeys were tested with real Aadhaar numbers of the owner's family, with their consent. **To raise with ABDM support:** which test identities are expected for the Aadhaar cases.
+
 ### Resend test, 2026-11-19
 
 Run by the owner as tester, from the Mac, with `abdm:scaffold-create --resend-test` on commit `049a8a4`.
